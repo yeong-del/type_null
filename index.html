@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>군도연합 해군</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 해도(海圖) 그리드 위에 함대 서열을 위→아래로 쌓는 브루탈 에디토리얼. 전대 = 한 장의 판, 인물 = 승조원 명부의 한 줄 */
+:root{
+  --ink:#0B0B0C;
+  --hull:#141415;
+  --plate:#1C1C1E;
+  --paper:#EDEAE6;
+  --fog:#8C8986;
+  --red:#E3261C;
+  --red-deep:#8E1710;
+  --red-mute:#9A3B34;
+  --sel:#6E2C27;
+  --rule:rgba(237,234,230,.12);
+  --rule-s:rgba(237,234,230,.32);
+  --f-disp:'Big Shoulders Display','Black Han Sans',Impact,sans-serif;
+  --f-kr-disp:'Black Han Sans','Big Shoulders Display',sans-serif;
+  --f-body:'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--f-body);font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.wrap{width:100%;max-width:1360px;margin-inline:auto;padding-inline:clamp(16px,4vw,48px)}
+.mono{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fog)}
+.red{color:var(--red)}
+.chart-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(to right,var(--rule) 1px,transparent 1px),linear-gradient(to bottom,var(--rule) 1px,transparent 1px);
+  background-size:calc(100%/8) 100%,100% 120px;opacity:.45}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.07;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+main,header,footer{position:relative;z-index:1}
+
+/* 상단 바 */
+::selection{background:var(--sel);color:var(--paper)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:rgba(11,11,12,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule-s)}
+.bar-in{display:flex;align-items:stretch;gap:clamp(12px,2.5vw,32px);min-height:58px}
+.brand{display:grid;grid-template-columns:auto auto auto;grid-template-rows:auto auto;align-content:center;column-gap:2px;padding-right:clamp(12px,2vw,24px);border-right:1px solid var(--rule-s);flex:none}
+.b-mk,.b-sl,.b-nl{font-family:var(--f-disp);font-weight:900;font-size:1.35rem;line-height:1;letter-spacing:.04em}
+.b-sl{color:var(--red);transform:skewX(-8deg)}
+.b-sub{grid-column:1/-1;font-family:var(--f-mono);font-size:.56rem;letter-spacing:.2em;color:var(--fog);margin-top:4px}
+.nav{display:flex;align-items:stretch;gap:0;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 clamp(10px,1.4vw,18px);color:var(--fog);white-space:nowrap;transition:color .2s,background .2s}
+.nav a::after{content:"";position:absolute;left:clamp(10px,1.4vw,18px);right:clamp(10px,1.4vw,18px);bottom:-1px;height:2px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.nav .ne{font-family:var(--f-mono);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+.nav .nk{font-family:var(--f-body);font-weight:500;font-size:.86rem;letter-spacing:.02em}
+.nav a:hover{color:var(--paper);background:var(--hull)}
+.nav a.on{color:var(--paper)}
+.nav a.on::after,.nav a:hover::after{transform:scaleX(1)}
+.nav a.pir .ne{color:var(--red);opacity:1}
+.nav a.pir.on .nk,.nav a.pir:hover .nk{color:var(--red)}
+.bar-meta{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.6rem;letter-spacing:.18em;color:var(--fog);flex:none;padding-left:clamp(12px,2vw,24px);border-left:1px solid var(--rule-s)}
+.bar-meta .dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.bar-prog{position:absolute;left:0;right:0;bottom:-1px;height:2px;pointer-events:none}
+.bar-prog span{display:block;height:100%;width:0;background:var(--red-mute)}
+@media (max-width:900px){.bar-meta{display:none}}
+@media (max-width:560px){.b-sub{display:none}.brand{padding-right:12px}.nav a{padding:0 10px}.nav a::after{left:10px;right:10px}}
+
+/* HERO */
+.hero{padding-block:clamp(48px,9vw,120px) clamp(40px,6vw,72px);border-bottom:1px solid var(--rule-s)}
+.hero-top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.hero h1{margin:0;font-family:var(--f-disp);font-weight:900;text-transform:uppercase;line-height:.82;letter-spacing:-.01em;font-size:clamp(4rem,15vw,13.5rem)}
+.hero h1 .ln{display:block}
+.hero h1 .out{color:transparent;-webkit-text-stroke:1.5px var(--paper)}
+.hero h1 .r{color:var(--red)}
+.hero-kr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:clamp(24px,5vw,72px);margin-top:clamp(28px,4vw,48px);align-items:end}
+.hero-kr h2{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(2rem,5vw,3.6rem);line-height:1.05;text-wrap:balance}
+.hero-kr p{margin:0;max-width:58ch;color:#CFCBC6}
+.hero-kr p b{color:var(--paper);font-weight:600}
+@media (max-width:760px){.hero-kr{grid-template-columns:1fr}}
+
+/* 함대 서열표 */
+.order{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--rule-s)}
+.order a{padding:22px clamp(14px,2vw,24px) 26px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:6px;transition:background .2s}
+.order a:last-child{border-right:0}
+.order a:hover{background:var(--hull)}
+.order .no{font-family:var(--f-disp);font-weight:900;font-size:clamp(2.6rem,5vw,4rem);line-height:.9}
+.order .nm{font-weight:600;font-size:1rem}
+.order .ds{font-size:.8rem;color:var(--fog);line-height:1.5}
+.order a.pir .no{color:var(--red)}
+@media (max-width:820px){.order{grid-template-columns:repeat(2,minmax(0,1fr))}.order a:nth-child(2){border-right:0}.order a:nth-child(-n+2){border-bottom:1px solid var(--rule)}}
+
+/* 공통 섹션 */
+section{padding-block:clamp(56px,8vw,104px);border-bottom:1px solid var(--rule-s)}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:end;margin-bottom:clamp(32px,5vw,56px)}
+.sec-head h2{margin:0;font-family:var(--f-disp);font-weight:900;text-transform:uppercase;font-size:clamp(3rem,9vw,7.5rem);line-height:.85}
+.sec-head h2 small{display:block;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(1.3rem,2.6vw,2rem);line-height:1.2;margin-top:12px;text-transform:none}
+.sec-head p{margin:0;max-width:56ch;color:#CFCBC6}
+@media (max-width:760px){.sec-head{grid-template-columns:1fr}}
+
+/* 세계관 */
+.world-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,56px)}
+@media (max-width:860px){.world-grid{grid-template-columns:1fr}}
+.facts{display:flex;flex-direction:column;border-top:1px solid var(--rule-s)}
+.fact{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:16px;padding-block:16px;border-bottom:1px solid var(--rule)}
+.fact dt{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;color:var(--red);padding-top:4px}
+.fact dd{margin:0}
+.seas{border:1px solid var(--rule-s);background:var(--hull)}
+.seas-hd{display:flex;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--rule-s);flex-wrap:wrap}
+.seas-hd b{font-family:var(--f-kr-disp);font-weight:400;font-size:1.2rem}
+.sea{display:grid;grid-template-columns:2.4rem minmax(0,9rem) minmax(0,1fr);gap:14px;padding:14px 18px;border-bottom:1px solid var(--rule);align-items:baseline}
+.sea:last-child{border-bottom:0}
+.sea .k{font-family:var(--f-mono);font-size:.68rem;color:var(--fog)}
+.sea .n{font-weight:600}
+.sea .d{font-size:.86rem;color:#CFCBC6;line-height:1.55}
+.sea .d em{font-style:normal;color:var(--fog);display:block;font-size:.76rem}
+.sea.void .n,.sea.void .k{color:var(--red)}
+@media (max-width:520px){.sea{grid-template-columns:2rem minmax(0,1fr)}.sea .d{grid-column:2}}
+
+/* 전대 판 */
+.sq{position:relative}
+.sq-plate{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,64px)}
+@media (max-width:900px){.sq-plate{grid-template-columns:1fr}}
+.sq-num{font-family:var(--f-disp);font-weight:900;line-height:.78;font-size:clamp(9rem,22vw,19rem);letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px var(--rule-s);margin:-.06em 0 0 -.04em;user-select:none}
+.sq.pir .sq-num{-webkit-text-stroke-color:var(--red-deep)}
+.sq-side{display:flex;flex-direction:column;gap:22px;min-width:0}
+.sq-side h2{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(2.2rem,4.4vw,3.4rem);line-height:1.05}
+.sq-side h2 .en{display:block;font-family:var(--f-disp);font-weight:800;font-size:.42em;letter-spacing:.14em;color:var(--fog);margin-bottom:10px;text-transform:uppercase}
+.sq-side p{margin:0;color:#CFCBC6;max-width:52ch}
+.ship{border:1px solid var(--rule-s);padding:16px 18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;background:var(--hull)}
+.ship .hc{font-family:var(--f-disp);font-weight:900;font-size:1.9rem;line-height:1;grid-row:span 2;align-self:center;color:var(--red)}
+.ship .sn{font-weight:600}
+.ship .sd{font-size:.8rem;color:var(--fog);line-height:1.5}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--f-mono);font-size:.64rem;letter-spacing:.1em;padding:4px 8px;border:1px solid var(--rule-s);color:var(--fog)}
+.tag.on{border-color:var(--paper);color:var(--paper)}
+.tag.wip{border-style:dashed}
+.traits{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+.traits li{padding:10px 0;border-bottom:1px solid var(--rule);font-size:.88rem;display:grid;grid-template-columns:1.2rem minmax(0,1fr);gap:8px;color:#CFCBC6}
+.traits li::before{content:"—";color:var(--red)}
+
+/* 승조원 명부 */
+.roster{display:flex;flex-direction:column;border-top:2px solid var(--paper);min-width:0}
+.sq.pir .roster{border-top-color:var(--red)}
+.roster-hd,.crew{display:grid;grid-template-columns:5.5rem minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.roster-hd{padding:10px 0;border-bottom:1px solid var(--rule-s)}
+.crew{padding:20px 0;border-bottom:1px solid var(--rule);position:relative;transition:background .2s,padding .2s}
+.crew:hover{background:var(--hull);padding-inline:12px}
+.crew .ix{font-family:var(--f-disp);font-weight:800;color:var(--paper);line-height:1}
+.crew:hover .pf{border-color:var(--red)}
+.crew .who{min-width:0}
+.crew .nm{font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(1.3rem,2.4vw,1.7rem);line-height:1.15;display:block}
+.crew .nm.tbd{color:var(--fog)}
+.crew .blurb{font-size:.84rem;color:#BEBAB5;line-height:1.6;margin-top:6px;display:block;max-width:46ch}
+.crew .rk{font-weight:600;font-size:.92rem}
+.crew .rk small{display:block;font-weight:400;font-size:.78rem;color:var(--fog)}
+.crew .sp{font-size:.92rem}
+.crew .sp small{display:block;font-size:.76rem;color:var(--fog)}
+.crew.lead .ix{color:var(--paper)}
+.sw{display:inline-block;width:.65em;height:.65em;margin-right:6px;vertical-align:.02em;border:1px solid var(--rule-s)}
+@media (max-width:640px){
+  .roster-hd{display:none}
+  .crew{grid-template-columns:5rem minmax(0,1fr);row-gap:8px}.crew .pf{grid-row:span 3}
+  .crew .rk,.crew .sp{grid-column:2}
+  .crew .rk small,.crew .sp small{display:inline;margin-left:6px}
+}
+
+
+/* 초상 슬롯 */
+.pf{position:relative;display:block;aspect-ratio:3/4;width:100%;max-width:100%;background:var(--plate);border:1px solid var(--rule-s);overflow:hidden;align-self:start;cursor:default}
+.pf::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 9px,var(--rule) 9px 10px)}
+.pf.has::after{display:none}
+.pf img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 18%;filter:grayscale(.15) contrast(1.05);transition:filter .3s,transform .4s}
+.pf.has{cursor:zoom-in}
+.crew:hover .pf img{filter:none;transform:scale(1.04)}
+.pf .ix{position:absolute;left:6px;bottom:4px;z-index:2;font-size:1.1rem;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+.sq.pir .pf{border-color:var(--red-deep)}
+.lb{position:fixed;inset:0;z-index:80;background:rgba(5,5,6,.94);display:grid;place-items:center;padding:24px;cursor:zoom-out}
+.lb img{max-height:86vh;max-width:100%;border:1px solid var(--rule-s)}
+.lb figcaption{margin-top:12px;text-align:center;font-family:var(--f-kr-disp);font-size:1.3rem}
+
+
+/* 비공개 */
+.bar{display:inline-block;height:.95em;vertical-align:-.1em;background:var(--paper);opacity:.9}
+.w4{width:4em}.w5{width:5em}.w6{width:6em}.w7{width:7em}.w8{width:8em}.w10{width:10em;max-width:100%}
+.crew.cls .blurb .bar{height:.8em;opacity:.35}
+.crew.cls .nm .bar{height:.8em}
+.crew.cls:hover{background:transparent;padding-inline:0}
+.cls-pf{background:var(--ink)}
+.cls-pf::before{content:"비공개";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-mono);font-size:.6rem;letter-spacing:.2em;color:var(--fog);z-index:1}
+.stamp{align-self:flex-start;font-family:var(--f-disp);font-weight:900;font-size:1.6rem;letter-spacing:.18em;color:var(--red);border:3px solid var(--red);padding:4px 14px 2px;transform:rotate(-4deg);opacity:.85}
+
+/* 인사기록 패널 */
+.crew.open-able{cursor:pointer}
+.crew.open-able .who::after{content:"기록 열람 →";display:block;margin-top:8px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.14em;color:var(--fog)}
+.crew.open-able:hover .who::after{color:var(--red)}
+.dos{position:fixed;inset:0;z-index:80;background:rgba(5,5,6,.9);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 40px}
+.dos-card{width:100%;max-width:980px;background:var(--hull);border:1px solid var(--rule-s);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);position:relative}
+.dos-card.pir{border-color:var(--red-deep)}
+.dos-img{position:relative;background:var(--plate);min-height:320px}
+.dos-img img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.dos-body{padding:clamp(20px,3vw,36px);display:flex;flex-direction:column;gap:18px;min-width:0}
+.dos-head{display:flex;flex-direction:column;gap:6px;border-bottom:2px solid var(--paper);padding-bottom:14px}
+.dos-card.pir .dos-head{border-bottom-color:var(--red)}
+.dos-head h3{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(2rem,4vw,2.8rem);line-height:1.05}
+.dos-sub{font-size:.9rem;color:#CFCBC6}
+.dos-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--rule)}
+.dos-meta div{background:var(--hull);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.dos-meta b{font-weight:600;font-size:.95rem;font-variant-numeric:tabular-nums}
+.dos-sec{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:12px;font-size:.9rem;line-height:1.7}
+.dos-sec dt{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.12em;color:var(--red);padding-top:4px}
+.dos-sec dd{margin:0;color:#DAD6D1}
+.dos-quote{margin:0;padding:12px 16px;border-left:3px solid var(--red);background:var(--plate);font-family:var(--f-kr-disp);font-size:1.1rem;line-height:1.5}
+.dos-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dos-list li{padding:8px 0;border-top:1px solid var(--rule);font-size:.88rem;display:grid;grid-template-columns:1.2rem minmax(0,1fr);gap:6px;color:#CFCBC6}
+.dos-list li::before{content:"—";color:var(--red)}
+.dos-x{position:absolute;top:0;right:0;z-index:2;background:var(--ink);color:var(--paper);border:1px solid var(--rule-s);font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;padding:10px 14px;cursor:pointer}
+.dos-x:hover{border-color:var(--red);color:var(--red)}
+.dos-tag{position:absolute;left:12px;bottom:12px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;background:var(--ink);padding:5px 8px;border:1px solid var(--rule-s)}
+.dos-card.pir .dos-tag{color:var(--red);border-color:var(--red)}
+@media (max-width:760px){.dos-card{grid-template-columns:1fr}.dos-img{min-height:0;aspect-ratio:3/4;max-height:62vh}.dos-meta{grid-template-columns:repeat(3,minmax(0,1fr))}.dos-sec{grid-template-columns:1fr;gap:2px}}
+
+
+/* 전대 특징 + 함선 */
+.sq-more{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,56px);margin-top:clamp(40px,6vw,72px)}
+@media (max-width:900px){.sq-more{grid-template-columns:1fr}}
+.blk-hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:2px solid var(--paper)}
+.sq.pir .blk-hd{border-bottom-color:var(--red)}
+.blk-hd b{font-family:var(--f-kr-disp);font-weight:400;font-size:1.4rem}
+.spec dl{margin:0}
+.spec-row{display:grid;grid-template-columns:4.5rem minmax(0,1fr);gap:14px;padding-block:11px;border-bottom:1px solid var(--rule)}
+.spec-row dt{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--red);padding-top:3px}
+.spec-row dd{margin:0;font-size:.9rem;line-height:1.6;color:#DAD6D1}
+.shipbox{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ship-desc{margin:0;font-size:.92rem;color:#CFCBC6;max-width:62ch}
+.svgwrap{overflow-x:auto;border:1px solid var(--rule-s);background:var(--hull);
+  background-image:linear-gradient(to right,var(--rule) 1px,transparent 1px),linear-gradient(to bottom,var(--rule) 1px,transparent 1px);background-size:40px 40px}
+.hullsvg{display:block;width:100%;min-width:520px;height:auto}
+.hullsvg .hull{fill:none;stroke:var(--paper);stroke-width:1.6}
+.hullsvg .hull.rust{stroke-dasharray:14 3}
+.hullsvg .deck{stroke:var(--rule-s);stroke-width:1;stroke-dasharray:4 4}
+.hullsvg .wl{stroke:var(--red);stroke-width:1;stroke-dasharray:2 6;opacity:.7}
+.hullsvg .ln{stroke:var(--paper);stroke-width:1.2;fill:none}
+.hullsvg .ln.thick{stroke-width:2.4}
+.hullsvg .gun{fill:var(--plate);stroke:var(--paper);stroke-width:1.2}
+.hullsvg .boat,.hullsvg .hatch{fill:var(--plate);stroke:var(--fog);stroke-width:1}
+.hullsvg .port{fill:var(--ink);stroke:var(--paper);stroke-width:1}
+.hullsvg .patch{fill:none;stroke:var(--red);stroke-width:1;stroke-dasharray:3 2;opacity:.8}
+.hullsvg .lbl{fill:var(--fog);font-family:var(--f-mono);font-size:11px;letter-spacing:1.5px}
+.hullsvg .band rect{fill:var(--plate);stroke:var(--paper);stroke-width:1.2;transition:fill .2s}
+.hullsvg g[clip-path] .band rect{stroke:none;fill:transparent}
+.hullsvg .band.on rect,.hullsvg g[clip-path] .band.on rect{fill:var(--red);fill-opacity:.55}
+.decks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--rule-s)}
+.decks li{display:grid;grid-template-columns:3.2rem 7.5rem minmax(0,1fr);gap:12px;padding:10px 8px;border-bottom:1px solid var(--rule);font-size:.86rem;cursor:default;transition:background .2s}
+.decks li:hover,.decks li:focus-visible,.decks li.on{background:var(--plate)}
+.decks .dk{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--red);padding-top:2px}
+.decks .dn{font-weight:600}
+.decks .dr{color:#BEBAB5;line-height:1.55}
+@media (max-width:560px){.decks li{grid-template-columns:3rem minmax(0,1fr)}.decks .dr{grid-column:2}}
+.cls-ship{flex:1;min-height:220px;border:1px dashed var(--rule-s);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:repeating-linear-gradient(135deg,transparent 0 11px,var(--rule) 11px 12px)}
+.cls-ship .stamp{align-self:center}
+
+
+/* 연대기 */
+.world-side{display:flex;flex-direction:column;gap:28px;min-width:0}
+.chron{min-width:0}
+.tl{list-style:none;margin:0;padding:0;position:relative}
+.tl::before{content:"";position:absolute;left:5.4rem;top:8px;bottom:8px;width:1px;background:var(--rule-s)}
+.tl li{display:grid;grid-template-columns:5.4rem minmax(0,1fr);gap:22px;padding-block:16px;position:relative}
+.tl li::after{content:"";position:absolute;left:calc(5.4rem - 4px);top:24px;width:9px;height:9px;background:var(--ink);border:1px solid var(--paper)}
+.tl li.hot::after{background:var(--red);border-color:var(--red)}
+.tl-t{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;color:var(--fog);padding-top:4px;text-align:right;padding-right:6px}
+.tl li.hot .tl-t{color:var(--red)}
+.tl b{font-family:var(--f-kr-disp);font-weight:400;font-size:1.25rem;line-height:1.3;display:block}
+.tl p{margin:6px 0 0;font-size:.9rem;color:#CFCBC6;max-width:60ch}
+@media (max-width:520px){.tl::before{left:0}.tl li{grid-template-columns:1fr;gap:4px;padding-left:20px}.tl li::after{left:-4px}.tl-t{text-align:left}}
+.world-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+@media (max-width:900px){.world-grid{grid-template-columns:1fr}}
+
+/* 해도 */
+.chart-grid{display:grid;grid-template-columns:minmax(0,9fr) minmax(0,4fr);gap:clamp(24px,4vw,48px)}
+@media (max-width:1100px){.chart-grid{grid-template-columns:1fr}}
+.map-box{display:flex;flex-direction:column;gap:14px;min-width:0}
+.map-box{display:flex;flex-direction:column;gap:16px;min-width:0}
+.map-tools{display:flex;flex-wrap:wrap;gap:6px}
+.tg{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--fog);border:1px solid var(--rule-s);padding:6px 12px;font-family:var(--f-mono);font-size:.7rem;letter-spacing:.06em;cursor:pointer}
+.tg.on{color:var(--paper);border-color:var(--paper)}
+.tg:not(.on) .lg{opacity:.3}
+.map-wrap{display:grid;grid-template-columns:minmax(0,1fr) 15rem;gap:20px;align-items:center}
+@media (max-width:760px){.map-wrap{grid-template-columns:1fr}}
+.map-fig{min-width:0;max-width:560px;width:100%;justify-self:center}
+.mapsvg{display:block;width:100%;height:auto}
+.mapsvg .sea{fill:var(--hull)}
+.mapsvg .zone{stroke:var(--ink);stroke-width:3;cursor:pointer;transition:fill .25s}
+.mapsvg .z-n{fill:#26262A}.mapsvg .z-e{fill:#1F1F22}.mapsvg .z-s{fill:#2B2A2C}.mapsvg .z-c{fill:#343336}
+.mapsvg .z-w{fill:url(#hatch)}
+.mapsvg .hatchln{stroke:var(--red-deep);stroke-width:2}
+.mapsvg .zone:hover,.mapsvg .zone:focus-visible{fill:#3D3B3E;outline:none}
+.mapsvg .z-w:hover,.mapsvg .z-w:focus-visible{fill:url(#hatch);stroke:var(--red)}
+.mapsvg .zone.sel{fill:#4A2420}
+.mapsvg .z-w.sel{fill:url(#hatch);stroke:var(--red);stroke-width:3}
+.mapsvg .ct{fill:none;stroke:var(--paper);stroke-opacity:.07;stroke-dasharray:2 5;pointer-events:none}
+.mapsvg .rim{fill:none;stroke:var(--paper);stroke-width:1.5}
+.mapsvg .tk{stroke:var(--fog);stroke-width:1}
+.mapsvg .card{fill:var(--paper);font-family:var(--f-disp);font-weight:800;font-size:17px;text-anchor:middle}
+.mapsvg .zlab{pointer-events:none}
+.mapsvg .zn{fill:var(--paper);font-family:var(--f-kr-disp);font-size:21px;text-anchor:middle}
+.mapsvg .zs{fill:var(--fog);font-family:var(--f-mono);font-size:10.5px;letter-spacing:1px;text-anchor:middle}
+.mapsvg .zl-w .zn{fill:var(--red)}
+.mapsvg .isl{fill:var(--paper);fill-opacity:.85;pointer-events:none}
+.mapsvg .emp{fill:none;stroke:var(--paper);stroke-width:1.3;stroke-dasharray:2 2;pointer-events:none}
+.mapsvg .lost{fill:var(--fog);pointer-events:none}
+.mapsvg .lane{fill:none;stroke:var(--red);stroke-width:2.6;stroke-dasharray:9 6;stroke-linecap:round;pointer-events:none}
+.mapsvg .patrol{fill:none;stroke:var(--paper);stroke-width:2;stroke-dasharray:1 7;stroke-linecap:round;pointer-events:none}
+.mapsvg .clash path{stroke:var(--red);stroke-width:2.6;stroke-linecap:round;fill:none}
+.mapsvg .clash{pointer-events:none}
+.mapsvg .hq{pointer-events:none}
+.mapsvg .hq rect{fill:var(--ink);stroke:var(--paper);stroke-width:1.5}
+.mapsvg .hq path{stroke:var(--paper);stroke-width:1}
+.mapsvg .layer{transition:opacity .25s}
+.mapsvg .layer.off{opacity:0}
+.zinfo{border-top:2px solid var(--paper);padding-top:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.zinfo.void{border-top-color:var(--red)}
+.zinfo h3{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:1.6rem;line-height:1.15}
+.zinfo.void h3{color:var(--red)}
+.zinfo p{margin:0;font-size:.86rem;line-height:1.65;color:#CFCBC6}
+.zi-dl{margin:4px 0 0;display:flex;flex-direction:column}
+.zi-dl div{display:grid;grid-template-columns:2.6rem minmax(0,1fr);gap:8px;padding-block:7px;border-top:1px solid var(--rule)}
+.zi-dl dt{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;color:var(--red);padding-top:3px}
+.zi-dl dd{margin:0;font-size:.84rem;color:var(--paper)}
+.zi-hint{font-family:var(--f-mono);font-size:.64rem!important;letter-spacing:.08em;color:var(--fog)!important}
+.legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.82rem;color:#CFCBC6}
+.legend li{display:flex;align-items:center;gap:8px}
+.lg{flex:none;width:22px;height:12px;display:inline-grid;place-items:center;font-size:.8rem;line-height:1}
+.isle-k{background:var(--paper);width:11px;height:8px;border-radius:40%}
+.empty-k{width:11px;height:11px;border:1.5px dashed var(--paper);border-radius:50%}
+.lost-k{width:8px;height:8px;background:var(--fog);transform:rotate(45deg)}
+.lane-k{height:0;border-top:2.5px dashed var(--red)}
+.patrol-k{height:0;border-top:2.5px dotted var(--paper)}
+.clash-k{color:var(--red);font-weight:700}
+.hq-k{width:11px;height:11px;border:1.5px solid var(--paper);background:var(--ink)}
+.seasons{display:flex;flex-direction:column;min-width:0}
+.seasons .note{margin:12px 0 4px;font-size:.84rem;color:var(--fog)}
+.ssn{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;padding-block:14px;border-bottom:1px solid var(--rule)}
+.ssn-n{font-family:var(--f-kr-disp);font-size:1.3rem;line-height:1.2}
+.ssn-w{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;color:var(--red);align-self:center;justify-self:end}
+.ssn p{grid-column:1/-1;margin:4px 0 0;font-size:.86rem;color:#CFCBC6;line-height:1.6}
+.life{margin-top:clamp(48px,7vw,80px);display:flex;flex-direction:column;border-top:2px solid var(--paper)}
+.lg-row{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:clamp(20px,3vw,40px);padding-block:clamp(28px,4vw,40px);border-bottom:1px solid var(--rule-s)}
+@media (max-width:900px){.lg-row{grid-template-columns:1fr}}
+.lg-head{display:flex;flex-direction:column;gap:8px}
+.lg-head h3{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(1.7rem,2.6vw,2.2rem);line-height:1.1}
+.lg-head p{margin:0;font-size:.88rem;color:var(--fog);max-width:24ch}
+.lg-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+@media (max-width:560px){.lg-cards{grid-template-columns:1fr}}
+.lf{background:var(--ink);padding:20px 22px 22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.lf header{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.lf header .mono{order:2;font-size:.6rem}
+.lf h3{margin:0;font-family:var(--f-body);font-weight:600;font-size:.95rem;letter-spacing:.02em}
+.lf-key{font-family:var(--f-kr-disp);font-size:clamp(1.35rem,2vw,1.6rem);line-height:1.2;color:var(--paper);text-wrap:balance}
+.lf-key.red{color:var(--red)}
+.lf p{margin:0;font-size:.86rem;line-height:1.7;color:#BEBAB5;max-width:46ch}
+.kv{margin:0;display:flex;flex-direction:column}
+.kv div{display:grid;grid-template-columns:3.6rem minmax(0,1fr);gap:12px;padding-block:8px;border-top:1px solid var(--rule)}
+.kv div:first-child{border-top:0;padding-top:0}
+.kv dt{font-family:var(--f-kr-disp);font-size:1rem;color:var(--paper);line-height:1.5}
+.kv dd{margin:0;font-size:.86rem;line-height:1.6;color:#BEBAB5}
+
+/* 교차선 */
+.cross{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule-s)}
+@media (max-width:900px){.cross{grid-template-columns:1fr}}
+.x{padding:clamp(20px,3vw,32px);border-right:1px solid var(--rule-s);display:flex;flex-direction:column;gap:14px;min-width:0}
+.x:last-child{border-right:0}
+@media (max-width:900px){.x{border-right:0;border-bottom:1px solid var(--rule-s)}.x:last-child{border-bottom:0}}
+.x-pair{display:flex;align-items:center;gap:10px;font-family:var(--f-disp);font-weight:900;font-size:clamp(1.6rem,3vw,2.2rem);text-transform:uppercase;line-height:1;flex-wrap:wrap}
+.x-pair i{font-style:normal;color:var(--red);font-size:.8em}
+.x h3{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:1.35rem;line-height:1.25}
+.x p{margin:0;font-size:.9rem;color:#CFCBC6}
+.meter{display:flex;gap:3px}
+.meter span{flex:1;height:6px;background:var(--plate)}
+.meter span.f{background:var(--red)}
+
+footer{padding-block:48px 64px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:end}
+footer .sig{font-family:var(--f-disp);font-weight:900;font-size:clamp(3rem,8vw,6rem);line-height:.85}
+footer .sig span{color:var(--red)}
+
+/* 로드 시퀀스: 정지 상태가 완성형, 첫 프레임부터 보임 */
+@keyframes rise{from{transform:translateY(.18em)}to{transform:none}}
+.hero h1 .ln{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.hero h1 .ln:nth-child(2){animation-delay:.08s}
+.hero h1 .ln:nth-child(3){animation-delay:.16s}
+</style>
+
+<div class="chart-bg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="#top" aria-label="맨 위로"><span class="b-mk">UAN</span><span class="b-sl">/</span><span class="b-nl">NULL</span><span class="b-sub">연합해군 시리즈</span></a>
+    <nav class="nav" aria-label="함대 색인"><a href="#world" data-s="world"><span class="ne">World</span><span class="nk">세계</span></a><a href="#chart" data-s="chart"><span class="ne">Chart</span><span class="nk">해도</span></a><a href="#sq1" data-s="sq1"><span class="ne">1st</span><span class="nk">제1전대</span></a><a href="#sq2" data-s="sq2"><span class="ne">2nd</span><span class="nk">제2전대</span></a><a href="#sq3" data-s="sq3"><span class="ne">3rd</span><span class="nk">제3전대</span></a><a href="#drift" class="pir" data-s="drift"><span class="ne">Drift</span><span class="nk">드리프트</span></a><a href="#cross" data-s="cross"><span class="ne">Cross</span><span class="nk">교차선</span></a></nav>
+    <span class="bar-meta"><i class="dot"></i><span id="bar-pos">FLEET INDEX</span></span>
+  </div>
+  <div class="bar-prog" aria-hidden="true"><span id="bar-prog"></span></div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-top">
+        <span class="mono">United Archipelago Navy · 연합해군 시리즈</span>
+        <span class="mono">3 Squadrons / 1 Pirate Crew / 20 Characters</span>
+      </div>
+      <h1>
+        <span class="ln">Power lies</span>
+        <span class="ln out">on the</span>
+        <span class="ln r">ships.</span>
+      </h1>
+      <div class="hero-kr">
+        <h2>정치는 섬에,<br>힘은 배에.</h2>
+        <p>육지라고는 섬뿐인 바다의 세계. 열두 도시국가가 묶인 <b>군도연합</b>의 실체는 해군 그 자체입니다. 행정의 정점에 선 <b>제1전대</b>, 가장 많이 싸우는 <b>제2전대</b>, 좌천지로 불리는 <b>제3전대</b>, 그리고 연합이 스스로 만들어낸 해적 <b>드리프트</b>. 같은 바다를 나눠 쓰는 네 개의 이야기입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <nav class="order" aria-label="함대 서열">
+      <a href="#sq1"><span class="mono">Classified</span><span class="no">01</span><span class="nm">제1전대</span><span class="ds">열람 제한 · 기록 비공개</span></a>
+      <a href="#sq2"><span class="mono">CL Tempest</span><span class="no">02</span><span class="nm">제2전대 템페스트</span><span class="ds">최다 교전 · 해적 소탕</span></a>
+      <a href="#sq3"><span class="mono">DD Skoll</span><span class="no">03</span><span class="nm">제3전대 스콜</span><span class="ds">항로 호위 · 초계</span></a>
+      <a class="pir" href="#drift"><span class="mono">Unregistered</span><span class="no">—</span><span class="nm">해적단 드리프트</span><span class="ds">무소속 · 표류</span></a>
+    </nav>
+  </div>
+
+  <!-- 세계 -->
+  <section id="world">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>The Archipelago<small>군도연합</small></h2>
+        <p>육지라고는 섬뿐인 바다의 세계. 이곳 사람은 모두 해양생물의 특징을 지닌 인수입니다. 외형은 인간과 같고 지느러미도, 귀도, 꼬리도 없습니다. 종은 머리색과 분위기, 감각과 체격으로만 드러납니다. 그리고 태어난 바다가 곧 신분이 됩니다.</p>
+      </div>
+
+      <div class="world-grid">
+        <div class="chron">
+          <div class="blk-hd"><b>연대기</b><span class="mono">Chronicle</span></div>
+          <ol class="tl">
+            <li><span class="tl-t">연합 이전</span><div><b>섬마다 따로 띄우던 배</b><p>섬나라들은 저마다 배를 띄워 자기 항로만 지켰습니다. 함선을 움직이는 기관은 남방 산호권만 만들 수 있었고, 그 동력원은 바다 밑에서 캐는 심층석이었습니다.</p></div></li>
+            <li><span class="tl-t">결성</span><div><b>군도연합과 연합해군</b><p>섬들이 방위동맹을 맺고 배를 하나의 해군으로 묶었습니다. 정치는 섬에 남았지만 힘은 배로 옮겨 갔고, 연합의 실체는 곧 해군이 되었습니다.</p></div></li>
+            <li><span class="tl-t">편제</span><div><b>세 개의 전대</b><p>본부 행정을 쥔 제1전대, 전투를 맡은 제2전대, 항로를 지키는 제3전대. 어느 전대에 배속되느냐가 그 사람에 대한 평가가 되었습니다.</p></div></li>
+            <li><span class="tl-t">침강</span><div><b>섬이 가라앉기 시작하다</b><p>섬들이 조금씩 바다 아래로 내려앉고 있습니다. 연합은 해류 변화라고 공지했고, 원인이 공식적으로 밝혀진 적은 없습니다. 가장 빨리 줄어드는 곳은 남방 산호권입니다.</p></div></li>
+            <li class="hot"><span class="tl-t">15년 전</span><div><b>재배치</b><p>연합이 재배치 제도를 도입했습니다. 공식적으로는 이주 지원, 실제로는 섬을 포기하라는 통보였습니다. 남기로 한 사람은 그 순간 무소속이 되었습니다. 열네 나라였던 연합은 열두 나라가 되었습니다.</p></div></li>
+            <li class="hot"><span class="tl-t">같은 무렵</span><div><b>드리프트</b><p>버려진 섬에 남은 사람들이 배 한 척에 모였습니다. 연합 문서가 무소속을 분류하던 항목명, 「표류」가 그대로 그들의 이름이 되었습니다.</p></div></li>
+            <li><span class="tl-t">수년 전</span><div><b>그날의 격전</b><p>템페스트가 주력, 스콜이 퇴로 차단을 맡은 드리프트 합동 추격전. 포위망 한쪽이 열려 드리프트는 빠져나갔습니다. 작전 직후 세베린 그라우가 카엘 보른에게 총을 겨눴고, 청문 끝에 드리프트 관할은 제3전대로 넘어갔습니다.</p></div></li>
+            <li><span class="tl-t">지금</span><div><b>같은 바다, 다른 배</b><p>템페스트는 최전선에서 해적을 쓸어내고, 스콜은 외곽 초계 항로에서 드리프트를 쫓습니다. 두 배의 정박 일정은 겹치지 않게 조정됩니다. 제1전대의 서류는 여전히 모든 배의 행선지를 정합니다.</p></div></li>
+          </ol>
+        </div>
+
+        <div class="world-side">
+          <div class="seas" role="table" aria-label="해역별 신분">
+            <div class="seas-hd" role="row"><b>해역 = 신분</b><span class="mono">Five waters</span></div>
+            <div class="sea" role="row"><span class="k">N</span><span class="n">북방 심해권</span><span class="d">군사의 중심. 연합 지휘부와 장교 대부분이 이곳 출신입니다. 섬이 크고 깊어 가장 안전하다고 여겨집니다.<em>대형 고래목 · 상어류</em></span></div>
+            <div class="sea" role="row"><span class="k">C</span><span class="n">중앙 환초권</span><span class="d">교역과 물류. 부유하지만 무력은 없습니다. 모든 화물 기록이 이곳을 지납니다.<em>여과섭식 · 대형 온순종</em></span></div>
+            <div class="sea" role="row"><span class="k">O</span><span class="n">외양 회유권</span><span class="d">전령과 정찰. 어느 섬에도 정착하지 않는 사람들입니다.<em>고속 어종</em></span></div>
+            <div class="sea" role="row"><span class="k">S</span><span class="n">남방 산호권</span><span class="d">기술과 공예. 함선 기관 제조를 쥐고 있지만 섬이 가장 작고 가장 빨리 줄어듭니다.<em>소형 · 화려한 종</em></span></div>
+            <div class="sea void" role="row"><span class="k">∅</span><span class="n">무소속</span><span class="d">섬을 잃었거나 쫓겨난 사람. 연합의 배급도 방위도 닿지 않습니다.<em>해적의 바다</em></span></div>
+          </div>
+          <dl class="facts">
+            <div class="fact"><dt>UNION</dt><dd>12개 도시국가의 방위동맹. 정치는 섬에서, 실제 힘은 함대에서 나옵니다.</dd></div>
+            <div class="fact"><dt>ENGINE</dt><dd>모든 함선 기관은 남방 산호권에서 만들어집니다. 도면 없이 손으로만 전해지는 기술이라 완전히 다룰 수 있는 사람은 연합 전체에 열 명도 안 됩니다.</dd></div>
+            <div class="fact"><dt>FUEL</dt><dd>심층석. 연합의 공식 명칭이고, 산호권 기술자들은 「바다뼈」라고 부릅니다. 대체재가 없습니다.</dd></div>
+            <div class="fact"><dt>PIRATES</dt><dd>바깥에서 온 침략자가 아닙니다. 같은 훈련을 받고 같은 배를 탔던, 연합에서 떨어져 나온 사람들입니다. 해적을 만드는 것이 연합 자신이라 근절되지 않습니다.</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chart">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Sea Chart<small>해도와 바다의 생활</small></h2>
+        <p>다섯 해역과 세 배가 움직이는 바다. 해도에 남은 섬 가운데 몇은 이미 아무도 살지 않는 「비는 섬」입니다. 순찰에서는 빠졌지만 지도에서는 지워지지 않았습니다.</p>
+      </div>
+      <div class="chart-grid">
+        <div class="map-box">
+          <div class="map-tools" role="group" aria-label="해도 표시 항목">
+            <button type="button" class="tg on" data-l="isle"><span class="lg isle-k"></span>섬</button>
+            <button type="button" class="tg on" data-l="lane"><span class="lg lane-k"></span>남방 항로</button>
+            <button type="button" class="tg on" data-l="patrol"><span class="lg patrol-k"></span>스콜 초계</button>
+            <button type="button" class="tg on" data-l="clash"><span class="lg clash-k">✕</span>템페스트 교전</button>
+          </div>
+          <div class="map-wrap">
+            <div class="map-fig"><svg viewBox="-10 -10 620 620" role="img" aria-label="군도연합 해도" class="mapsvg" id="mapsvg">
+  <defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" class="hatchln"/></pattern></defs>
+  <circle cx="300" cy="300" r="262" class="sea"/>
+  <path class="zone z-n" data-z="n" d="M114.7 114.7 A262 262 0 0 1 485.3 114.7 L367.9 232.1 A96 96 0 0 0 232.1 232.1 Z" tabindex="0"/><path class="zone z-e" data-z="e" d="M485.3 114.7 A262 262 0 0 1 485.3 485.3 L367.9 367.9 A96 96 0 0 0 367.9 232.1 Z" tabindex="0"/><path class="zone z-s" data-z="s" d="M485.3 485.3 A262 262 0 0 1 114.7 485.3 L232.1 367.9 A96 96 0 0 0 367.9 367.9 Z" tabindex="0"/><path class="zone z-w" data-z="w" d="M114.7 485.3 A262 262 0 0 1 114.7 114.7 L232.1 232.1 A96 96 0 0 0 232.1 367.9 Z" tabindex="0"/><circle class="zone z-c" data-z="c" cx="300" cy="300" r="96" tabindex="0"/>
+  <g class="layer" data-layer="depth"><circle cx="300" cy="300" r="130" class="ct"/><circle cx="300" cy="300" r="165" class="ct"/><circle cx="300" cy="300" r="200" class="ct"/><circle cx="300" cy="300" r="235" class="ct"/></g>
+  <circle cx="300" cy="300" r="262" class="rim"/><line x1="566.0" y1="300.0" x2="576.0" y2="300.0" class="tk"/><line x1="565.0" y1="323.2" x2="568.0" y2="323.4" class="tk"/><line x1="562.0" y1="346.2" x2="564.9" y2="346.7" class="tk"/><line x1="556.9" y1="368.8" x2="562.7" y2="370.4" class="tk"/><line x1="550.0" y1="391.0" x2="552.8" y2="392.0" class="tk"/><line x1="541.1" y1="412.4" x2="543.8" y2="413.7" class="tk"/><line x1="530.4" y1="433.0" x2="535.6" y2="436.0" class="tk"/><line x1="517.9" y1="452.6" x2="520.4" y2="454.3" class="tk"/><line x1="503.8" y1="471.0" x2="506.1" y2="472.9" class="tk"/><line x1="488.1" y1="488.1" x2="495.2" y2="495.2" class="tk"/><line x1="471.0" y1="503.8" x2="472.9" y2="506.1" class="tk"/><line x1="452.6" y1="517.9" x2="454.3" y2="520.4" class="tk"/><line x1="433.0" y1="530.4" x2="436.0" y2="535.6" class="tk"/><line x1="412.4" y1="541.1" x2="413.7" y2="543.8" class="tk"/><line x1="391.0" y1="550.0" x2="392.0" y2="552.8" class="tk"/><line x1="368.8" y1="556.9" x2="370.4" y2="562.7" class="tk"/><line x1="346.2" y1="562.0" x2="346.7" y2="564.9" class="tk"/><line x1="323.2" y1="565.0" x2="323.4" y2="568.0" class="tk"/><line x1="300.0" y1="566.0" x2="300.0" y2="576.0" class="tk"/><line x1="276.8" y1="565.0" x2="276.6" y2="568.0" class="tk"/><line x1="253.8" y1="562.0" x2="253.3" y2="564.9" class="tk"/><line x1="231.2" y1="556.9" x2="229.6" y2="562.7" class="tk"/><line x1="209.0" y1="550.0" x2="208.0" y2="552.8" class="tk"/><line x1="187.6" y1="541.1" x2="186.3" y2="543.8" class="tk"/><line x1="167.0" y1="530.4" x2="164.0" y2="535.6" class="tk"/><line x1="147.4" y1="517.9" x2="145.7" y2="520.4" class="tk"/><line x1="129.0" y1="503.8" x2="127.1" y2="506.1" class="tk"/><line x1="111.9" y1="488.1" x2="104.8" y2="495.2" class="tk"/><line x1="96.2" y1="471.0" x2="93.9" y2="472.9" class="tk"/><line x1="82.1" y1="452.6" x2="79.6" y2="454.3" class="tk"/><line x1="69.6" y1="433.0" x2="64.4" y2="436.0" class="tk"/><line x1="58.9" y1="412.4" x2="56.2" y2="413.7" class="tk"/><line x1="50.0" y1="391.0" x2="47.2" y2="392.0" class="tk"/><line x1="43.1" y1="368.8" x2="37.3" y2="370.4" class="tk"/><line x1="38.0" y1="346.2" x2="35.1" y2="346.7" class="tk"/><line x1="35.0" y1="323.2" x2="32.0" y2="323.4" class="tk"/><line x1="34.0" y1="300.0" x2="24.0" y2="300.0" class="tk"/><line x1="35.0" y1="276.8" x2="32.0" y2="276.6" class="tk"/><line x1="38.0" y1="253.8" x2="35.1" y2="253.3" class="tk"/><line x1="43.1" y1="231.2" x2="37.3" y2="229.6" class="tk"/><line x1="50.0" y1="209.0" x2="47.2" y2="208.0" class="tk"/><line x1="58.9" y1="187.6" x2="56.2" y2="186.3" class="tk"/><line x1="69.6" y1="167.0" x2="64.4" y2="164.0" class="tk"/><line x1="82.1" y1="147.4" x2="79.6" y2="145.7" class="tk"/><line x1="96.2" y1="129.0" x2="93.9" y2="127.1" class="tk"/><line x1="111.9" y1="111.9" x2="104.8" y2="104.8" class="tk"/><line x1="129.0" y1="96.2" x2="127.1" y2="93.9" class="tk"/><line x1="147.4" y1="82.1" x2="145.7" y2="79.6" class="tk"/><line x1="167.0" y1="69.6" x2="164.0" y2="64.4" class="tk"/><line x1="187.6" y1="58.9" x2="186.3" y2="56.2" class="tk"/><line x1="209.0" y1="50.0" x2="208.0" y2="47.2" class="tk"/><line x1="231.2" y1="43.1" x2="229.6" y2="37.3" class="tk"/><line x1="253.8" y1="38.0" x2="253.3" y2="35.1" class="tk"/><line x1="276.8" y1="35.0" x2="276.6" y2="32.0" class="tk"/><line x1="300.0" y1="34.0" x2="300.0" y2="24.0" class="tk"/><line x1="323.2" y1="35.0" x2="323.4" y2="32.0" class="tk"/><line x1="346.2" y1="38.0" x2="346.7" y2="35.1" class="tk"/><line x1="368.8" y1="43.1" x2="370.4" y2="37.3" class="tk"/><line x1="391.0" y1="50.0" x2="392.0" y2="47.2" class="tk"/><line x1="412.4" y1="58.9" x2="413.7" y2="56.2" class="tk"/><line x1="433.0" y1="69.6" x2="436.0" y2="64.4" class="tk"/><line x1="452.6" y1="82.1" x2="454.3" y2="79.6" class="tk"/><line x1="471.0" y1="96.2" x2="472.9" y2="93.9" class="tk"/><line x1="488.1" y1="111.9" x2="495.2" y2="104.8" class="tk"/><line x1="503.8" y1="129.0" x2="506.1" y2="127.1" class="tk"/><line x1="517.9" y1="147.4" x2="520.4" y2="145.7" class="tk"/><line x1="530.4" y1="167.0" x2="535.6" y2="164.0" class="tk"/><line x1="541.1" y1="187.6" x2="543.8" y2="186.3" class="tk"/><line x1="550.0" y1="209.0" x2="552.8" y2="208.0" class="tk"/><line x1="556.9" y1="231.2" x2="562.7" y2="229.6" class="tk"/><line x1="562.0" y1="253.8" x2="564.9" y2="253.3" class="tk"/><line x1="565.0" y1="276.8" x2="568.0" y2="276.6" class="tk"/><text x="300.0" y="15.0" class="card">N</text><text x="590.0" y="305.0" class="card">E</text><text x="300.0" y="595.0" class="card">S</text><text x="10.0" y="305.0" class="card">W</text>
+  <g class="zlab zl-n" data-z="n"><text x="300.0" y="116.0" class="zn">북방 심해권</text><text x="300.0" y="136.0" class="zs">군사 · 장교</text></g><g class="zlab zl-e" data-z="e"><text x="482.0" y="298.0" class="zn">외양 회유권</text><text x="482.0" y="318.0" class="zs">전령 · 정찰</text></g><g class="zlab zl-s" data-z="s"><text x="300.0" y="480.0" class="zn">남방 산호권</text><text x="300.0" y="500.0" class="zs">기술 · 공예</text></g><g class="zlab zl-w" data-z="w"><text x="118.0" y="298.0" class="zn">무소속 해역</text><text x="118.0" y="318.0" class="zs">섬을 잃은 자</text></g><g class="zlab zl-c" data-z="c"><text x="300" y="296" class="zn">중앙 환초권</text><text x="300" y="316" class="zs">교역 · 물류</text></g>
+  <g class="layer" data-layer="isle"><path class="isl" d="M200.4 101.3 L197.8 104.5 L192.8 106.6 L189.7 103.0 L188.3 99.1 L193.0 96.8 L197.6 98.3 Z"/><path class="isl" d="M385.1 82.0 L382.0 84.5 L378.1 86.0 L375.4 83.4 L375.3 80.5 L378.1 78.0 L383.5 78.1 Z"/><path class="isl" d="M282.3 173.9 L280.8 176.8 L276.4 178.4 L271.4 176.2 L272.4 172.0 L276.6 170.0 L282.2 169.8 Z"/><path class="isl" d="M378.6 170.1 L378.5 173.4 L374.1 173.2 L371.5 171.4 L371.6 168.9 L374.0 167.0 L378.5 166.8 Z"/><path class="isl" d="M501.3 228.2 L500.4 231.1 L496.2 231.9 L493.3 229.6 L492.9 226.6 L496.5 225.5 L499.6 226.0 Z"/><path class="isl" d="M520.7 401.4 L520.1 403.9 L516.7 404.1 L514.4 402.5 L513.9 400.1 L516.7 398.7 L519.6 399.4 Z"/><path class="isl" d="M452.1 326.0 L450.3 328.5 L447.0 328.5 L444.2 327.3 L444.3 324.8 L446.7 322.7 L450.4 323.5 Z"/><path class="isl" d="M381.4 514.2 L380.9 517.0 L377.3 516.5 L374.7 515.4 L374.1 512.8 L377.3 512.0 L380.3 512.0 Z"/><path class="isl" d="M221.9 521.8 L221.6 524.0 L218.4 524.6 L216.1 522.9 L215.6 520.4 L218.6 519.5 L221.6 519.6 Z"/><path class="isl" d="M304.0 440.0 L302.5 442.3 L299.2 442.7 L296.0 441.5 L295.8 438.5 L299.2 437.3 L302.6 437.6 Z"/><path class="isl" d="M363.5 289.6 L363.0 293.3 L357.7 294.1 L352.6 291.9 L353.1 287.4 L358.0 285.9 L362.4 286.4 Z"/><path class="isl" d="M270.5 320.0 L267.6 322.1 L264.3 323.4 L261.8 321.3 L261.9 318.8 L264.5 317.3 L268.7 316.8 Z"/><circle class="emp" cx="109.5" cy="410.0" r="5"/><circle class="emp" cx="152.3" cy="326.0" r="4.5"/><circle class="emp" cx="73.0" cy="239.2" r="5"/><circle class="emp" cx="182.2" cy="245.1" r="4"/><circle class="emp" cx="69.8" cy="383.8" r="3.6"/><circle class="emp" cx="136.2" cy="185.3" r="4"/><rect class="lost" x="91.0" y="296.0" width="8" height="8" transform="rotate(45 95.0 300.0)"/><rect class="lost" x="169.7" y="409.8" width="8" height="8" transform="rotate(45 173.7 413.8)"/></g>
+  <g class="layer" data-layer="lane"><path class="lane" d="M219.5 499.3 C122.5 402.5 87.5 356.9 125.7 284.7 S173.1 240.8 207.9 266.5"/></g>
+  <g class="layer" data-layer="patrol"><path class="patrol" d="M95.2 156.6 A250 250 0 0 0 321.8 549.0"/></g>
+  <g class="layer" data-layer="clash"><g class="clash" transform="translate(176.9 457.6)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g><g class="clash" transform="translate(110.7 316.6)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g><g class="clash" transform="translate(270.5 467.4)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g><g class="clash" transform="translate(512.2 177.5)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g><g class="clash" transform="translate(145.7 116.1)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g><g class="clash" transform="translate(417.6 467.9)"><path d="M-5 -5 L5 5 M5 -5 L-5 5"/></g></g>
+  <g class="hq"><rect x="291.0" y="163.0" width="18" height="18"/><path d="M291.0 163.0 l18 18 M309.0 163.0 l-18 18"/></g>
+</svg></div>
+            <aside class="zinfo" id="zinfo" aria-live="polite">
+              <span class="mono" id="zi-code"></span>
+              <h3 id="zi-name"></h3>
+              <p id="zi-desc"></p>
+              <dl class="zi-dl">
+                <div><dt>종</dt><dd id="zi-sp"></dd></div>
+                <div><dt>출신</dt><dd id="zi-who"></dd></div>
+              </dl>
+              <p class="zi-hint">해역을 누르면 정보가 바뀝니다.</p>
+            </aside>
+          </div>
+          <ul class="legend">
+            <li><span class="lg isle-k"></span>연합의 섬</li>
+            <li><span class="lg empty-k"></span>비는 섬 · 드리프트 정박지</li>
+            <li><span class="lg lost-k"></span>연합에서 사라진 두 나라</li>
+            <li><span class="lg hq-k"></span>제1전대 본대 · 비공개</li>
+          </ul>
+        </div>
+
+        <div class="seasons">
+          <div class="blk-hd"><b>바다의 사계</b><span class="mono">Currents, not temperature</span></div>
+          <p class="note">이 세계의 계절은 기온보다 해류와 바람으로 나뉩니다.</p>
+          <div class="ssn"><span class="ssn-n">잔잔철</span><span class="ssn-w">봄</span><p>해류가 안정되고 교역이 다시 열립니다. 드리프트가 가장 바빠지는 철입니다.</p></div>
+          <div class="ssn"><span class="ssn-n">무풍기</span><span class="ssn-w">한여름</span><p>바람이 죽고 바다가 유리처럼 잔잔해집니다. 범선은 묶이고 기관선만 움직여서, 산호권 기술의 값이 가장 오릅니다.</p></div>
+          <div class="ssn"><span class="ssn-n">회류기</span><span class="ssn-w">초가을</span><p>회유권 사람들이 크게 이동하는 철. 전령과 정찰의 수요가 몰립니다.</p></div>
+          <div class="ssn"><span class="ssn-n">폭풍철</span><span class="ssn-w">늦가을 ~ 초겨울</span><p>북방 해류가 내려오며 파고가 높아집니다. 교역도 해적도 줄어들고, 초계함에게는 가장 힘든 시기입니다.</p></div>
+        </div>
+      </div>
+
+      <div class="life"><div class="lg-row"><div class="lg-head"><span class="mono">Living</span><h3>먹고 사는 것</h3><p>식탁과 지갑, 그리고 육지에 닿는 며칠.</p></div><div class="lg-cards"><article class="lf"><header><span class="mono">Table</span><h3>식탁</h3></header><span class="lf-key red">생선은 먹지 않습니다</span><p>모두가 해양생물의 피를 가진 세계라 금기에 가깝습니다. 해조류, 갑각류, 조개류, 섬 작물이 식탁의 전부입니다. 긴 항해에는 염장 해조와 말린 조개살, 단단한 곡물 비스킷이 실립니다.</p></article><article class="lf"><header><span class="mono">Regional taste</span><h3>해역의 입맛</h3></header><dl class="kv"><div><dt>북방</dt><dd>짜고 투박한 저장식</dd></div><div><dt>환초</dt><dd>향신료가 풍부한 교역의 맛</dd></div><div><dt>회유</dt><dd>들고 다니며 먹는 마른 음식</dd></div><div><dt>산호</dt><dd>작고 정교한 요리, 단맛</dd></div><div><dt>배 위</dt><dd>장교는 쓴 해초차, 기관실은 금지된 남방 과일주</dd></div></dl></article><article class="lf"><header><span class="mono">Coin</span><h3>은화</h3></header><span class="lf-key">급여는 정박지에서만</span><p>항해 중에는 쓸 데가 없기 때문입니다. 승조원 사이에 조개껍데기 도박이 흔하지만 공식적으로는 금지입니다.</p></article><article class="lf"><header><span class="mono">Ports</span><h3>정박지</h3></header><span class="lf-key">이삼일</span><p>승조원 절반이 상륙 허가를 받아 술집과 시장으로 흩어집니다. 정박 직후 며칠만 신선한 과일이 식탁에 오릅니다. 제3전대 정박지는 술집 하나, 수리창 하나뿐입니다.</p></article></div></div><div class="lg-row"><div class="lg-head"><span class="mono">Belief</span><h3>바다를 믿는 법</h3><p>신의 이름은 없고, 바다만 있습니다.</p></div><div class="lg-cards"><article class="lf"><header><span class="mono">Faith</span><h3>바다 신앙</h3></header><span class="lf-key">소금 한 줌, 술 한 줌</span><p>출항과 귀항 때 바다에 붓습니다. 북방은 엄숙하게, 남방은 축제처럼 치릅니다.</p></article><article class="lf"><header><span class="mono">Festivals</span><h3>축제</h3></header><dl class="kv"><div><dt>귀류제</dt><dd>회류기에 떠났던 이들이 돌아오는 날. 섬마다 등불을 띄웁니다</dd></div><div><dt>개항제</dt><dd>폭풍철이 끝나고 교역이 다시 열리는 날. 중앙 환초권에서 가장 성대합니다</dd></div></dl></article><article class="lf"><header><span class="mono">Burial</span><h3>수장</h3></header><span class="lf-key red">출신 해역 쪽으로</span><p>죽은 사람은 바다로 돌려보냅니다. 해군에는 종교 행사가 없지만 수장 때만은 예외입니다.</p></article><article class="lf"><header><span class="mono">Superstition</span><h3>뱃사람 미신</h3></header><dl class="kv"><div><dt>휘파람</dt><dd>출항하는 날에는 불지 않습니다</dd></div><div><dt>소금</dt><dd>갑판에 흘리면 불운이 따릅니다</dd></div><div><dt>흰 새</dt><dd>보면 사흘 안에 폭풍이 옵니다</dd></div></dl></article></div></div><div class="lg-row"><div class="lg-head"><span class="mono">Aboard</span><h3>배 위의 질서</h3><p>종이 울리면 사람이 바뀌고, 신호가 오르면 배가 움직입니다.</p></div><div class="lg-cards"><article class="lf"><header><span class="mono">Watches</span><h3>당직과 종</h3></header><span class="lf-key">하루 여섯 번</span><p>교대마다 종이 울립니다. 신참 소위가 가장 기피되는 새벽 당직부터 맡는 것은 어느 전대나 같은 관례입니다.</p></article><article class="lf"><header><span class="mono">Signals</span><h3>신호</h3></header><dl class="kv"><div><dt>등불</dt><dd>먼 거리는 점멸로 주고받습니다</dd></div><div><dt>깃발</dt><dd>낮의 함대 간 신호</dd></div><div><dt>신호탄</dt><dd>붉은 신호탄과 정해진 점멸은 조난. 호위함은 무시할 수 없고, 해적이 가장 잘 아는 규정입니다</dd></div></dl></article><article class="lf"><header><span class="mono">Speech</span><h3>해역의 말씨</h3></header><dl class="kv"><div><dt>북방</dt><dd>짧고 딱딱하게 어미를 자릅니다</dd></div><div><dt>환초</dt><dd>길고 부드러운 경어</dd></div><div><dt>회유</dt><dd>특색이 옅은 표준어</dd></div><div><dt>산호</dt><dd>말끝이 가볍습니다</dd></div></dl></article><article class="lf"><header><span class="mono">Weather</span><h3>해무와 야광 해역</h3></header><span class="lf-key">맑은 날엔 아무 일도 없다</span><p>뱃사람들이 하는 말입니다. 북방 근처의 짙은 해무 속에서는 정찰관의 감각이 시야를 대신하고, 밤바다가 푸르게 빛나는 야광 해역은 발광하는 종이 숨기 가장 좋은 곳입니다.</p></article></div></div></div>
+    </div>
+  </section>
+
+  <!-- 제1전대 -->
+  <section id="sq1" class="sq">
+    <div class="wrap sq-plate">
+      <div class="sq-side">
+        <div class="sq-num" aria-hidden="true">01</div>
+        <h2><span class="en">1st Squadron · Admiralty</span>제1전대</h2>
+        <p>연합해군의 가장 높은 곳. 모든 전대의 배속과 견책이 이곳의 서류 한 장으로 정해집니다. 그 서류에 서명하는 다섯이 누구인지, 일선 함선의 승조원 대부분은 얼굴조차 본 적이 없습니다.</p>
+        <div class="ship"><span class="hc">HQ</span><span class="sn">연합해군 본대</span><span class="sd">소재 비공개 · 열람 등급 미달</span></div>
+        <div class="stamp" aria-hidden="true">CLASSIFIED</div>
+      </div>
+      <div class="roster" role="table" aria-label="제1전대 명부">
+        <div class="roster-hd mono" role="row"><span></span><span>Name</span><span>Rank · Post</span><span>Species</span></div>
+        <div class="crew cls" role="row"><span class="pf cls-pf"><span class="ix">01</span></span><span class="who"><span class="nm"><span class="bar w6">&nbsp;</span></span><span class="blurb"><span class="bar w10">&nbsp;</span> <span class="bar w4">&nbsp;</span></span></span><span class="rk"><span class="bar w4">&nbsp;</span><small>비공개</small></span><span class="sp"><span class="bar w5">&nbsp;</span><small>비공개</small></span></div>
+        <div class="crew cls" role="row"><span class="pf cls-pf"><span class="ix">02</span></span><span class="who"><span class="nm"><span class="bar w8">&nbsp;</span></span><span class="blurb"><span class="bar w10">&nbsp;</span> <span class="bar w4">&nbsp;</span></span></span><span class="rk"><span class="bar w4">&nbsp;</span><small>비공개</small></span><span class="sp"><span class="bar w5">&nbsp;</span><small>비공개</small></span></div>
+        <div class="crew cls" role="row"><span class="pf cls-pf"><span class="ix">03</span></span><span class="who"><span class="nm"><span class="bar w5">&nbsp;</span></span><span class="blurb"><span class="bar w10">&nbsp;</span> <span class="bar w4">&nbsp;</span></span></span><span class="rk"><span class="bar w4">&nbsp;</span><small>비공개</small></span><span class="sp"><span class="bar w5">&nbsp;</span><small>비공개</small></span></div>
+        <div class="crew cls" role="row"><span class="pf cls-pf"><span class="ix">04</span></span><span class="who"><span class="nm"><span class="bar w7">&nbsp;</span></span><span class="blurb"><span class="bar w10">&nbsp;</span> <span class="bar w4">&nbsp;</span></span></span><span class="rk"><span class="bar w4">&nbsp;</span><small>비공개</small></span><span class="sp"><span class="bar w5">&nbsp;</span><small>비공개</small></span></div>
+        <div class="crew cls" role="row"><span class="pf cls-pf"><span class="ix">05</span></span><span class="who"><span class="nm"><span class="bar w6">&nbsp;</span></span><span class="blurb"><span class="bar w10">&nbsp;</span> <span class="bar w4">&nbsp;</span></span></span><span class="rk"><span class="bar w4">&nbsp;</span><small>비공개</small></span><span class="sp"><span class="bar w5">&nbsp;</span><small>비공개</small></span></div>
+      </div>
+    </div>
+    <div class="wrap sq-more"><div class="spec"><div class="blk-hd"><b>전대 특징</b><span class="mono">Squadron Profile</span></div><dl><div class="spec-row"><dt>임무</dt><dd><span class="bar w8">&nbsp;</span></dd></div><div class="spec-row"><dt>소재</dt><dd><span class="bar w6">&nbsp;</span></dd></div><div class="spec-row"><dt>권한</dt><dd>전 전대의 배속·관할·견책 결정</dd></div><div class="spec-row"><dt>구성</dt><dd><span class="bar w5">&nbsp;</span> 5인</dd></div><div class="spec-row"><dt>함선</dt><dd><span class="bar w7">&nbsp;</span></dd></div><div class="spec-row"><dt>열람</dt><dd>제1전대 기록은 열람 등급 미달로 표시되지 않습니다</dd></div></dl></div><div class="shipbox cls-box"><div class="blk-hd"><b>함선 기록</b><span class="mono">Classified</span></div><div class="cls-ship"><span class="stamp">CLASSIFIED</span><span class="mono">함명 · 제원 · 함내 구조 열람 불가</span></div></div></div>
+  </section>
+
+  <!-- 제2전대 -->
+  <section id="sq2" class="sq">
+    <div class="wrap sq-plate">
+      <div class="sq-side">
+        <div class="sq-num" aria-hidden="true">02</div>
+        <h2><span class="en">2nd Squadron · Tempest</span>제2전대 템페스트</h2>
+        <p>연합해군에서 가장 많이 싸우는 부대. 해적선을 추적해 격침하고, 피습당한 항로를 되찾습니다. 섬에서는 영웅으로 불리고, 해군 안에서는 가면 돌아오지 않는 배로 불립니다. 공적이 가장 많이 쌓이는 곳은 사상자가 가장 많은 곳이기도 합니다.</p>
+        <div class="ship"><span class="hc">CL</span><span class="sn">순양함 템페스트</span><span class="sd">기함 체제 · 지휘부 5인 전원 승선 · 수리 흔적이 가장 많은 배</span></div>
+        <ul class="traits">
+          <li>귀항보다 출항이 잦은 최전선 상시 배치</li>
+          <li>5인 전원 생존이 이 전대에서는 드문 일</li>
+          <li>당신은 전사자의 빈자리를 채우러 온 보충 인원</li>
+        </ul>
+      </div>
+      <div class="roster" role="table" aria-label="제2전대 명부">
+        <div class="roster-hd mono" role="row"><span></span><span>Name</span><span>Rank · Post</span><span>Species</span></div>
+        <div class="crew lead" role="row"><span class="pf" data-k="sq2-01"><span class="ix">01</span></span><span class="who"><span class="nm">세베린 그라우</span><span class="blurb">다섯 중 홀로 흰 제복을 입는 전대장. 스콜의 함장과는 크게 부딪힌 사이입니다.</span></span><span class="rk">대령<small>전대장</small></span><span class="sp">귀신고래<small>북방 심해권</small></span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq2-02"><span class="ix">02</span></span><span class="who"><span class="nm">가레스 에피넬</span><span class="blurb">전대장 바로 아래에서 배를 붙드는 부장.</span></span><span class="rk">중령<small>부장</small></span><span class="sp">골리앗 그루퍼</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq2-03"><span class="ix">03</span></span><span class="who"><span class="nm">리오 벨라스</span><span class="blurb">가장 빠른 종이 쥔 키. 템페스트의 항로를 정합니다.</span></span><span class="rk">소령<small>항해장</small></span><span class="sp">돛새치</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq2-04"><span class="ix">04</span></span><span class="who"><span class="nm">카시안 레갈</span><span class="blurb">심해에서 올라온 긴 그림자. 템페스트의 포를 맡습니다.</span></span><span class="rk">대위<small>포술장</small></span><span class="sp">산갈치</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq2-05"><span class="ix">05</span></span><span class="who"><span class="nm">주드 크레이트</span><span class="blurb">가장 먼저 적선에 오르는 사람. 강습대를 이끕니다.</span></span><span class="rk">중위<small>강습대장</small></span><span class="sp">바다뱀</span></div>
+      </div>
+    </div>
+    <div class="wrap sq-more"><div class="spec"><div class="blk-hd"><b>전대 특징</b><span class="mono">Squadron Profile</span></div><dl><div class="spec-row"><dt>임무</dt><dd>해적선 추적·격침, 해적 거점 제압, 피습 항로 탈환</dd></div><div class="spec-row"><dt>배치</dt><dd>최전선 상시. 귀항보다 출항이 잦음</dd></div><div class="spec-row"><dt>전투</dt><dd>도선 전투가 중심. 갈고리와 로프로 적선에 붙어 강습대가 먼저 오름</dd></div><div class="spec-row"><dt>규율</dt><dd>전투 밖에서는 느슨함. 전투 중 명령 불복은 그 자리에서 처리</dd></div><div class="spec-row"><dt>명령</dt><dd>전대장의 명령은 부장을 거쳐 승조원에게 내려가는 것이 관례</dd></div><div class="spec-row"><dt>승조원</dt><dd>약 120명. 교체율 연합 최고. 한 항해를 넘기면 고참 취급</dd></div><div class="spec-row"><dt>관례</dt><dd>새 얼굴의 이름은 외우지 않음. 신참이 며칠 버틸지 내기를 걺</dd></div><div class="spec-row"><dt>장례</dt><dd>전사자는 범포에 싸 선미에 안치, 다음 일몰에 수장. 계급장은 함장에게</dd></div><div class="spec-row"><dt>평판</dt><dd>섬에서는 영웅, 해군 안에서는 「가면 안 돌아오는 배」</dd></div></dl></div><div class="shipbox"><div class="blk-hd"><b>순양함 템페스트</b><span class="mono">CL · Tempest</span></div><p class="ship-desc">제2전대의 기함이자 유일한 배. 선수와 선미에 주포탑을 얹은 크고 무거운 순양함으로, 선체 곳곳에 덧댄 철판이 남아 있습니다. 교체보다 수리가 빠른 배입니다. 해적들은 이 깃발을 보면 싸우기 전에 도주부터 계산합니다.</p><div class="svgwrap"><svg viewBox="0 0 800 270" role="img" aria-label="순양함 템페스트 측면 단면도" class="hullsvg">
+<defs><clipPath id="c-tp"><path d="M40 140 L742 140 L784 124 L708 240 L92 240 L40 198 Z"/></clipPath></defs>
+<line x1="10" y1="205" x2="790" y2="205" class="wl"/>
+<g data-d="0" class="band"><rect x="320" y="78" width="160" height="62"/><rect x="362" y="44" width="76" height="34"/></g>
+<line x1="400" y1="8" x2="400" y2="44" class="ln"/><line x1="380" y1="20" x2="420" y2="20" class="ln"/>
+<g data-d="1" class="band"><rect x="40" y="126" width="744" height="14"/><rect x="575" y="110" width="66" height="22"/><rect x="160" y="110" width="66" height="22"/></g>
+<g clip-path="url(#c-tp)">
+ <g data-d="2" class="band"><rect x="0" y="140" width="800" height="32"/></g>
+ <g data-d="3" class="band"><rect x="0" y="172" width="800" height="32"/></g>
+ <g data-d="4" class="band"><rect x="0" y="204" width="800" height="40"/></g>
+</g>
+<path d="M40 140 L742 140 L784 124 L708 240 L92 240 L40 198 Z" class="hull"/>
+<line x1="40" y1="172" x2="770" y2="172" class="deck"/><line x1="50" y1="204" x2="750" y2="204" class="deck"/>
+<rect x="575" y="110" width="66" height="22" class="gun"/><line x1="641" y1="118" x2="716" y2="114" class="ln thick"/><line x1="641" y1="125" x2="716" y2="121" class="ln thick"/>
+<rect x="160" y="110" width="66" height="22" class="gun"/><line x1="160" y1="118" x2="86" y2="114" class="ln thick"/><line x1="160" y1="125" x2="86" y2="121" class="ln thick"/>
+<circle cx="270" cy="156" r="4" class="port"/><circle cx="310" cy="156" r="4" class="port"/><circle cx="490" cy="156" r="4" class="port"/><circle cx="530" cy="156" r="4" class="port"/>
+<rect x="250" y="182" width="34" height="16" class="patch"/><rect x="600" y="150" width="28" height="18" class="patch"/><rect x="120" y="212" width="40" height="14" class="patch"/><rect x="452" y="96" width="20" height="26" class="patch"/>
+<text x="770" y="262" class="lbl" text-anchor="end">CL · 승조원 약 120명</text>
+<text x="20" y="262" class="lbl">STERN</text>
+</svg></div><ol class="decks"><li data-d="0" tabindex="0"><span class="dk">BRG</span><span class="dn">함교 · 전대 지휘소</span><span class="dr">전대장 지휘석, 견시대, 신호 마스트</span></li><li data-d="1" tabindex="0"><span class="dk">UPR</span><span class="dn">상갑판</span><span class="dr">선수·선미 주포탑, 측면 포좌, 도선용 갈고리·로프, 강습대 집결지, 선미 안치소</span></li><li data-d="2" tabindex="0"><span class="dk">D1</span><span class="dn">제1갑판</span><span class="dr">해도실(항해장 외 열람 제한), 전대장실, 사관실, 포술 통제실</span></li><li data-d="3" tabindex="0"><span class="dk">D2</span><span class="dn">제2갑판</span><span class="dr">승조원 침상, 식당, 의무실, 탄약고</span></li><li data-d="4" tabindex="0"><span class="dk">ENG</span><span class="dn">기관부</span><span class="dr">기관실, 보일러, 수리 자재 창고</span></li></ol></div></div>
+  </section>
+
+  <!-- 제3전대 -->
+  <section id="sq3" class="sq">
+    <div class="wrap sq-plate">
+      <div class="sq-side">
+        <div class="sq-num" aria-hidden="true">03</div>
+        <h2><span class="en">3rd Squadron · Skoll</span>제3전대 구축함 스콜</h2>
+        <p>항로를 호위하고 바깥 해역을 도는 초계함. 최전선에 서지 않으니 공적도 쌓이지 않고, 그래서 이 배에 배속되는 일은 좌천이나 유배로 통합니다. 다섯이 왜 이 배에 모였는지는 아직 아무도 말하지 않았습니다.</p>
+        <div class="ship"><span class="hc">DD</span><span class="sn">구축함 스콜</span><span class="sd">항로 호위 · 초계 · 몇 년째 드리프트를 쫓는 유일한 배</span></div>
+        <ul class="traits">
+          <li>배 위에서는 함장의 판단이 연합의 판단보다 우선</li>
+          <li>기관실에서는 계급이 낮은 기관장의 말이 우선</li>
+          <li>당신은 다섯 전원이 상관인 신참 소위</li>
+        </ul>
+      </div>
+      <div class="roster" role="table" aria-label="제3전대 명부">
+        <div class="roster-hd mono" role="row"><span></span><span>Name</span><span>Rank · Post</span><span>Species</span></div>
+        <div class="crew lead" role="row"><span class="pf" data-k="sq3-01"><span class="ix">01</span></span><span class="who"><span class="nm">카엘 보른</span><span class="blurb">함내 유일한 흑색 제복, 왼쪽 눈가의 흉터. 명령은 짧고, 누구의 이름도 부르지 않습니다.</span></span><span class="rk">대령<small>함장 · 204cm</small></span><span class="sp">범고래<small>북방 심해권</small></span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq3-02"><span class="ix">02</span></span><span class="who"><span class="nm">사른 베커</span><span class="blurb">함장의 유일한 견제자. 질문으로 몰아붙이고, 감정어를 쓰지 않습니다.</span></span><span class="rk">소령<small>부장 · 198cm</small></span><span class="sp">백상아리<small>북방 심해권</small></span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq3-03"><span class="ix">03</span></span><span class="who"><span class="nm">아마데오 리렌</span><span class="blurb">함내 최대 체구로 함장을 내려다보는 중계자. 존댓말과 완곡어법, 아무도 위협하지 않습니다.</span></span><span class="rk">대위<small>작전관 · 208cm</small></span><span class="sp">고래상어<small>중앙 환초권</small></span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq3-04"><span class="ix">04</span></span><span class="who"><span class="nm">이븐 사엘</span><span class="blurb">흑청색 케이프. 정중한 단문. 신참의 이름을 부르는 유일한 사람입니다.</span></span><span class="rk">중위<small>항해정찰관 · 185cm</small></span><span class="sp">만타가오리<small>외양 회유권</small></span></div>
+        <div class="crew" role="row"><span class="pf" data-k="sq3-05"><span class="ix">05</span></span><span class="who"><span class="nm" style="color:#FF7A00">로렐 반디에르</span><span class="blurb">함내 유일한 난색. 전원에게 반말을 하는데, 아무도 그를 제지하지 못합니다.</span></span><span class="rk">준위<small>기관장 · 180cm</small></span><span class="sp">사자물고기<small>남방 산호권</small></span></div>
+      </div>
+    </div>
+    <div class="wrap sq-more"><div class="spec"><div class="blk-hd"><b>전대 특징</b><span class="mono">Squadron Profile</span></div><dl><div class="spec-row"><dt>임무</dt><dd>항로 호위와 외곽 초계. 최전선에는 배치되지 않음</dd></div><div class="spec-row"><dt>평판</dt><dd>공적이 쌓이지 않는 배. 배속은 좌천이나 유배로 통함</dd></div><div class="spec-row"><dt>관할</dt><dd>드리프트 담당. 몇 년째 쫓고 있지만 결착은 없음</dd></div><div class="spec-row"><dt>규율</dt><dd>엄격함. 징계는 부장이 맡고, 함장은 결과만 보고받음</dd></div><div class="spec-row"><dt>실권</dt><dd>배 위에서는 함장의 판단이 우선, 기관실에서는 기관장의 말이 우선</dd></div><div class="spec-row"><dt>신참</dt><dd>첫 주는 함내 구조 숙지, 부장 출제 규정 시험, 새벽 당직</dd></div><div class="spec-row"><dt>견습</dt><dd>함교 → 작전실 → 갑판 → 기관실 순으로 순환. 기관실은 기관장이 허락해야 진행</dd></div><div class="spec-row"><dt>여가</dt><dd>조개껍데기 도박(공식 금지). 기관실이 비공식 휴게실 겸 술자리</dd></div><div class="spec-row"><dt>분위기</dt><dd>장교들은 각자 혼자 시간을 보냄. 함께 어울리는 일은 거의 없음</dd></div></dl></div><div class="shipbox"><div class="blk-hd"><b>구축함 스콜</b><span class="mono">DD · Skoll</span></div><p class="ship-desc">낮고 날렵한 초계 구축함. 포는 적고 발이 빠릅니다. 남방 산호권 기관 특유의 낮은 소리가 나고, 조용한 밤에는 그 진동이 함 전체로 번집니다.</p><div class="svgwrap"><svg viewBox="0 0 800 270" role="img" aria-label="구축함 스콜 측면 단면도" class="hullsvg">
+<defs><clipPath id="c-sk"><path d="M60 150 L722 150 L772 138 L706 228 L104 228 L60 196 Z"/></clipPath></defs>
+<line x1="20" y1="200" x2="780" y2="200" class="wl"/>
+<g data-d="0" class="band"><rect x="425" y="92" width="96" height="58"/><rect x="452" y="70" width="46" height="22"/></g>
+<line x1="475" y1="28" x2="475" y2="70" class="ln"/><line x1="458" y1="40" x2="492" y2="40" class="ln"/>
+<g data-d="1" class="band"><rect x="60" y="138" width="712" height="12"/></g>
+<g clip-path="url(#c-sk)">
+ <g data-d="2" class="band"><rect x="0" y="150" width="800" height="26"/></g>
+ <g data-d="3" class="band"><rect x="0" y="176" width="800" height="26"/></g>
+ <g data-d="4" class="band"><rect x="0" y="202" width="800" height="30"/></g>
+</g>
+<path d="M60 150 L722 150 L772 138 L706 228 L104 228 L60 196 Z" class="hull"/>
+<line x1="60" y1="176" x2="760" y2="176" class="deck"/><line x1="70" y1="202" x2="740" y2="202" class="deck"/>
+<rect x="602" y="128" width="40" height="10" class="gun"/><line x1="642" y1="132" x2="690" y2="130" class="ln"/>
+<rect x="150" y="128" width="40" height="10" class="gun"/><line x1="150" y1="132" x2="110" y2="131" class="ln"/>
+<rect x="330" y="140" width="46" height="10" class="boat"/>
+<text x="770" y="258" class="lbl" text-anchor="end">DD · 초계 구축함</text>
+<text x="30" y="258" class="lbl">STERN</text>
+</svg></div><ol class="decks"><li data-d="0" tabindex="0"><span class="dk">BRG</span><span class="dn">함교 · 견시대</span><span class="dr">함장 지휘석, 조타실, 정찰관 관측 위치</span></li><li data-d="1" tabindex="0"><span class="dk">UPR</span><span class="dn">상갑판</span><span class="dr">선수·선미 포좌, 연락정, 당직 견시 구역</span></li><li data-d="2" tabindex="0"><span class="dk">D1</span><span class="dn">제1갑판</span><span class="dr">작전실(해도 보관, 반출 금지), 함장실, 장교 선실, 사관 식당</span></li><li data-d="3" tabindex="0"><span class="dk">D2</span><span class="dn">제2갑판</span><span class="dr">승조원 침실, 식당, 의무실, 영창</span></li><li data-d="4" tabindex="0"><span class="dk">ENG</span><span class="dn">최하층</span><span class="dr">기관실. 덥고 시끄럽고 기름 냄새가 남. 구석에 기관장의 해먹</span></li></ol></div></div>
+  </section>
+
+  <!-- 드리프트 -->
+  <section id="drift" class="sq pir">
+    <div class="wrap sq-plate">
+      <div class="sq-side">
+        <div class="sq-num" aria-hidden="true">∅</div>
+        <h2><span class="en" style="color:var(--red)">Pirate Crew · Drift</span>해적단 드리프트</h2>
+        <p>표류. 닻을 내릴 곳이 없는 사람들. 연합 문서에서 무소속을 분류하던 항목명을 그대로 이름으로 씁니다. 계급도 제복도 없고, 역할만 있습니다. 같은 훈련을 받고 같은 배를 탔던 사람들이라 연합의 약점을 압니다.</p>
+        <div class="ship"><span class="hc">—</span><span class="sn">모선 드리프트</span><span class="sd">개조 화물선 · 60~80명이 사는 배 · 교전은 쾌속선이 맡음</span></div>
+        <ul class="traits">
+          <li>고정 거점 없이 버려진 섬을 순회</li>
+          <li>출신을 묻지 않는 것이 예의</li>
+          <li>당신은 드리프트에 처음 오른 신입 해적</li>
+        </ul>
+      </div>
+      <div class="roster" role="table" aria-label="드리프트 명부">
+        <div class="roster-hd mono" role="row"><span></span><span>Name</span><span>Role</span><span>Species</span></div>
+        <div class="crew lead" role="row"><span class="pf" data-k="drift-01"><span class="ix" style="color:var(--red)">01</span></span><span class="who"><span class="nm">카르네</span><span class="blurb">명령하지 않고, 거부권만 씁니다. 화가 날수록 목소리가 낮아집니다. 식탁 끝 가장 어두운 자리가 그의 자리입니다.</span></span><span class="rk">두목<small>39세</small></span><span class="sp">곰치</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="drift-02"><span class="ix">02</span></span><span class="who"><span class="nm">리스</span><span class="blurb">처음 만난 사람에게 가장 다정하고, 그 다정함이 정확히 함정입니다. 가짜 조난 신호를 보내는 사람.</span></span><span class="rk">유인 · 기만<small>31세</small></span><span class="sp">심해아귀</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="drift-03"><span class="ix">03</span></span><span class="who"><span class="nm">베인</span><span class="blurb">늘 덥고 기름 냄새가 나는 기관실의 주인. 허락 없이 들어가지 않는 것이 규칙입니다. 아무도 그를 만지지 않습니다.</span></span><span class="rk">기관 · 파괴<small>33세</small></span><span class="sp">전기뱀장어</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="drift-04"><span class="ix">04</span></span><span class="who"><span class="nm">셰이드</span><span class="blurb">웃으면서 싸움을 거는 주력 전투원. 쾌속선의 선두에 서고, 두목에게만 순종합니다.</span></span><span class="rk">전투<small>27세</small></span><span class="sp">바라쿠다</span></div>
+        <div class="crew" role="row"><span class="pf" data-k="drift-05"><span class="ix">05</span></span><span class="who"><span class="nm">유안</span><span class="blurb">연합 항구와 드리프트를 자유롭게 오갑니다. 나이를 물으면 매번 다르게 답합니다.</span></span><span class="rk">정보<small>나이 불명</small></span><span class="sp">뱀장어</span></div>
+      </div>
+    </div>
+    <div class="wrap sq-more"><div class="spec"><div class="blk-hd"><b>해적단 특징</b><span class="mono">Crew Profile</span></div><dl><div class="spec-row"><dt>구조</dt><dd>계급 없음. 역할만 있고 서열은 관계로 정해짐</dd></div><div class="spec-row"><dt>결정</dt><dd>두목은 명령하지 않고 거부권만 씀. 일은 맡은 사람이 정함</dd></div><div class="spec-row"><dt>거점</dt><dd>없음. 재배치로 버려진 「비는 섬」을 돌며 정박</dd></div><div class="spec-row"><dt>입단</dt><dd>절차 없음. 누가 받아준 적 없이 배에 있으면 선원</dd></div><div class="spec-row"><dt>이탈</dt><dd>언제든 나갈 수 있고 붙잡지 않음. 단, 나간 사람은 돌아오지 못함</dd></div><div class="spec-row"><dt>분배</dt><dd>모든 물자는 두목을 거쳐 나뉨. 신입도 첫날부터 몫이 있음</dd></div><div class="spec-row"><dt>수법</dt><dd>가짜 조난 신호로 호위함을 끌어내고, 그 사이 쾌속선이 화물선을 침</dd></div><div class="spec-row"><dt>항로</dt><dd>남방 산호권에서 중앙으로 기관 부품이 흐르는 남방 항로가 주 무대</dd></div><div class="spec-row"><dt>예의</dt><dd>출신을 묻지 않음. 과거도 이름도 묻지 않음</dd></div></dl></div><div class="shipbox pir"><div class="blk-hd"><b>모선 드리프트</b><span class="mono">Unregistered · Drift</span></div><p class="ship-desc">느리고 큰 개조 화물선. 녹슨 선체에 쾌속선 서너 척을 매달고 다닙니다. 아이와 노인까지 60~80명이 사는 집이라, 모선은 절대 교전에 들어가지 않습니다. 싸움은 전부 쾌속선의 몫입니다.</p><div class="svgwrap"><svg viewBox="0 0 800 270" role="img" aria-label="드리프트 측면 단면도" class="hullsvg">
+<defs><clipPath id="c-dr"><path d="M50 130 L700 130 L742 114 L690 236 L84 236 L50 200 Z"/></clipPath></defs>
+<line x1="10" y1="206" x2="790" y2="206" class="wl"/>
+<g data-d="0" class="band"><rect x="72" y="62" width="140" height="68"/><rect x="100" y="40" width="70" height="22"/></g>
+<line x1="520" y1="24" x2="520" y2="130" class="ln"/><line x1="520" y1="34" x2="455" y2="112" class="ln"/><line x1="455" y1="112" x2="455" y2="122" class="ln"/>
+<g data-d="1" class="band"><rect x="50" y="116" width="692" height="14"/></g>
+<rect x="290" y="114" width="96" height="10" class="hatch"/><rect x="410" y="114" width="96" height="10" class="hatch"/>
+<line x1="250" y1="80" x2="250" y2="116" class="ln"/><rect x="226" y="88" width="56" height="14" class="boat"/>
+<line x1="610" y1="84" x2="610" y2="116" class="ln"/><rect x="586" y="92" width="56" height="14" class="boat"/>
+<line x1="660" y1="90" x2="660" y2="116" class="ln"/><rect x="640" y="98" width="44" height="12" class="boat"/>
+<g clip-path="url(#c-dr)">
+ <g data-d="2" class="band"><rect x="0" y="130" width="800" height="36"/></g>
+ <g data-d="3" class="band"><rect x="0" y="166" width="800" height="36"/></g>
+ <g data-d="4" class="band"><rect x="0" y="202" width="800" height="38"/></g>
+</g>
+<path d="M50 130 L700 130 L742 114 L690 236 L84 236 L50 200 Z" class="hull rust"/>
+<line x1="50" y1="166" x2="728" y2="166" class="deck"/><line x1="58" y1="202" x2="704" y2="202" class="deck"/>
+<text x="770" y="262" class="lbl" text-anchor="end">개조 화물선 · 60~80명 거주 · 쾌속선 3~4척</text>
+<text x="20" y="262" class="lbl">STERN</text>
+</svg></div><ol class="decks"><li data-d="0" tabindex="0"><span class="dk">BRG</span><span class="dn">선교</span><span class="dr">조타실과 해도. 해도에 좌표는 적지 않음</span></li><li data-d="1" tabindex="0"><span class="dk">UPR</span><span class="dn">갑판</span><span class="dr">쾌속선 거치대, 화물창 덮개, 크레인, 늘 널린 빨래</span></li><li data-d="2" tabindex="0"><span class="dk">D1</span><span class="dn">상층</span><span class="dr">통신실(좁고 녹슨 리스의 방), 선원 선실</span></li><li data-d="3" tabindex="0"><span class="dk">D2</span><span class="dn">화물창 거주구</span><span class="dr">긴 나무 식탁이 있는 식당. 두목은 식탁 끝 가장 어두운 자리</span></li><li data-d="4" tabindex="0"><span class="dk">ENG</span><span class="dn">아래층</span><span class="dr">기관실. 늘 덥고 기름 냄새. 허락 없이 들어가지 않는 것이 규칙</span></li></ol></div></div>
+  </section>
+
+  <!-- 교차선 -->
+  <section id="cross">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Crossings<small>항로가 겹치는 곳</small></h2>
+        <p>네 이야기는 각자 따로 흘러가지만 같은 바다 위에 있습니다. 어느 배에 오르든, 다른 배의 이름은 한 번쯤 들리게 됩니다.</p>
+      </div>
+      <div class="cross">
+        <article class="x">
+          <span class="mono">Collision · 충돌</span>
+          <div class="x-pair">Skoll <i>×</i> Tempest</div>
+          <h3>카엘 보른과 세베린 그라우</h3>
+          <p>스콜의 함장과 템페스트의 전대장은 한 번 크게 부딪혔습니다. 같은 북방 심해권 출신의 두 지휘관은 그 뒤로 서로의 배를 다르게 부릅니다.</p>
+          <div class="meter" aria-label="관계 강도 5단계 중 5"><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span></div>
+        </article>
+        <article class="x">
+          <span class="mono">Pursuit · 추격</span>
+          <div class="x-pair">Skoll <i>×</i> Drift</div>
+          <h3>몇 년째, 결착 없이</h3>
+          <p>드리프트를 쫓는 배는 스콜 하나뿐입니다. 교전은 여러 번 있었지만 끝이 난 적은 없습니다. 드리프트 선원들은 스콜을 날씨처럼 여깁니다.</p>
+          <div class="meter" aria-label="관계 강도 5단계 중 4"><span class="f"></span><span class="f"></span><span class="f"></span><span class="f"></span><span></span></div>
+        </article>
+        <article class="x">
+          <span class="mono">Brush · 스침</span>
+          <div class="x-pair">Tempest <i>×</i> Drift</div>
+          <h3>한 번의 격전</h3>
+          <p>해적 소탕이 일인 템페스트도 드리프트와 맞붙은 적이 있습니다. 그 뒤로 드리프트는 제3전대의 몫이 되었고, 두 배는 스쳐 지나가는 사이로 남았습니다.</p>
+          <div class="meter" aria-label="관계 강도 5단계 중 2"><span class="f"></span><span class="f"></span><span></span><span></span><span></span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="sig">NuLL<span>.</span></div>
+    <span class="mono">연합해군 시리즈 · 캐릭터 챗 OC · by 널</span>
+  </div>
+</footer>
+
+<div class="dos" id="dos" hidden role="dialog" aria-modal="true" aria-labelledby="dos-name">
+  <article class="dos-card" id="dos-card">
+    <button class="dos-x" id="dos-x" type="button">닫기 ✕</button>
+    <div class="dos-img"><img id="dos-img" alt=""><span class="dos-tag" id="dos-tag"></span></div>
+    <div class="dos-body">
+      <div class="dos-head">
+        <span class="mono" id="dos-eyebrow"></span>
+        <h3 id="dos-name"></h3>
+        <span class="dos-sub" id="dos-sub"></span>
+      </div>
+      <div class="dos-meta" id="dos-meta"></div>
+      <dl class="dos-sec" id="dos-sec"></dl>
+      <blockquote class="dos-quote" id="dos-quote"></blockquote>
+      <ul class="dos-list" id="dos-list"></ul>
+    </div>
+  </article>
+</div>
+
+<script>
+/* 공개 프로필만 수록. 비밀·해금 설정은 넣지 않습니다 */
+const P={
+"sq2-01":{eb:"템페스트 인사기록 · No.01",nm:"세베린 그라우",sub:"대령 · 제2전대 전대장 겸 템페스트 함장",meta:[["종","귀신고래"],["출신","북방 심해권"],["신장","195cm · 39세"]],
+ look:"등까지 내려오는 백발과 흰 속눈썹, 붉은 홍채. 창백한 얼굴에 십자로 교차한 흉터가 있고, 목에는 따개비 자국 같은 흉터가 남아 있습니다. 다섯 중 홀로 흰 제복을 입고, 흰 장갑과 금술 견장을 갖춥니다.",
+ mind:"늘 웃는 얼굴로, 목소리를 높이는 법이 없습니다. 예의 바르고 느긋하지만 부하의 이름보다 생존 확률을 먼저 계산합니다.",
+ talk:"느리고 정중한 존댓말. 명령도 권유처럼 말하고, 끝에는 웃음이 섞입니다.",
+ path:"북방 심해권 장교 가문 출신. 태어날 때부터 정해진 길이었고, 전쟁은 그에게 잘 맞았습니다.",
+ q:"외울지 말지는 한 항해 지나고 제가 정하겠습니다.",
+ li:["전투에서 진 적이 한 번도 없습니다","스콜 함장 카엘 보른에게 총을 겨눈 전적이 있습니다. 견책을 받았지만 전대장직은 그대로입니다","그가 장갑을 벗는 모습을 본 사람이 없습니다"]},
+"sq2-02":{eb:"템페스트 인사기록 · No.02",nm:"가레스 에피넬",sub:"중령 · 템페스트 부장",meta:[["종","골리앗 그루퍼"],["출신","남방 산호권"],["신장","210cm · 42세"]],
+ look:"검은 점무늬가 섞인 갈색 머리에 금안. 오른쪽 눈을 검은 안대로 가렸고, 그 아래로 흉터가 뺨까지 이어집니다. 제복 앞섶을 풀어두며, 전대에서 가장 큰 체격입니다.",
+ mind:"말수가 적고 무게감이 있습니다. 웃을 때는 느긋합니다. 승조원이 무슨 일이 생기면 가장 먼저 찾는 사람입니다.",
+ talk:"낮고 짧은 반말. 필요한 말만 합니다.",
+ path:"소형종이 사는 산호권에서 너무 큰 몸으로 자랐습니다. 섬이 그를 품지 못해 바다로 나왔습니다.",
+ q:"됐다. 가서 쉬어.",
+ li:["전대장의 명령을 승조원이 따를 수 있는 말로 옮기는 사람입니다","세베린이 카엘 보른에게 총을 겨눴을 때 그 총구를 손으로 덮었습니다","가슴의 타투는 다른 무언가를 덮은 것입니다. 무엇이었는지는 말하지 않습니다"]},
+"sq2-03":{eb:"템페스트 인사기록 · No.03",nm:"리오 벨라스",sub:"소령 · 템페스트 항해장",meta:[["종","돛새치"],["출신","외양 회유권"],["신장","183cm · 33세"]],
+ look:"안쪽으로 갈수록 검게 짙어지는 파란 머리, 날렵한 회색 눈. 무테 안경을 쓰고 목에 화상 흉터가 있습니다. 슬림한 역삼각형 체형에 제복을 몸에 딱 맞게 입습니다.",
+ mind:"정확하고 차갑습니다. 항로 계산이 틀린 적이 없고, 여유 있는 척 웃습니다.",
+ talk:"군더더기 없는 존댓말. 숫자와 좌표로 말하고, 비꼴 때만 말이 길어집니다. 안경을 소매로 닦는 버릇이 있습니다.",
+ path:"정착하지 않는 회유권의 전령 출신. 정찰대에서 추격 능력을 인정받아 템페스트로 차출되었습니다.",
+ q:"좌표 다시 부르겠습니다. 이번엔 받아 적으십시오.",
+ li:["목의 화상은 수년 전 드리프트와의 격전에서 입었습니다","한곳에 오래 머무는 걸 견디지 못해 정박일에는 잠을 못 잡니다","템페스트에서 스콜을 「산책선」이라고 처음 부른 사람입니다"]},
+"sq2-04":{eb:"템페스트 인사기록 · No.04",nm:"카시안 레갈",sub:"대위 · 템페스트 포술장",meta:[["종","산갈치"],["출신","북방 심해권"],["신장","191cm · 30세"]],
+ look:"겉은 붉고 안쪽은 회색인 긴 머리. 처진 적안. 귀와 눈썹, 입술에 피어싱이 많습니다. 검은 제복은 늘 목까지 잠가 둡니다.",
+ mind:"나른하고 장난스럽습니다. 늘 반쯤 감긴 눈으로 규율을 느슨하게 지킵니다. 밝은 곳을 불편해합니다.",
+ talk:"늘어지는 반말에 말끝을 흐립니다. 포격 명령을 내릴 때만 목소리가 가라앉습니다.",
+ path:"북방 심해권 출신. 세베린이 직접 데려왔고, 그 이유는 두 사람만 압니다.",
+ q:"어어, 그거~ 내가 쏠게.",
+ li:["빛보다 진동에 민감합니다. 야간과 저시계 포격의 명수입니다","피어싱은 전투를 하나 넘길 때마다 하나씩 늘었습니다","세베린을 이름으로 부르는 유일한 사람입니다"]},
+"sq2-05":{eb:"템페스트 인사기록 · No.05",nm:"주드 크레이트",sub:"중위 · 템페스트 강습대장",meta:[["종","바다뱀"],["출신","남방 산호권"],["신장","201cm · 27세"]],
+ look:"겉은 백발, 안쪽은 흑발. 회색 눈에 탄 피부, 목을 두른 문신. 두꺼운 목과 팔의 다부진 몸으로 제복 앞섶을 열어둡니다. 입에는 늘 사탕을 물고 있습니다.",
+ mind:"시끄럽고 거침없습니다. 싸움을 즐기고, 계급은 막내인데 제일 먼저 대들고 제일 먼저 뛰어듭니다.",
+ talk:"거친 반말. 윗사람에게는 대충 붙인 존댓말을 씁니다. 웃으면서 욕합니다.",
+ path:"고향 섬이 해적에게 털린 뒤 자원했습니다. 템페스트를 지원한 이유는 해적을 제일 많이 죽이는 배라서입니다.",
+ q:"넵, 대장님.",
+ li:["계급은 막내지만 적선 갑판 위에서는 그가 지휘합니다","사탕은 담배를 끊고 생긴 습관입니다","독을 가진 종입니다. 문신 일부는 경고 문양입니다"]},
+
+"sq3-01":{eb:"스콜 인사기록 · No.01",nm:"카엘 보른",sub:"대령 · 구축함 스콜 함장",meta:[["종","범고래"],["출신","북방 심해권"],["신장","204cm · 41세"]],
+ look:"흰 줄기가 섞인 흑발 장발, 왼쪽 눈가의 흉터. 함내에서 유일하게 흑색 제복을 입습니다.",
+ mind:"명령대로 움직이고, 사적인 말을 하지 않습니다. 그가 입을 열면 그 자리의 이야기가 끝납니다.",
+ talk:"낮고 짧은 명령형. 설명을 붙이지 않습니다. 누구도 이름으로 부르지 않고 직책과 계급으로만 부릅니다.",
+ path:"북방 정규 사관 출신. 최전선 대신 초계함을 지휘하고 있습니다.",
+ q:"좌현 15도. 사격 준비.",
+ li:["왼쪽 눈가의 흉터는 드리프트와의 교전에서 얻었습니다","배 위에서는 그의 판단이 연합의 판단보다 우선합니다","템페스트 전대장 세베린 그라우와는 같은 자리에 두지 않는 것이 해군의 불문율입니다"]},
+"sq3-02":{eb:"스콜 인사기록 · No.02",nm:"사른 베커",sub:"소령 · 구축함 스콜 부장",meta:[["종","백상아리"],["출신","북방 심해권"],["신장","198cm · 34세"]],
+ look:"뒤로 넘긴 회백색 머리에 회색 눈. 무채색만 입습니다.",
+ mind:"답을 알면서 묻고, 상대가 스스로 말하게 만듭니다. 감정을 드러내는 말을 쓰지 않습니다.",
+ talk:"존댓말 고정. 평서문 대신 의문문으로 말합니다. 같은 실수에는 같은 강도로만 반응합니다.",
+ path:"전 함선에서의 독단 행동으로 문책을 받은 뒤 스콜에 왔습니다.",
+ q:"그게 답입니까?",
+ li:["함장의 유일한 견제자입니다. 반대는 하지만 항명은 하지 않습니다","그의 시험은 악의가 아닙니다. 준비되지 않은 사람이 먼저 죽기 때문입니다","드리프트의 셰이드와는 서로 이름을 아는 적수입니다"]},
+"sq3-03":{eb:"스콜 인사기록 · No.03",nm:"아마데오 리렌",sub:"대위 · 구축함 스콜 작전관",meta:[["종","고래상어"],["출신","중앙 환초권"],["신장","208cm · 36세"]],
+ look:"푸른 회색 머리에 함내 최대 체구. 함장을 내려다보는 키입니다. 제복 깃 안쪽에 점무늬가 있습니다.",
+ mind:"온화하고 완곡합니다. 거절을 거절처럼 하지 않고, 가장 큰 몸으로 가장 많이 물러섭니다.",
+ talk:"길고 부드러운 존댓말. 반대 의견도 질문으로 말합니다. 나쁜 소식일수록 말이 길어집니다.",
+ path:"중앙 환초권이 연합해군에 보낸 사람입니다. 본인이 원한 자리는 아닙니다.",
+ q:"혹시, 다른 방법을 한 번만 더 생각해보셔도 괜찮을까요?",
+ li:["함장과 부장 사이에서 양쪽의 말을 부드럽게 옮기는 중계자입니다","신참에게 상황을 설명해주는 거의 유일한 상관입니다","계급이 한참 낮은 기관장에게도 존댓말을 씁니다"]},
+"sq3-04":{eb:"스콜 인사기록 · No.04",nm:"이븐 사엘",sub:"중위 · 구축함 스콜 항해정찰관",meta:[["종","만타가오리"],["출신","외양 회유권"],["신장","185cm · 28세"]],
+ look:"낮게 묶은 흑청색 장발에 푸른 눈. 백색 제복 위로 넓은 흑청 케이프를 두릅니다. 평소에는 접어두고 정찰할 때 펼칩니다.",
+ mind:"조용하고 예의 바릅니다. 어느 편도 들지 않고 늘 일정한 거리를 둡니다.",
+ talk:"정중한 존댓말. 짧고 담백한 문장으로, 침묵 뒤에 한 마디를 합니다.",
+ path:"자원해서 스콜에 탔습니다. 이유는 말하지 않았고, 아무도 묻지 않았습니다.",
+ q:"제3항로 진입했습니다. 이상 없습니다.",
+ li:["함내 최연소 장교입니다","신참의 이름을 부르는 유일한 사람입니다","곤란한 순간에만 나서고, 그때는 정확히 필요한 만큼만 돕습니다"]},
+"sq3-05":{eb:"스콜 인사기록 · No.05",nm:"로렐 반디에르",sub:"준위 · 구축함 스콜 기관장",meta:[["종","사자물고기"],["출신","남방 산호권"],["신장","180cm"]],
+ look:"흰 줄기가 섞인 주황색 머리가 한쪽 눈을 덮습니다. 주황색 눈. 백색 제복의 깃을 열고 헐렁하게 입으며, 주황 머플러를 두릅니다. 무채색 함내에서 유일한 난색입니다.",
+ mind:"규정도 계급도 신경 쓰지 않는 날라리. 기관실에서 잘 나오지 않다가, 신참이 있는 곳엔 꼭 나타납니다.",
+ talk:"전원에게 반말. 함장 앞에서만 형식적으로 존댓말을 쓰는데, 그마저 자주 잊습니다. 진지한 상황일수록 농담을 먼저 끼웁니다.",
+ path:"남방 산호권의 기관 기술자. 정규 편제를 거치지 않았고, 승선을 승인한 사람은 함장입니다.",
+ q:"야, 얼어붙었잖아. 숨 쉬어, 숨.",
+ li:["기관실 안에서는 아무도 그에게 명령할 수 없습니다. 배를 멈출 수 있는 유일한 사람입니다","산호권 기관을 완전히 다룰 수 있는 사람은 연합 전체에 열 명도 안 됩니다. 그래서 그를 자를 수 없습니다","화려한 색은 장식이 아니라 경고색입니다"]},
+
+"drift-01":{eb:"수배 기록 · 드리프트",nm:"카르네",sub:"두목",meta:[["종","곰치"],["출신","무소속"],["신장","196cm · 39세"]],
+ look:"흑록색 장발에 세로로 갈라진 노란빛 녹안. 목덜미에서 턱선까지 오래된 상처가 있습니다. 갈색 롱코트 안에 아무것도 갖춰 입지 않습니다.",
+ mind:"말이 없고 자리를 옮기지 않습니다. 지시를 거의 하지 않는데도 배 전체가 그를 통해 움직입니다.",
+ talk:"짧은 평서문. 명령형을 쓰지 않고 사실만 말합니다. 화가 날수록 목소리가 낮아집니다.",
+ path:"드리프트를 만든 사람입니다.",
+ q:"먹었으면 됐다.",
+ li:["거부권만 쓰고, 쓰는 일은 한 해에 한두 번입니다. 그때는 아무도 되묻지 않습니다","좁은 곳에서 잘 나오지 않고 필요할 때만 갑판에 오릅니다","식당 긴 식탁의 끝, 가장 어두운 자리가 그의 자리입니다"]},
+"drift-02":{eb:"수배 기록 · 드리프트",nm:"리스",sub:"유인 · 기만",meta:[["종","심해아귀"],["출신","무소속"],["신장","183cm · 31세"]],
+ look:"검은 장발. 앞머리 사이로 희미한 빛이 새어 나옵니다. 창백한 피부에 회색 눈, 웃는 얼굴이 기본값입니다.",
+ mind:"처음 만나는 사람에게 가장 다정합니다. 그 다정함이 정확히 함정입니다.",
+ talk:"부드러운 존댓말. 의문형으로 밀어붙이고, 상대의 이름을 자주 붙여 부릅니다.",
+ path:"섬을 잃은 사람입니다. 드리프트가 지나가다 건져 올렸습니다.",
+ q:"괜찮아요, 천천히 말해도 돼요. 이름이 뭐였죠?",
+ li:["연합 호위함을 끌어내는 가짜 조난 신호는 전부 그의 통신실에서 나갑니다","한 번 만난 사람의 이름과 말버릇을 잊지 않습니다","좁고 녹슨 통신실이 그의 영역입니다"]},
+"drift-03":{eb:"수배 기록 · 드리프트",nm:"베인",sub:"기관 · 파괴",meta:[["종","전기뱀장어"],["출신","남방 산호권"],["신장","188cm · 33세"]],
+ look:"옆머리를 민 남색 단발에 잿빛 눈. 목과 팔에 번개 모양의 방전 흉터가 있습니다. 작업복에 늘 절연 밴드를 감고 있습니다.",
+ mind:"무뚝뚝하고 대화를 먼저 끝냅니다. 쉬지 않습니다.",
+ talk:"단답 반말. 기계 얘기를 할 때만 문장이 길어지고, 그때만 상대의 눈을 봅니다.",
+ path:"남방 산호권 공방의 도제였습니다. 봉인된 기관을 열어봤다가 파문당해 섬으로 돌아가지 못했습니다.",
+ q:"만지지 마. 터져.",
+ li:["감정이 격해지면 의지와 상관없이 방전됩니다. 그래서 아무도 그를 만지지 않습니다","늘 덥고 기름 냄새가 나는 기관실이 그의 영역입니다. 허락 없이 들어가지 않는 게 규칙입니다","남방 항로 화물선의 기관을 멈추는 일을 맡습니다"]},
+"drift-04":{eb:"수배 기록 · 드리프트",nm:"셰이드",sub:"주력 전투",meta:[["종","바라쿠다"],["출신","무소속"],["신장","191cm · 27세"]],
+ look:"은회색 짧은 머리에 옅은 노란 눈. 얼굴 전체에 잔 상처가 있습니다. 상의를 반쯤 열고, 허리에 무기를 여럿 찹니다.",
+ mind:"웃으면서 싸움을 겁니다. 드리프트에서 가장 빠릅니다.",
+ talk:"반말에 말끝을 올립니다. 문장 끝에 도발을 붙이는 버릇이 있습니다.",
+ path:"열두 살 때부터 드리프트에서 자랐습니다. 다른 배에 있어본 적이 없습니다.",
+ q:"따라올 수 있으면 따라와 봐?",
+ li:["쾌속선의 선두에 서서 가장 먼저 적선에 오릅니다","스콜의 부장 사른 베커와 여러 번 칼을 맞댔습니다. 서로 이름을 아는 유일한 적수입니다","두목에게만 순종합니다. 카르네 앞에서는 도발하는 기질이 통째로 사라집니다"]},
+"drift-05":{eb:"수배 기록 · 드리프트",nm:"유안",sub:"정보",meta:[["종","뱀장어"],["출신","무소속"],["신장","177cm · 나이 불명"]],
+ look:"한쪽으로 넘긴 갈흑색 중단발에 옅은 갈색 눈. 특징 없는 얼굴을 스스로 관리하고, 어느 항구에서도 튀지 않는 옷을 입습니다.",
+ mind:"붙임성이 좋아서 어디서든 사흘이면 단골이 됩니다. 자기 얘기로 대화가 끝나게 두지 않습니다.",
+ talk:"누구에게나 존댓말. 질문을 받으면 질문으로 돌려주고, 자기 얘기가 나오면 화제를 자연스럽게 넘깁니다.",
+ path:"드리프트 초창기에 물자를 들고 나타나 그대로 남았습니다. 들어온 절차가 없습니다.",
+ q:"글쎄요, 몇 살로 보이세요?",
+ li:["연합 항구와 드리프트를 자유롭게 오갑니다","나이를 물으면 매번 다르게 답합니다","배에 처음 오른 신입은 유안이 가장 먼저 만나는 것이 관례입니다"]}
+};
+
+const $=id=>document.getElementById(id);
+const dos=$('dos');let lastFocus=null;
+function openDos(k,pf){
+  const d=P[k];if(!d)return;
+  const pir=k.startsWith('drift');
+  $('dos-card').classList.toggle('pir',pir);
+  $('dos-img').src='img/'+k+'.jpg';$('dos-img').alt=d.nm;
+  $('dos-tag').textContent=pir?'WANTED':'UAN PERSONNEL';
+  $('dos-eyebrow').textContent=d.eb;$('dos-name').textContent=d.nm;$('dos-sub').textContent=d.sub;
+  $('dos-meta').innerHTML='';d.meta.forEach(([a,b])=>{const e=document.createElement('div');e.innerHTML='<span class="mono"></span><b></b>';e.children[0].textContent=a;e.children[1].textContent=b;$('dos-meta').append(e)});
+  $('dos-sec').innerHTML='';[['외형',d.look],['성격',d.mind],['말투',d.talk],[pir?'합류':'배속',d.path]].forEach(([a,b])=>{const t=document.createElement('dt'),v=document.createElement('dd');t.textContent=a;v.textContent=b;$('dos-sec').append(t,v)});
+  $('dos-quote').textContent='「'+d.q+'」';
+  $('dos-list').innerHTML='';d.li.forEach(x=>{const l=document.createElement('li');l.textContent=x;$('dos-list').append(l)});
+  lastFocus=pf;dos.hidden=false;dos.scrollTop=0;document.body.style.overflow='hidden';$('dos-x').focus();
+}
+function closeDos(){dos.hidden=true;document.body.style.overflow='';if(lastFocus)lastFocus.focus()}
+$('dos-x').addEventListener('click',closeDos);
+dos.addEventListener('click',e=>{if(e.target===dos)closeDos()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dos.hidden)closeDos()});
+
+document.querySelectorAll('.pf[data-k]').forEach(pf=>{
+  const k=pf.dataset.k;if(!P[k])return;
+  const row=pf.closest('.crew');
+  const img=new Image();img.src='img/'+k+'.jpg';img.alt=P[k].nm;img.loading='lazy';
+  pf.prepend(img);pf.classList.add('has');
+  row.classList.add('open-able');row.tabIndex=0;row.setAttribute('aria-label',P[k].nm+' 기록 열람');
+  row.addEventListener('click',()=>openDos(k,row));
+  row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDos(k,row)}});
+});
+
+/* 층 목록 ↔ 단면도 연동 */
+document.querySelectorAll('.shipbox').forEach(box=>{
+  const svg=box.querySelector('svg');if(!svg)return;
+  const set=(d,on)=>{svg.querySelectorAll('.band[data-d="'+d+'"]').forEach(g=>g.classList.toggle('on',on));box.querySelectorAll('.decks li[data-d="'+d+'"]').forEach(l=>l.classList.toggle('on',on))};
+  box.querySelectorAll('.decks li').forEach(li=>{const d=li.dataset.d;
+    ['mouseenter','focus'].forEach(e=>li.addEventListener(e,()=>set(d,true)));
+    ['mouseleave','blur'].forEach(e=>li.addEventListener(e,()=>set(d,false)));});
+  svg.querySelectorAll('.band').forEach(g=>{const d=g.dataset.d;
+    g.addEventListener('mouseenter',()=>set(d,true));g.addEventListener('mouseleave',()=>set(d,false));});
+});
+
+/* 해도 */
+const Z={
+ n:{c:"NORTH · 01",n:"북방 심해권",d:"군사의 중심. 섬이 크고 깊어 가장 안전하다고 여겨지며, 연합 지휘부와 장교 대부분이 이곳에서 나옵니다. 해무가 잦은 바다입니다.",sp:"대형 고래목 · 상어류",w:"카엘 보른, 사른 베커, 세베린 그라우, 카시안 레갈"},
+ e:{c:"EAST · 02",n:"외양 회유권",d:"고속 어종의 바다. 어느 섬에도 정착하지 않고 전령과 정찰로 연합을 잇습니다. 회류기에 가장 크게 움직입니다.",sp:"고속 어종",w:"이븐 사엘, 리오 벨라스"},
+ s:{c:"SOUTH · 03",n:"남방 산호권",d:"함선 기관을 만드는 유일한 곳. 도면 없이 손으로 전해지는 기술을 쥐고 있지만, 섬이 가장 작고 가장 빨리 줄어듭니다. 남방 항로가 여기서 시작됩니다.",sp:"소형 · 화려한 종",w:"로렐 반디에르, 가레스 에피넬, 주드 크레이트, 베인"},
+ w:{c:"WEST · ∅",n:"무소속 해역",d:"재배치로 버려진 섬들이 남은 바다. 연합의 배급도 방위도 닿지 않습니다. 남방 항로가 이곳을 지나고, 드리프트는 비는 섬을 돌며 정박합니다. 템페스트의 교전 기록이 가장 많이 찍힌 곳이기도 합니다.",sp:"섬을 잃은 모든 종",w:"카르네, 리스, 셰이드, 유안"},
+ c:{c:"CENTER · 00",n:"중앙 환초권",d:"교역과 물류의 중심. 가장 부유하지만 무력은 없습니다. 연합의 모든 화물 기록이 이곳을 지나고, 잔잔철 개항제가 가장 성대하게 열립니다.",sp:"여과섭식 · 대형 온순종",w:"아마데오 리렌"}
+};
+const zi=document.getElementById('zinfo');
+function selZone(k){
+  const z=Z[k];if(!z)return;
+  document.querySelectorAll('#mapsvg .zone').forEach(p=>p.classList.toggle('sel',p.dataset.z===k));
+  document.getElementById('zi-code').textContent=z.c;document.getElementById('zi-name').textContent=z.n;
+  document.getElementById('zi-desc').textContent=z.d;document.getElementById('zi-sp').textContent=z.sp;document.getElementById('zi-who').textContent=z.w;
+  zi.classList.toggle('void',k==='w');
+}
+document.querySelectorAll('#mapsvg .zone').forEach(p=>{
+  p.addEventListener('click',()=>selZone(p.dataset.z));
+  p.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selZone(p.dataset.z)}});
+});
+document.querySelectorAll('.tg').forEach(b=>b.addEventListener('click',()=>{
+  b.classList.toggle('on');const on=b.classList.contains('on');
+  document.querySelectorAll('#mapsvg .layer[data-layer="'+b.dataset.l+'"]').forEach(g=>g.classList.toggle('off',!on));
+  b.setAttribute('aria-pressed',on);
+}));
+selZone('w');
+
+/* 상단 바: 현재 위치 + 진행 */
+(function(){
+  const links=[...document.querySelectorAll('.nav a[data-s]')];
+  const secs=links.map(l=>document.getElementById(l.dataset.s)).filter(Boolean);
+  const pos=document.getElementById('bar-pos'),prog=document.getElementById('bar-prog');
+  let cur=null;
+  function upd(){
+    const y=window.scrollY+120;let id=null;
+    secs.forEach(sec=>{if(sec.offsetTop<=y)id=sec.id});
+    if(id!==cur){cur=id;links.forEach(l=>{const on=l.dataset.s===id;l.classList.toggle('on',on);if(on){l.setAttribute('aria-current','true');l.scrollIntoView({block:'nearest',inline:'nearest'})}else l.removeAttribute('aria-current')});
+      const l=links.find(x=>x.dataset.s===id);pos.textContent=l?l.querySelector('.ne').textContent.toUpperCase()+' · '+l.querySelector('.nk').textContent:'FLEET INDEX';}
+    const h=document.documentElement.scrollHeight-window.innerHeight;prog.style.width=(h>0?Math.min(100,window.scrollY/h*100):0)+'%';
+  }
+  window.addEventListener('scroll',upd,{passive:true});window.addEventListener('resize',upd);upd();
+})();
+</script>
+
+</body>
+</html>
