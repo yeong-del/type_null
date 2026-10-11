@@ -64,6 +64,8 @@ main,header,footer{position:relative;z-index:1}
 .nav a:hover{color:var(--paper);background:var(--hull)}
 .nav a.on{color:var(--paper)}
 .nav a.on::after,.nav a:hover::after{transform:scaleX(1)}
+.nav a.nav-out{border-left:1px solid var(--rule-s);margin-left:6px}
+.nav a.nav-out .ne{color:var(--red);opacity:1}
 .nav a.pir .ne{color:var(--red);opacity:1}
 .nav a.pir.on .nk,.nav a.pir:hover .nk{color:var(--red)}
 .bar-meta{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.6rem;letter-spacing:.18em;color:var(--fog);flex:none;padding-left:clamp(12px,2vw,24px);border-left:1px solid var(--rule-s)}
@@ -222,6 +224,8 @@ section{padding-block:clamp(56px,8vw,104px);border-bottom:1px solid var(--rule-s
 .dos-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .dos-list li{padding:8px 0;border-top:1px solid var(--rule);font-size:.88rem;display:grid;grid-template-columns:1.2rem minmax(0,1fr);gap:6px;color:#CFCBC6}
 .dos-list li::before{content:"—";color:var(--red)}
+.dos-pr{align-self:flex-start;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.14em;padding:10px 14px;border:1px solid var(--rule-s);background:var(--ink)}
+.dos-pr:hover{border-color:var(--red);color:var(--red)}
 .dos-x{position:absolute;top:0;right:0;z-index:2;background:var(--ink);color:var(--paper);border:1px solid var(--rule-s);font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;padding:10px 14px;cursor:pointer}
 .dos-x:hover{border-color:var(--red);color:var(--red)}
 .dos-tag{position:absolute;left:12px;bottom:12px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;background:var(--ink);padding:5px 8px;border:1px solid var(--rule-s)}
@@ -407,7 +411,7 @@ footer .sig span{color:var(--red)}
 <header class="bar">
   <div class="wrap bar-in">
     <a class="brand" href="#top" aria-label="맨 위로"><span class="b-mk">UAN</span><span class="b-sl">/</span><span class="b-nl">NULL</span><span class="b-sub">연합해군 시리즈</span></a>
-    <nav class="nav" aria-label="함대 색인"><a href="#world" data-s="world"><span class="ne">World</span><span class="nk">세계</span></a><a href="#chart" data-s="chart"><span class="ne">Chart</span><span class="nk">해도</span></a><a href="#sq1" data-s="sq1"><span class="ne">1st</span><span class="nk">제1전대</span></a><a href="#sq2" data-s="sq2"><span class="ne">2nd</span><span class="nk">제2전대</span></a><a href="#sq3" data-s="sq3"><span class="ne">3rd</span><span class="nk">제3전대</span></a><a href="#drift" class="pir" data-s="drift"><span class="ne">Drift</span><span class="nk">드리프트</span></a><a href="#cross" data-s="cross"><span class="ne">Cross</span><span class="nk">교차선</span></a></nav>
+    <nav class="nav" aria-label="함대 색인"><a href="#world" data-s="world"><span class="ne">World</span><span class="nk">세계</span></a><a href="#chart" data-s="chart"><span class="ne">Chart</span><span class="nk">해도</span></a><a href="#sq1" data-s="sq1"><span class="ne">1st</span><span class="nk">제1전대</span></a><a href="#sq2" data-s="sq2"><span class="ne">2nd</span><span class="nk">제2전대</span></a><a href="#sq3" data-s="sq3"><span class="ne">3rd</span><span class="nk">제3전대</span></a><a href="#drift" class="pir" data-s="drift"><span class="ne">Drift</span><span class="nk">드리프트</span></a><a href="#cross" data-s="cross"><span class="ne">Cross</span><span class="nk">교차선</span></a><a href="prompts.html" class="nav-out"><span class="ne">Prompts ↗</span><span class="nk">프롬프트</span></a></nav>
     <span class="bar-meta"><i class="dot"></i><span id="bar-pos">FLEET INDEX</span></span>
   </div>
   <div class="bar-prog" aria-hidden="true"><span id="bar-prog"></span></div>
@@ -777,6 +781,7 @@ footer .sig span{color:var(--red)}
       <dl class="dos-sec" id="dos-sec"></dl>
       <blockquote class="dos-quote" id="dos-quote"></blockquote>
       <ul class="dos-list" id="dos-list"></ul>
+      <a class="dos-pr" id="dos-pr" href="prompts.html">전신 · 프롬프트 보기 →</a>
     </div>
   </article>
 </div>
@@ -940,6 +945,7 @@ function openDos(k,pf){
   $('dos-meta').innerHTML='';d.meta.forEach(([a,b])=>{const e=document.createElement('div');e.innerHTML='<span class="mono"></span><b></b>';e.children[0].textContent=a;e.children[1].textContent=b;$('dos-meta').append(e)});
   $('dos-sec').innerHTML='';[['외형',d.look],['성격',d.mind],['말투',d.talk],[pir?'합류':'배속',d.path]].forEach(([a,b])=>{const t=document.createElement('dt'),v=document.createElement('dd');t.textContent=a;v.textContent=b;$('dos-sec').append(t,v)});
   $('dos-quote').textContent='「'+d.q+'」';
+  $('dos-pr').href='prompts.html#'+k;
   $('dos-list').innerHTML='';d.li.forEach(x=>{const l=document.createElement('li');l.textContent=x;$('dos-list').append(l)});
   lastFocus=pf;dos.hidden=false;dos.scrollTop=0;document.body.style.overflow='hidden';$('dos-x').focus();
 }

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>연합해군 프롬프트 보관함</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* 레이아웃: 신장 눈금자 앞에 다섯이 실제 키 비율로 나란히 선 라인업. 한 명을 고르면 아래에 그 사람의 프롬프트 시트가 열림 */
+:root{
+  --ink:#0B0B0C;--hull:#141415;--plate:#1C1C1E;--paper:#EDEAE6;--fog:#8C8986;
+  --red:#E3261C;--red-deep:#8E1710;--red-mute:#9A3B34;--sel:#6E2C27;
+  --rule:rgba(237,234,230,.12);--rule-s:rgba(237,234,230,.32);
+  --f-disp:'Big Shoulders Display','Black Han Sans',Impact,sans-serif;
+  --f-kr-disp:'Black Han Sans','Big Shoulders Display',sans-serif;
+  --f-body:'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--f-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
+::selection{background:var(--sel);color:var(--paper)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.wrap{width:100%;max-width:1360px;margin-inline:auto;padding-inline:clamp(16px,4vw,48px)}
+.mono{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--fog)}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.07;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* 상단 바 */
+.bar{position:sticky;top:0;z-index:40;background:rgba(11,11,12,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--rule-s);padding-top:env(safe-area-inset-top,0px)}
+.bar-in{display:flex;align-items:stretch;gap:clamp(12px,2.5vw,28px);min-height:58px}
+.brand{display:flex;flex-direction:column;justify-content:center;padding-right:clamp(12px,2vw,24px);border-right:1px solid var(--rule-s);flex:none}
+.brand b{font-family:var(--f-disp);font-weight:900;font-size:1.35rem;line-height:1;letter-spacing:.04em}
+.brand b i{font-style:normal;color:var(--red)}
+.brand span{font-family:var(--f-mono);font-size:.56rem;letter-spacing:.2em;color:var(--fog);margin-top:4px}
+.tabs{display:flex;align-items:stretch;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 clamp(10px,1.4vw,18px);background:none;border:0;cursor:pointer;color:var(--fog);white-space:nowrap;text-align:left}
+.tab::after{content:"";position:absolute;left:clamp(10px,1.4vw,18px);right:clamp(10px,1.4vw,18px);bottom:-1px;height:2px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.tab .te{font-family:var(--f-mono);font-size:.56rem;letter-spacing:.18em;opacity:.7}
+.tab .tk{font-weight:500;font-size:.86rem}
+.tab:hover{color:var(--paper);background:var(--hull)}
+.tab[aria-selected="true"]{color:var(--paper)}
+.tab[aria-selected="true"]::after,.tab:hover::after{transform:scaleX(1)}
+.tab.pir .te{color:var(--red);opacity:1}
+.back{display:flex;align-items:center;gap:8px;padding-left:clamp(12px,2vw,24px);border-left:1px solid var(--rule-s);font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;color:var(--fog);flex:none}
+.back:hover{color:var(--red)}
+@media (max-width:640px){.brand span{display:none}.back .bl{display:none}}
+
+/* 머리 */
+.head{padding-block:clamp(36px,6vw,72px) clamp(20px,3vw,32px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,4vw,56px);align-items:end}
+@media (max-width:800px){.head{grid-template-columns:1fr}}
+.head h1{margin:0;font-family:var(--f-disp);font-weight:900;text-transform:uppercase;font-size:clamp(3.2rem,10vw,8rem);line-height:.82;letter-spacing:-.01em}
+.head h1 .out{color:transparent;-webkit-text-stroke:1.5px var(--paper)}
+.head h1 small{display:block;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(1.3rem,2.6vw,2rem);line-height:1.2;margin-top:14px;text-transform:none;letter-spacing:0}
+.head p{margin:0;max-width:56ch;color:#CFCBC6}
+.head p b{color:var(--paper);font-weight:600}
+
+/* 라인업 */
+.stage-hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:10px;border-bottom:2px solid var(--paper)}
+.stage-hd b{font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(1.5rem,3vw,2.2rem)}
+.stage-hd.pir{border-bottom-color:var(--red)}
+.stage-wrap{overflow-x:auto;scrollbar-width:thin;border-bottom:1px solid var(--rule-s)}
+.stage{--H:clamp(300px,27vw,470px);position:relative;height:calc(var(--H) + 78px);min-width:calc(var(--H) * 2.95 + 130px);padding-left:64px}
+.ruler{position:absolute;left:0;right:0;top:0;height:var(--H);pointer-events:none}
+.ruler .tick{position:absolute;left:0;right:0;border-top:1px solid var(--rule)}
+.ruler .tick.major{border-top-color:var(--rule-s)}
+.ruler .tick span{position:absolute;left:0;top:-9px;font-family:var(--f-mono);font-size:.62rem;color:var(--fog);background:var(--ink);padding-right:6px;font-variant-numeric:tabular-nums}
+.ruler .tick.r210 span{color:var(--red)}
+.line{position:absolute;left:72px;right:0;top:0;height:var(--H);display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.fig{position:relative;flex:none;height:calc(var(--H) * var(--h) / 210);aspect-ratio:68/120;background:var(--plate);border:1px solid var(--rule-s);padding:0;cursor:pointer;transition:border-color .2s,transform .25s}
+.fig img.full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(.55) brightness(.78);transition:filter .3s}
+.fig .ghost{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.fig .ghost img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:50% 18%;filter:grayscale(.6) brightness(.7)}
+.fig .ghost i{flex:1;display:grid;place-items:center;font-style:normal;font-family:var(--f-mono);font-size:.58rem;letter-spacing:.16em;color:var(--fog);writing-mode:vertical-rl}
+.fig .mark{position:absolute;left:0;right:0;top:-1px;border-top:2px solid var(--red);opacity:0;transition:opacity .25s;z-index:2}
+.fig .mark span{position:absolute;right:0;top:-20px;font-family:var(--f-mono);font-size:.62rem;color:var(--red);font-variant-numeric:tabular-nums}
+.fig .tag{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 12px);width:max-content;max-width:160px;text-align:center;display:flex;flex-direction:column;gap:1px}
+.fig .tag b{font-family:var(--f-kr-disp);font-weight:400;font-size:1.05rem;line-height:1.2;color:var(--fog);transition:color .2s}
+.fig .tag span{font-family:var(--f-mono);font-size:.58rem;letter-spacing:.12em;color:var(--fog)}
+.fig:hover img.full,.fig[aria-pressed="true"] img.full,.fig:hover .ghost img,.fig[aria-pressed="true"] .ghost img{filter:none}
+.fig:hover .mark,.fig[aria-pressed="true"] .mark{opacity:1}
+.fig:hover{transform:translateY(-4px)}
+.fig[aria-pressed="true"]{border-color:var(--red)}
+.fig[aria-pressed="true"] .tag b{color:var(--paper)}
+.fig[aria-pressed="true"] .tag::before{content:"";display:block;margin:0 auto 6px;width:18px;height:2px;background:var(--red)}
+
+/* 프롬프트 시트 */
+.sheet{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,56px);padding-block:clamp(36px,5vw,56px) clamp(56px,8vw,96px)}
+@media (max-width:900px){.sheet{grid-template-columns:1fr}}
+.id{display:flex;flex-direction:column;gap:16px;min-width:0}
+.id-pic{position:relative;aspect-ratio:68/120;max-height:78vh;max-width:100%;background:var(--plate);border:1px solid var(--rule-s);overflow:hidden}
+.id-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.id-pic .tg{position:absolute;left:10px;bottom:10px;font-family:var(--f-mono);font-size:.6rem;letter-spacing:.16em;background:var(--ink);border:1px solid var(--rule-s);padding:4px 8px}
+.id h2{margin:0;font-family:var(--f-kr-disp);font-weight:400;font-size:clamp(2rem,4vw,2.8rem);line-height:1.05}
+.id .sub{font-size:.9rem;color:#CFCBC6}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.meta div{background:var(--ink);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.meta b{font-weight:600;font-size:.92rem;font-variant-numeric:tabular-nums}
+.to-site{align-self:flex-start;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.14em;color:var(--fog);border-bottom:1px solid var(--rule-s);padding-bottom:2px}
+.to-site:hover{color:var(--red);border-color:var(--red)}
+.blocks{display:flex;flex-direction:column;gap:22px;min-width:0}
+.pb{border:1px solid var(--rule-s);background:var(--hull);min-width:0}
+.pb.neg{border-color:var(--rule)}
+.pb-hd{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--rule)}
+.pb-hd b{font-weight:600;font-size:.92rem}
+.pb-hd .mono{margin-left:10px}
+.copy{background:var(--ink);border:1px solid var(--rule-s);padding:6px 12px;font-family:var(--f-mono);font-size:.64rem;letter-spacing:.14em;cursor:pointer;flex:none}
+.copy:hover{border-color:var(--paper)}
+.copy.ok{border-color:var(--red);color:var(--red)}
+.copy:disabled{opacity:.35;cursor:default}
+.pb pre{margin:0;padding:16px 16px 18px;font-family:var(--f-mono);font-size:.8rem;line-height:1.75;white-space:pre-wrap;word-break:break-word;color:#DAD6D1;max-height:340px;overflow:auto}
+.pb .empty{padding:22px 16px;font-size:.88rem;color:var(--fog);display:flex;gap:10px;align-items:baseline}
+.pb .empty::before{content:"";width:8px;height:8px;flex:none;border:1px dashed var(--fog);transform:translateY(1px)}
+.note{border-left:3px solid var(--red);background:var(--plate);padding:12px 16px;font-size:.88rem;color:#DAD6D1}
+.note:empty{display:none}
+.how{border-top:1px solid var(--rule-s);padding-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:640px){.how{grid-template-columns:1fr}}
+.how div{display:flex;flex-direction:column;gap:4px;font-size:.84rem;color:#BEBAB5}
+.how b{font-family:var(--f-kr-disp);font-weight:400;font-size:1.05rem;color:var(--paper)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--paper);color:var(--ink);font-family:var(--f-mono);font-size:.7rem;letter-spacing:.14em;padding:10px 16px;z-index:70}
+footer{border-top:1px solid var(--rule-s);padding-block:32px 48px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:end}
+footer b{font-family:var(--f-disp);font-weight:900;font-size:2.4rem;line-height:.9}
+footer b i{font-style:normal;color:var(--red)}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="index.html"><b>UAN<i>/</i>NULL</b><span>프롬프트 보관함</span></a>
+    <div class="tabs" role="tablist" aria-label="전대 선택" id="tabs"></div>
+    <a class="back" href="index.html">← <span class="bl">메인 사이트</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap head">
+    <h1>Line<span class="out">up</span><small>캐릭터 프롬프트 보관함</small></h1>
+    <p>연합해군 시리즈 스무 명의 전신과 외형 프롬프트를 모았습니다. 뒤의 눈금은 실제 키입니다. 인물을 누르면 아래에 <b>외형 프롬프트</b>가 열리고, 복사 버튼으로 바로 가져갈 수 있습니다.</p>
+  </div>
+
+  <section class="wrap" aria-labelledby="stage-title">
+    <div class="stage-hd" id="stage-hd"><b id="stage-title"></b><span class="mono" id="stage-en"></span></div>
+    <div class="stage-wrap"><div class="stage" id="stage">
+      <div class="ruler" id="ruler" aria-hidden="true"></div>
+      <div class="line" id="line"></div>
+    </div></div>
+  </section>
+
+  <section class="wrap sheet" id="sheet" aria-live="polite">
+    <div class="id">
+      <div class="id-pic"><img id="s-img" alt=""><span class="tg" id="s-tag"></span></div>
+      <span class="mono" id="s-eb"></span>
+      <h2 id="s-name"></h2>
+      <span class="sub" id="s-sub"></span>
+      <div class="meta" id="s-meta"></div>
+      <a class="to-site" id="s-link" href="index.html">메인 사이트에서 기록 보기 →</a>
+    </div>
+    <div class="blocks">
+      <div class="pb" id="pb-full">
+        <div class="pb-hd"><span><b>외형 프롬프트</b><span class="mono">Appearance · NAI</span></span><button class="copy" type="button" data-t="full">COPY</button></div>
+        <div class="pb-body"></div>
+      </div>
+      <div class="note" id="s-note"></div>
+      <div class="how">
+        <div><b>그대로 쓰기</b>복사한 외형 프롬프트를 NAI 입력칸에 붙여 넣으면 됩니다.</div>
+        <div><b>구도는 따로</b>외형 프롬프트 뒤에 포즈·배경 태그만 붙이면 같은 인물로 다른 장면을 뽑을 수 있습니다.</div>
+        <div><b>공통 규칙</b>지느러미·꼬리·귀 같은 해양생물 부위는 그리지 않습니다. 종은 색과 분위기로만.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><b>NuLL<i>.</i></b><span class="mono">연합해군 시리즈 · 프롬프트 보관함 · by 널</span></div>
+</footer>
+<div class="toast" id="toast" hidden>COPIED</div>
+
+<script>
+/* ───────────────────────────────────────────────
+   프롬프트 채우는 곳
+   - look: 외형 프롬프트 / note: 메모 (선택)
+   - 비워 두면 페이지에 「준비 중」으로 표시됩니다
+   - 전신 이미지는 img/full/키.jpg 로 넣으면 자동으로 라인업에 섭니다 (예: img/full/sq1-01.jpg)
+   ─────────────────────────────────────────────── */
+const PROMPTS={
+  "sq1-01":{look:"1boy, mature male, tall, broad shoulders, muscular, black hair, short hair, 1.2::undercut::, side shaved, asymmetrical hair, hair slicked to one side, 1.3::red eyes::, 1.3::scar across eye::, one eye closed, scarred eyelid, scar on mouth, scar on lip, sharp eyes, 1.2::black military uniform::, silver embroidery, epaulettes, buttoned collar, black gloves",note:""},
+  "sq1-02":{look:"1boy, mature male, tall, broad shoulders, muscular, black hair, short hair, 1.2::spiked hair::, messy hair, textured hair, swept back, 1.3::blue eyes::, sharp eyes, 1.3::burn scar::, burn scar on face, scar covering half of face, scarred skin, uneven skin texture, 1.2::black military uniform::, silver embroidery, epaulettes, high collar,",note:""},
+  "sq1-03":{look:"1boy, mature male, tall, broad shoulders, muscular, black hair, long hair, center part hair, 1.3::curly hair::, voluminous hair, loose curls, hair over shoulder, side bangs, 1.3::orange eyes::, droopy eyes, tareme, long eyelashes, 1.2::black military uniform::, silver embroidery, epaulettes, unbuttoned collar",note:""},
+  "sq1-04":{look:"1boy, mature male, tall, broad shoulders, slender muscular, black hair, very long hair,center part hair,  1.3::floating hair::, 1.2::tentacle hair::, thin hair strands mixed with tentacles, translucent tentacles, wavy hair, hair spread out, 1.3::black eyes::, empty eyes, no highlights, dull eyes, 1.1::black military uniform::, silver embroidery, epaulettescentipede tattoo, neck tattoo, tattoo on hand",note:""},
+  "sq1-05":{look:"1boy, mature male, tall, broad shoulders, muscular, black hair, short hair, spiked hair, messy bangs, hair slicked back loosely, 1.3::purple eyes::, sharp eyes, narrow eyes, tsurime, multiple ear piercings, silver earrings, hoop earrings, stud earrings, 1.2::black military uniform::, silver embroidery, high collar, popped collar, loose necktie, epaulettes, neck tattoo, radial pattern tattoo",note:""},
+  "sq2-01":{look:"-2::bangs::, boy, mature male,\n1.3::white hair::, forehead, long hair, straight hair, hair over shoulder, long eyelesh,\n1.4::red sclera::, 1.3::white pupils::, sharp eyes, thick eyebrows,\npale skin, 1.2::scar::, scar on face, scar across eye, scar on cheek, scar on neck,\n tall male, broad shoulders,\n\n0.1::muscular, muscle, heavy build, husky build, thick arms, thick neck::,\n\n1.3::white military uniform::, white naval uniform, dress uniform, double-breasted coat,\nstand collar, gold epaulettes, gold trim,",note:""},
+  "sq2-02":{look:"1boy, male focus, adult, mature male, 0.8::muscular male, large build, tall::, broad shoulders, 1.3::brown hair,::, 1.5::spotted hair, black spots::, short hair, 1.2::yellow eyes, gold eyes::, 1.3::right black eyepatch::, 1.2::scars, scar on face, scar across eye, multiple scars::,\n\n black military uniform, naval uniform,",note:""},
+  "sq2-03":{look:"1boy, male focus, adult, glasses, 1.2::toned male::, ::slim, narrow waist, broad shoulders::, 1.3::blue hair::, short hair, 1.5::grey eyes::, 1.2::sharp eyes::, tsurime, 1.2::burn scar on neck::,\n\nblack military uniform, naval uniform,",note:""},
+  "sq2-04":{look:"1boy, male focus, adult, 1.8::muscular male::, toned male, broad shoulders, 2::red hair::, 1.5::grey inner hair, colored inner hair::, 1.4::long hair::, 1.2::red eyes::, 1.2::droopy eyes::, 1.2::multiple piercings::, ear piercing, eyebrow piercing, lip piercing,\n\nblack military uniform, naval uniform",note:""},
+  "sq2-05":{look:"1boy, male focus, adult, 0.8::muscular male, stocky, thick arms, thick neck::, pectorals, black eyes, 1.3::center parted hair, white hair, colored inner hair, black inner hair::, medium hair, 1.2::dark-skinned male, tan::, 1.2::tattoo, arm tattoo, neck tattoo::,",note:""},
+  "sq3-01":{look:"1boy, long black hair, white streaked hair,tsurime, 1.5::blue sclera::, 1.3::black pupils::, scar on face, scar across eye, scar on nose, cold expression, 0.5::muscular, bulky, thick muscle, heavy build, husky build, thick arms, thick neck,::\n\nblack military uniform, high collar,  white streaks, peaked cap",note:""},
+  "sq3-02":{look:"1boy, solo, mature male, sharp eyes, cold expression,\ngrey hair, medium hair, slicked back hair, black eyes,\n\nwhite military uniform, high collar,\nsteel grey epaulettes, grey neck scarf, military cap,\n\n0.6::muscular, bulky, thick muscle, heavy build, husky build, thick arms, thick neck,::",note:""},
+  "sq3-03":{look:"1boy, male focus, tall man, large build, broad shoulders,\nblue grey hair, short hair,blue grey eyes, gentle eyes, calm expression, half-closed eyes,\n0.7::muscular, bulky, thick muscle, heavy build, husky build, thick arms, thick neck,::\nwhite military uniform, high collar,\nwhite cape, spotted pattern lining, blue grey necktie,\nmilitary cap,",note:""},
+  "sq3-04":{look:"1boy, solo, male focus, slender, quiet expression,\ndark blue hair, long hair, low ponytail, blue eyes,\nwhite military uniform, high collar,\ndark blue cape, wide draping cape,\nmilitary cap",note:""},
+  "sq3-05":{look:"1boy, solo, male focus, handsome, mature male, lazy expression, smirk,\norange hair, white streaked hair, messy long hair, orange eyes, orange hair, white streaked hair, medium hair, shoulder length hair, hair between eyes\n\nwhite military uniform, open collar, loose uniform,\norange muffler, striped cuffs,\n\n2::age down,::",note:""},
+  "drift-01":{look:"1boy, solo, male focus, ::mature male,:: handsome,  0.8::muscular, bulky, thick muscle, heavy build, husky build, thick arms, thick neck::,\ndark green hair, 1.8::long hair::, messy hair, swept back hair,\nyellow green eyes, slit pupils, sharp eyes, calm expression,\nscar on neck,",note:""},
+  "drift-02":{look:"1boy, solo, male focus, handsome, bishounen,\nblack hair, 2::long hair::, hair between eyes,\npale skin, grey eyes, soft smile, gentle expression, closed eyes,\nglowing light, light particles,\n\nblack shirt,",note:""},
+  "drift-03":{look:"1boy, solo, male focus, handsome, mature male,\nnavy blue hair, short hair, undercut,\ngrey eyes, expressionless, stoic,\nlightning scar, scars on arms, scar on neck,\n\nmuscular, toned, dark navy work jumpsuit, jumpsuit sleeves tied around waist, black tank top, 1.2::black rubber bands wrapped around forearms::, insulated wrist wraps, rubber gloves, tool belt, wrench, oil stains, grease stains on clothes, heavy work boots, white shirt,",note:""},
+  "drift-04":{look:"1boy, solo, male focus, handsome, young man,\nsilver hair, short hair, swept back hair,\npale yellow eyes, sharp eyes, grin, smirk,\nscars on face,\nopen shirt, chest, belt\n\n0.4::muscular, muscle, heavy build, husky build, thick arms, thick neck::,",note:""},
+  "drift-05":{look:"1boy, solo, male focus, handsome,\ndark brown hair, 1.5::medium hair::,\nlight brown eyes, half-closed eyes, faint smile, orange eyes, unremarkable,\nplain clothes, loose beige linen shirt, sleeves rolled up, dark brown vest, dark grey trousers, worn leather boots, brown leather crossbody bag, faded muted colors, no accessories\nblack skirt,",note:""}
+};
+
+const SQ=[
+ {id:"sq1",kr:"제1전대 칼름",en:"1st · Calm",tag:"CALM · ADMIRALTY",c:[
+  ["하르발 스카르","중장 · 전대장","그린란드상어",198],["율리안 벨루가","소장 · 재정참모","철갑상어",189],["에밀 캄푸스","준장 · 인사참모","해마",186],["루시앙 오렐리아","대령 · 정보참모","메두사 해파리",191],["덱스 에키노","중령 · 감찰관","성게",184]]},
+ {id:"sq2",kr:"제2전대 템페스트",en:"2nd · Tempest",tag:"UAN PERSONNEL",c:[
+  ["세베린 그라우","대령 · 전대장","귀신고래",195],["가레스 에피넬","중령 · 부장","골리앗 그루퍼",210],["리오 벨라스","소령 · 항해장","돛새치",183],["카시안 레갈","대위 · 포술장","산갈치",191],["주드 크레이트","중위 · 강습대장","바다뱀",201]]},
+ {id:"sq3",kr:"제3전대 스콜",en:"3rd · Skoll",tag:"UAN PERSONNEL",c:[
+  ["카엘 보른","대령 · 함장","범고래",204],["사른 베커","소령 · 부장","백상아리",198],["아마데오 리렌","대위 · 작전관","고래상어",208],["이븐 사엘","중위 · 항해정찰관","만타가오리",185],["로렐 반디에르","준위 · 기관장","사자물고기",180]]},
+ {id:"drift",kr:"해적단 드리프트",en:"Drift · Unregistered",tag:"WANTED",pir:true,c:[
+  ["카르네","두목","곰치",196],["리스","유인 · 기만","심해아귀",183],["베인","기관 · 파괴","전기뱀장어",188],["셰이드","주력 전투","바라쿠다",191],["유안","정보","뱀장어",177]]}
+];
+const MAXH=210;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+let curSq=null,curKey=null;
+
+/* 눈금자 */
+(function(){
+  const r=$('ruler');
+  for(let cm=0;cm<=MAXH;cm+=10){
+    const t=document.createElement('div');t.className='tick'+(cm%50===0?' major':'')+(cm===MAXH?' r210':'');
+    t.style.bottom=(cm/MAXH*100)+'%';
+    if(cm%30===0||cm===MAXH){const s=document.createElement('span');s.textContent=cm+'cm';t.append(s)}
+    r.append(t);
+  }
+})();
+
+/* 탭 */
+SQ.forEach(sq=>{
+  const b=document.createElement('button');b.type='button';b.className='tab'+(sq.pir?' pir':'');b.setAttribute('role','tab');b.id='tab-'+sq.id;
+  b.innerHTML='<span class="te"></span><span class="tk"></span>';b.children[0].textContent=sq.en.toUpperCase();b.children[1].textContent=sq.kr;
+  b.addEventListener('click',()=>showSq(sq.id,true));$('tabs').append(b);
+});
+
+function imgFull(k){return 'img/full/'+k+'.jpg'}
+function imgFace(k){return 'img/'+k+'.jpg'}
+
+function showSq(id,pickFirst){
+  const sq=SQ.find(s=>s.id===id);if(!sq)return;curSq=sq;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.id==='tab-'+id));
+  $('stage-title').textContent=sq.kr;$('stage-en').textContent=sq.en.toUpperCase()+' · LINEUP';
+  $('stage-hd').classList.toggle('pir',!!sq.pir);
+  const line=$('line');line.innerHTML='';
+  sq.c.forEach((c,i)=>{
+    const k=sq.id+'-'+pad(i+1);
+    const f=document.createElement('button');f.type='button';f.className='fig';f.dataset.k=k;f.style.setProperty('--h',c[3]);
+    f.setAttribute('aria-label',c[0]+' 프롬프트 보기');
+    const full=new Image();full.className='full';full.alt='';full.src=imgFull(k);full.loading='lazy';
+    full.onerror=()=>{full.remove();const g=document.createElement('span');g.className='ghost';const fi=new Image();fi.src=imgFace(k);fi.alt='';const t=document.createElement('i');t.textContent='전신 준비 중';g.append(fi,t);f.prepend(g)};
+    const mk=document.createElement('span');mk.className='mark';mk.innerHTML='<span></span>';mk.firstChild.textContent=c[3]+'cm';
+    const tg=document.createElement('span');tg.className='tag';tg.innerHTML='<b></b><span></span>';tg.children[0].textContent=c[0];tg.children[1].textContent=c[2];
+    f.append(full,mk,tg);
+    f.addEventListener('click',()=>pick(k,true));
+    line.append(f);
+  });
+  if(pickFirst)pick(sq.id+'-01',false);
+}
+
+function block(id,text,emptyMsg){
+  const b=$(id).querySelector('.pb-body');b.innerHTML='';
+  const btn=$(id).querySelector('.copy');
+  if(text&&text.trim()){const p=document.createElement('pre');p.textContent=text.trim();b.append(p);btn.disabled=false}
+  else{const e=document.createElement('div');e.className='empty';e.textContent=emptyMsg;b.append(e);btn.disabled=true}
+}
+
+function pick(k,scroll){
+  const [sid,n]=k.split('-');const sq=SQ.find(s=>s.id===sid);if(!sq)return;
+  if(curSq!==sq)showSq(sid,false);
+  const c=sq.c[parseInt(n,10)-1];if(!c)return;curKey=k;
+  document.querySelectorAll('.fig').forEach(f=>f.setAttribute('aria-pressed',f.dataset.k===k));
+  const si=$('s-img');si.onerror=()=>{si.onerror=null;si.src=imgFace(k)};si.src=imgFull(k);$('s-img').alt=c[0];$('s-tag').textContent=sq.tag;
+  $('s-eb').textContent=sq.kr+' · No.'+n;$('s-name').textContent=c[0];$('s-sub').textContent=c[1];
+  $('s-meta').innerHTML='';[["종",c[2]],["신장",c[3]+'cm'],["소속",sq.kr.split(' ')[0]]].forEach(([a,b])=>{const d=document.createElement('div');d.innerHTML='<span class="mono"></span><b></b>';d.children[0].textContent=a;d.children[1].textContent=b;$('s-meta').append(d)});
+  $('s-link').href='index.html#'+sid;
+  const p=PROMPTS[k]||{};
+  block('pb-full',p.look,'외형 프롬프트 준비 중입니다.');
+  $('s-note').textContent=p.note||'';
+  try{history.replaceState(null,'','#'+k)}catch(e){}
+  if(scroll)$('sheet').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* 복사 */
+let tt;
+function toast(){const t=$('toast');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1400)}
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{
+  const pre=btn.closest('.pb').querySelector('pre');if(!pre)return;
+  const done=()=>{btn.classList.add('ok');btn.textContent='COPIED';toast();setTimeout(()=>{btn.classList.remove('ok');btn.textContent='COPY'},1400)};
+  const sel=()=>{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r)};
+  try{navigator.clipboard.writeText(pre.textContent).then(done,sel)}catch(e){sel()}
+}));
+
+/* 시작: 주소의 #키 (예: #sq2-03) 가 있으면 그 인물부터 */
+const h=(location.hash||'').slice(1);
+if(/^(sq[123]|drift)-0[1-5]$/.test(h)){pick(h,false)}
+else if(/^(sq[123]|drift)$/.test(h)){showSq(h,true)}
+else{showSq('sq1',true)}
+window.addEventListener('hashchange',()=>{const k=location.hash.slice(1);if(k!==curKey&&/^(sq[123]|drift)-0[1-5]$/.test(k))pick(k,true)});
+</script>
+</body>
+</html>
