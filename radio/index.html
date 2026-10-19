@@ -1,0 +1,1384 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>연합해군 전술 무전망</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================
+   전술 무전망 — 진영마다 단말기 외장·LCD 백라이트·파형이 바뀝니다
+   ========================================================== */
+:root{
+  --digit:'Azeret Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans KR',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+/* 제3전대 스콜 — 그래파이트 외장, 일렉트릭 블루 LCD */
+body[data-unit="skoll"]{
+  --shell:#0d1114; --shell2:#161c21; --edge:#232c33; --ink:#dce6eb; --mute:#6f7f8a;
+  --lcd:#021619; --glow:#00E5FF; --glow-soft:rgba(0,229,255,.16); --alt:#FF7A00;
+  --tex:radial-gradient(circle at 1px 1px,rgba(255,255,255,.035) 1px,transparent 0) 0 0/4px 4px;
+}
+/* 제1전대 칼름 — 검은 제복과 은사 자수, 무풍대처럼 고요한 화면 */
+body[data-unit="calm"]{
+  --shell:#09090b; --shell2:#111114; --edge:#2a2a30; --ink:#e4e6ea; --mute:#7a7c84;
+  --lcd:#0c0d10; --glow:#D3D8E0; --glow-soft:rgba(211,216,224,.10); --alt:#D3D8E0;
+  --tex:repeating-linear-gradient(135deg,rgba(211,216,224,.035) 0 1px,transparent 1px 9px);
+}
+/* 제2전대 템페스트 — 전투 레이더 인광 */
+body[data-unit="tempest"]{
+  --shell:#0b100e; --shell2:#121a16; --edge:#22302a; --ink:#d9e8df; --mute:#6c8276;
+  --lcd:#03110a; --glow:#6CFFA8; --glow-soft:rgba(108,255,168,.13); --alt:#6CFFA8;
+  --tex:repeating-linear-gradient(100deg,rgba(255,255,255,.025) 0 1px,transparent 1px 7px);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--shell);background-image:var(--tex);color:var(--ink);font-family:var(--sans);
+  display:flex;flex-direction:column;height:100dvh;overflow:hidden;transition:background-color .6s var(--ease),color .6s}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+.wrap{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;height:100%}
+
+/* ---------- 진영 선택 ---------- */
+.units{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 12px 0}
+.unit{padding:8px 4px 9px;border-radius:10px 10px 4px 4px;text-align:center;color:var(--mute);
+  background:transparent;border:1px solid transparent;transition:all .3s var(--ease)}
+.unit strong{display:block;font-size:14px;font-weight:600;letter-spacing:.02em}
+.unit span{display:block;font-size:10.5px;margin-top:1px;opacity:.8}
+.unit[aria-pressed="true"]{color:var(--ink);background:var(--shell2);border-color:var(--edge);border-bottom-color:var(--shell2)}
+.unit[aria-pressed="true"] strong{color:var(--glow)}
+
+/* ---------- 단말기 본체 ---------- */
+.device{margin:0 12px;padding:14px;background:var(--shell2);border:1px solid var(--edge);border-radius:4px 4px 18px 18px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 14px 30px -18px #000}
+.screen{position:relative;background:var(--lcd);border-radius:8px;padding:12px 14px 10px;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 6px 18px rgba(0,0,0,.55),0 0 24px var(--glow-soft)}
+.screen::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 35%),repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--glow);font-family:var(--digit);font-size:11px;font-weight:500}
+.row .dim{opacity:.55}
+.freq{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;color:var(--glow)}
+.freq b{font-family:var(--digit);font-weight:300;font-size:46px;line-height:1;letter-spacing:-.02em;text-shadow:0 0 14px var(--glow-soft),0 0 2px var(--glow)}
+.freq small{font-family:var(--digit);font-size:12px;opacity:.6}
+.chline{display:flex;justify-content:space-between;align-items:baseline;color:var(--glow);font-size:13px}
+.chline .who{opacity:.65;font-size:11.5px}
+canvas{display:block;width:100%;height:46px;margin-top:8px}
+.state{margin-top:4px;font-size:11.5px;color:var(--glow);min-height:16px}
+.state.err{color:#ff7d7d}
+.screen.shift{animation:shift .55s var(--ease)}
+@keyframes shift{0%{filter:brightness(1)}20%{filter:brightness(2.4) blur(1px)}45%{filter:brightness(.15)}100%{filter:brightness(1)}}
+
+.bars{display:flex;gap:2px;align-items:flex-end;height:11px}
+.bars i{width:3px;background:currentColor;opacity:.18;display:block}
+.bars i:nth-child(1){height:3px}.bars i:nth-child(2){height:5px}.bars i:nth-child(3){height:7px}.bars i:nth-child(4){height:9px}.bars i:nth-child(5){height:11px}
+.bars i.on{opacity:1}
+.batt{display:inline-flex;align-items:center;gap:1px}
+.batt i{width:16px;height:8px;border:1px solid currentColor;border-radius:1px;padding:1px;display:block}
+.batt i::after{content:"";display:block;height:100%;width:var(--lv,80%);background:currentColor}
+.batt::after{content:"";width:2px;height:4px;background:currentColor}
+
+/* 채널 버튼 — 단말기의 물리 키 */
+.keys{display:flex;gap:6px;overflow-x:auto;margin-top:12px;padding-bottom:2px;scrollbar-width:none}
+.keys::-webkit-scrollbar{display:none}
+.key{flex:0 0 auto;padding:8px 12px;border-radius:7px;font-size:12.5px;color:var(--mute);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.15));border:1px solid var(--edge);
+  box-shadow:0 2px 0 rgba(0,0,0,.5);transition:transform .08s,color .2s}
+.key:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+.key[aria-pressed="true"]{color:var(--glow);border-color:color-mix(in srgb,var(--glow) 45%,var(--edge))}
+.key[aria-pressed="true"]::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--glow);margin-right:6px;vertical-align:2px;box-shadow:0 0 6px var(--glow)}
+.key.alt[aria-pressed="true"]{color:var(--alt)}
+.key.alt[aria-pressed="true"]::before{background:var(--alt);box-shadow:0 0 6px var(--alt)}
+
+/* ---------- 교신 기록 ---------- */
+#log{flex:1;overflow-y:auto;padding:18px 16px 12px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.open{align-self:center;font-size:11.5px;color:var(--mute);padding:4px 10px;border:1px dashed var(--edge);border-radius:20px}
+.empty{color:var(--mute);font-size:13px;line-height:1.7;text-align:center;margin:auto 0;padding:0 20px}
+.m{display:grid;grid-template-columns:40px 1fr;gap:3px 11px;max-width:94%}
+.m .av{grid-row:1/3;width:40px;height:40px;border-radius:11px;overflow:hidden;background:var(--shell2);border:1px solid var(--edge);position:relative}
+.m .av img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block;filter:saturate(.9) contrast(1.05)}
+.m .av::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
+.m .av.none{display:grid;place-items:center;color:var(--mute);font-family:var(--digit);font-size:13px}
+.m .name{font-size:12.5px;font-weight:600;color:var(--glow);grid-column:2;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.m .name em{font-style:normal;font-weight:400;color:var(--mute);font-size:11.5px}
+.m .time{font-family:var(--digit);font-size:10px;color:var(--mute);font-weight:400;margin-left:auto}
+.m .say{grid-column:2;font-size:14.5px;line-height:1.7;word-break:keep-all;overflow-wrap:anywhere}
+.m.alt .name{color:var(--alt)}
+.m.alt .av{border-color:color-mix(in srgb,var(--alt) 50%,var(--edge))}
+.m.me{align-self:flex-end;grid-template-columns:1fr;max-width:86%}
+.m.me .name{grid-column:1;justify-content:flex-end;color:var(--ink)}
+.m.me .name .time{margin-left:0;order:-1}
+.m.me .say{grid-column:1}
+.m.me .av{display:none}
+
+/* 직통 채널 상대 카드 */
+.contact{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center;padding:12px;border:1px solid var(--edge);border-radius:14px;background:var(--shell2)}
+.contact .pic{width:76px;height:96px;border-radius:9px;overflow:hidden;position:relative;background:var(--shell)}
+.contact .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 8%;display:block}
+.contact .pic::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 -30px 30px -20px rgba(0,0,0,.6)}
+.contact b{display:block;font-size:17px;font-weight:600;color:var(--ink)}
+.contact .r{font-size:12px;color:var(--glow);margin:2px 0 6px}
+.contact .s{font-size:11.5px;color:var(--mute)}
+.contact q{display:block;font-size:13px;color:var(--ink);opacity:.85;margin-top:8px;line-height:1.55;quotes:"「" "」"}
+.contact.alt .r{color:var(--alt)}
+.key img{width:18px;height:18px;border-radius:5px;object-fit:cover;object-position:50% 10%;vertical-align:-4px;margin-right:6px;opacity:.75}
+.key[aria-pressed="true"] img{opacity:1}
+.key[aria-pressed="true"]:has(img)::before{display:none}
+.m.me .say{background:color-mix(in srgb,var(--glow) 9%,transparent);border:1px solid color-mix(in srgb,var(--glow) 22%,transparent);
+  padding:8px 12px;border-radius:14px 14px 4px 14px;text-align:left}
+/* 기록에 남는 출처 불명 신호 흔적 */
+.trace{align-self:center;display:flex;align-items:center;gap:8px;font-size:11.5px;color:#ff8f9b;padding:6px 12px;
+  border:1px solid rgba(255,92,110,.35);border-radius:20px;background:rgba(255,92,110,.06)}
+.trace::before{content:"";width:6px;height:6px;border-radius:50%;background:#FF5C6E;box-shadow:0 0 8px #FF5C6E;animation:pulse 1.6s infinite}
+.trace span{font-family:var(--digit);font-size:10px;opacity:.7}
+@keyframes pulse{50%{opacity:.25}}
+
+/* 출처 불명 신호 창 */
+.ix{position:fixed;left:50%;top:18%;width:min(340px,calc(100% - 32px));transform:translateX(-50%);z-index:70;
+  background:#120708;border:1px solid #5a1f26;border-radius:6px;color:#f3d6d9;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 24px 60px -10px rgba(0,0,0,.9),0 0 40px rgba(255,92,110,.18);
+  font-family:var(--sans);overflow:hidden;animation:ixIn .5s steps(6,end)}
+.ix[hidden]{display:none}
+@keyframes ixIn{0%{clip-path:inset(48% 0 48% 0);filter:brightness(3)}60%{clip-path:inset(0 0 0 0);filter:brightness(1.6)}100%{filter:none}}
+.ix.glitch{animation:ixShake .18s 3}
+@keyframes ixShake{0%{transform:translateX(-50%)}33%{transform:translateX(calc(-50% + 3px)) skewX(-2deg)}66%{transform:translateX(calc(-50% - 2px))}}
+.ix-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(90deg,#3a0d13,#1c0709);border-bottom:1px solid #5a1f26;font-size:12px;cursor:grab;touch-action:none;user-select:none}
+.ix-bar b{font-weight:600;color:#FF5C6E;flex:1}
+.ix-bar .rec{width:7px;height:7px;border-radius:50%;background:#FF5C6E;box-shadow:0 0 8px #FF5C6E;animation:pulse 1s infinite}
+.ix-x{width:26px;height:26px;border-radius:4px;color:#f3d6d9;opacity:.7;font-size:16px;line-height:1}
+.ix-x:hover{opacity:1;background:rgba(255,255,255,.06)}
+.ix-body{padding:12px 14px 14px;position:relative}
+.ix-body::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+.ix-meta{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:11px;color:#a77a80;margin-bottom:10px}
+.ix-meta dd{font-family:var(--digit);color:#ffb3bc}
+.ix canvas{height:34px;margin:0 0 10px}
+.ix-text{font-family:var(--digit);font-size:13.5px;line-height:1.75;color:#ffd5da;min-height:48px;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 0 6px rgba(255,92,110,.35)}
+.ix-text .tag{color:#a77a80}
+.ix-foot{font-size:11px;color:#a77a80;margin-top:10px}
+.f textarea{width:100%;background:var(--shell);border:1px solid var(--edge);color:var(--ink);padding:10px 12px;font:14px/1.6 var(--sans);border-radius:10px;outline:none;resize:vertical;min-height:110px;max-height:none}
+.count{text-align:right;font-family:var(--digit);font-size:10.5px;color:var(--mute);margin-top:4px}
+.tag{color:var(--mute);font-size:12px}
+.caret{display:inline-block;width:2px;height:15px;background:var(--glow);vertical-align:-3px;margin-left:1px;animation:caret .8s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+
+/* ---------- 송신부 ---------- */
+.tx{padding:10px 12px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--edge);background:color-mix(in srgb,var(--shell) 85%,#000)}
+.txtop{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--mute);margin:0 4px 7px}
+.txtop button{color:var(--mute);font-size:11.5px;text-decoration:underline;text-underline-offset:3px}
+.txtop b{color:var(--ink);font-weight:500}
+.field{display:flex;gap:8px;align-items:flex-end}
+textarea{flex:1;resize:none;background:var(--shell2);border:1px solid var(--edge);color:var(--ink);font:15px/1.5 var(--sans);
+  padding:11px 14px;border-radius:22px;max-height:130px;outline:none;transition:border-color .2s}
+textarea:focus{border-color:color-mix(in srgb,var(--glow) 55%,var(--edge))}
+textarea::placeholder{color:var(--mute)}
+.ptt{flex:0 0 auto;width:50px;height:46px;border-radius:23px;background:var(--glow);color:var(--lcd);font-weight:600;font-size:13px;
+  box-shadow:0 0 0 0 var(--glow-soft);transition:transform .1s,box-shadow .3s,opacity .2s}
+.ptt:active{transform:scale(.94)}
+.ptt.live{box-shadow:0 0 0 8px var(--glow-soft)}
+.ptt:disabled{opacity:.45}
+
+/* ---------- 설정 ---------- */
+dialog{margin:auto auto 0;width:100%;max-width:560px;max-height:92dvh;overflow-y:auto;border:0;border-top:1px solid var(--edge);background:var(--shell2);color:var(--ink);
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h2{font-size:16px;font-weight:600;margin-bottom:4px}
+dialog p{font-size:12.5px;color:var(--mute);margin-bottom:16px;line-height:1.6}
+.f{margin-bottom:12px}
+.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:5px}
+.f input{width:100%;background:var(--shell);border:1px solid var(--edge);color:var(--ink);padding:10px 12px;font:14px var(--sans);border-radius:10px;outline:none}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:11px 0;font-size:14px;border-top:1px solid var(--edge)}
+.sw input{accent-color:var(--glow);width:20px;height:20px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.acts button{padding:11px;border:1px solid var(--edge);font-size:13px;border-radius:10px}
+.acts .go{grid-column:1/-1;background:var(--glow);color:var(--lcd);border-color:var(--glow);font-weight:600}
+.acts .warn{color:#ff8a8a}
+.note{font-size:11.5px;color:var(--mute);margin-top:12px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-unit="skoll">
+<div class="wrap">
+
+  <nav class="units" id="units" aria-label="진영 선택"></nav>
+
+  <section class="device">
+    <div class="screen" id="screen">
+      <div class="row">
+        <span id="unitLabel">연합해군 제3전대</span>
+        <span style="display:flex;gap:10px;align-items:center">
+          <span id="clock" class="dim">--:--</span>
+          <span class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="batt"><i id="batt"></i></span>
+        </span>
+      </div>
+      <div class="freq"><b id="freq">141.200</b><small>MHz</small></div>
+      <div class="chline"><span id="chName">전 대원</span><span class="who" id="chWho"></span></div>
+      <canvas id="scope" aria-hidden="true"></canvas>
+      <div class="state" id="state" role="status">대기 중</div>
+    </div>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <main id="log" aria-live="polite"></main>
+
+  <footer class="tx">
+    <div class="txtop"><span>내 콜사인 <b id="cs">미설정</b></span><button id="openSet">무전기 설정</button></div>
+    <div class="field">
+      <textarea id="input" rows="1" placeholder="무전 내용을 입력하세요"></textarea>
+      <button class="ptt" id="ptt" aria-label="송신">송신</button>
+    </div>
+  </footer>
+</div>
+
+<dialog id="set">
+  <h2>무전기 설정</h2>
+  <p>콜사인은 무전을 받는 쪽에서 당신을 부르는 이름입니다.</p>
+  <div class="f"><label for="sCs">콜사인</label><input id="sCs" maxlength="20" placeholder="예) 블루 식스"></div>
+  <div class="f"><label for="sProf">내 프로필</label><textarea id="sProf" maxlength="300" placeholder="무전 상대가 알고 있을 당신의 정보를 적어 주세요. 소속, 외모, 성격, 지금 맡은 일 같은 것들이요."></textarea><div class="count" id="sCount">0 / 300</div></div>
+  <div class="f"><label for="sPass">접속 암호</label><input id="sPass" type="password" placeholder="받은 암호를 입력하세요"></div>
+  <div class="sw"><label for="sSnd">무전 효과음</label><input type="checkbox" id="sSnd"></div>
+  <div class="acts">
+    <button class="go" id="sSave">설정 저장</button>
+    <button id="sExport">이 채널 기록 받기</button>
+    <button class="warn" id="sClear">이 채널 기록 지우기</button>
+  </div>
+  <div class="note" id="sNote"></div>
+</dialog>
+
+<section class="ix" id="ix" hidden role="alertdialog" aria-labelledby="ixTitle">
+  <div class="ix-bar" id="ixBar"><span class="rec"></span><b id="ixTitle">출처 불명 신호</b><button class="ix-x" id="ixClose" aria-label="창 닫기">✕</button></div>
+  <div class="ix-body">
+    <dl class="ix-meta"><dt>주파수</dt><dd id="ixFreq">—</dd><dt>발신지</dt><dd id="ixFrom">역탐지 실패</dd><dt>수신</dt><dd id="ixTime">—</dd></dl>
+    <canvas id="ixScope" aria-hidden="true"></canvas>
+    <div class="ix-text" id="ixText"></div>
+    <div class="ix-foot">연합해군 등록 주파수가 아닙니다.</div>
+  </div>
+</section>
+
+<script>
+/* ==========================================================
+   Worker 배포 후 주소만 넣으면 실제 응답으로 바뀝니다.
+   비워두면 데모 모드(사이트 대표 대사)로 동작합니다.
+   ========================================================== */
+const WORKER_URL = "https://calm-silence-d9a8skoll-radio.hongraon1342.workers.dev";
+
+/* 사이트 인사기록에서 가져온 표시용 정보 · 이미지는 사이트의 img 폴더를 그대로 씁니다 */
+const IMG_BASE = "https://yeong-del.github.io/type_null/img/";
+const PEOPLE = {
+  "sq1-01":{"nm":"하르발 스카르","role":"중장 · 전대장","q":"보고하게.","sp":"그린란드상어","from":"북방 심해권"},
+  "sq1-02":{"nm":"율리안 벨루가","role":"소장 · 재정국 재정참모","q":"유감입니다. 다음 분기부터 연료 배정은 절반으로 하겠습니다.","sp":"철갑상어","from":"중앙 환초권"},
+  "sq1-03":{"nm":"에밀 캄푸스","role":"준장 · 인사국 인사참모","q":"응, 괜찮아. 내가 다 정리해 줄게~","sp":"해마","from":"남방 산호권"},
+  "sq1-04":{"nm":"루시앙 오렐리아","role":"대령 · 정보국 정보참모","q":"지난주에… 고향에 편지 보내셨죠. 답장은… 아직 안 왔을 겁니다.","sp":"메두사 해파리","from":"외양 회유권"},
+  "sq1-05":{"nm":"덱스 에키노","role":"중령 · 감찰국 감찰관","q":"어이, 서기. 깃 단추. 조항 번호 불러 줘?","sp":"성게","from":"무소속 해역"},
+  "sq2-01":{"nm":"세베린 그라우","role":"대령 · 전대장 겸 템페스트 함장","q":"외울지 말지는 한 항해 지나고 제가 정하겠습니다.","sp":"귀신고래","from":"북방 심해권"},
+  "sq2-02":{"nm":"가레스 에피넬","role":"중령 · 부장","q":"됐다. 가서 쉬어.","sp":"골리앗 그루퍼","from":"남방 산호권"},
+  "sq2-03":{"nm":"리오 벨라스","role":"소령 · 항해장","q":"좌표 다시 부르겠습니다. 이번엔 받아 적으십시오.","sp":"돛새치","from":"외양 회유권"},
+  "sq2-04":{"nm":"카시안 레갈","role":"대위 · 포술장","q":"어어, 그거~ 내가 쏠게.","sp":"산갈치","from":"북방 심해권"},
+  "sq2-05":{"nm":"주드 크레이트","role":"중위 · 강습대장","q":"넵, 대장님.","sp":"바다뱀","from":"남방 산호권"},
+  "sq3-01":{"nm":"카엘 보른","role":"대령 · 함장","q":"좌현 15도. 사격 준비.","sp":"범고래","from":"북방 심해권"},
+  "sq3-02":{"nm":"사른 베커","role":"소령 · 부장","q":"그게 답입니까?","sp":"백상아리","from":"북방 심해권"},
+  "sq3-03":{"nm":"아마데오 리렌","role":"대위 · 작전관","q":"혹시, 다른 방법을 한 번만 더 생각해보셔도 괜찮을까요?","sp":"고래상어","from":"중앙 환초권"},
+  "sq3-04":{"nm":"이븐 사엘","role":"중위 · 항해정찰관","q":"제3항로 진입했습니다. 이상 없습니다.","sp":"만타가오리","from":"외양 회유권"},
+  "sq3-05":{"nm":"로렐 반디에르","role":"준위 · 기관장","q":"야, 얼어붙었잖아. 숨 쉬어, 숨.","sp":"사자물고기","from":"남방 산호권"}
+};
+
+/* 진영 정의 — 말투·성격 등 상세 설정은 worker.js에 있습니다 */
+const UNITS = {
+  calm: {
+    tab:"칼름", sub:"제1전대", label:"연합해군 제1전대 칼름", base:120.0,
+    keys:["sq1-01","sq1-02","sq1-03","sq1-04","sq1-05"],
+    allName:"본부 공용",
+    sound:{ band:900, noise:.04, tail:.5 },
+    scope:{ amp:.25, jitter:.02, speed:.4 },
+  },
+  tempest: {
+    tab:"템페스트", sub:"제2전대", label:"연합해군 제2전대 템페스트", base:132.0,
+    keys:["sq2-01","sq2-02","sq2-03","sq2-04","sq2-05"],
+    allName:"함내 공용",
+    sound:{ band:2200, noise:.11, tail:.25 },
+    scope:{ amp:.8, jitter:.35, speed:1.6 },
+  },
+  skoll: {
+    tab:"스콜", sub:"제3전대", label:"연합해군 제3전대 스콜", base:141.2,
+    keys:["sq3-01","sq3-02","sq3-03","sq3-04","sq3-05"],
+    alt:["로렐 반디에르"],
+    allName:"전 대원",
+    sound:{ band:1800, noise:.08, tail:.3 },
+    scope:{ amp:.5, jitter:.12, speed:1 },
+  },
+};
+const ORDER = ["calm","tempest","skoll"];
+/* ==========================================================
+   대원 자동 무전 — 30초 안팎마다 하나씩 들어옵니다 (1인당 30문장 · API 비용 없음)
+   {cs}는 유저 콜사인으로 바뀝니다
+   @로 시작하는 문장은 다른 대원에게 하는 지시·보고·혼잣말이라 공용 채널에서만 나옵니다
+   (직통 채널에서는 유저에게 거는 말만 나옵니다)
+   ========================================================== */
+const AMBIENT = {
+  "sq1-01":[
+    "…서기. 보고서는.",
+    "…다시 쓰게.",
+    "…기다리게.",
+    "…들어오게.",
+    "…늦었군.",
+    "…그건 내가 정하네.",
+    "…됐네.",
+    "…아니.",
+    "…지금 몇 시인가.",
+    "…문 닫게. 바람이 들어오는군. 이 바다엔 바람도 없는데.",
+    "…회의 중이네. 나중에.",
+    "…서류는 책상 왼쪽에 두게.",
+    "…같은 말을 두 번 하게 하지 말게.",
+    "…추운가. 익숙해지게.",
+    "…해도를 가져오게. 남방 쪽.",
+    "…이유는 묻지 말게.",
+    "…감찰관을 부르게.",
+    "…그 배속은 번복하지 않네.",
+    "…서명했네. 가져가게.",
+    "…자네 이름은 아직 외우지 않았네.",
+    "@…조용하군. 좋네.",
+    "…스콜 보고는 왔나.",
+    "…템페스트에서 또 몇 명이 빠졌나.",
+    "…숨을 고르게. 그다음에 말하게.",
+    "…변명은 필요 없네.",
+    "…시계는 멈춰 있어도 되네. 시간은 내가 알고 있으니.",
+    "…오늘은 그만 쉬게.",
+    "…서기실 등이 아직 켜져 있더군.",
+    "…다시. 이번엔 처음부터.",
+    "…나가 보게."
+  ],
+  "sq1-02":[
+    "죄송합니다. 이번 분기 연료 배정이 12퍼센트 줄었습니다. 각 전대에 통보해 주십시오.",
+    "실례합니다. 차를 새로 우렸습니다. 결재 서류 세 건과 함께 재정실로 와 주십시오.",
+    "번거롭게 해 드려 송구합니다. 어제 제출하신 지출표, 두 줄이 틀렸습니다.",
+    "미안합니다, 서기. 템페스트 보급 요청은 반려하기로 했습니다. 사유는 제가 직접 쓰겠습니다.",
+    "차가 식기 전에 오시면 좋겠습니다. 잔은 이미 따라 두었습니다.",
+    "송구합니다만, 3년 전 그 장부에도 같은 숫자가 틀려 있었습니다. 기억하고 있습니다.",
+    "사과드립니다. 다음 달부터 서기실 등유는 일주일에 두 통으로 줄겠습니다.",
+    "괜찮으십니까? 안색이 좋지 않으십니다. 쉬실 수 있게… 다만 마감은 그대로입니다.",
+    "실례합니다. 스콜 정박비 정산이 열하루 늦었습니다. 독촉 서한 문안을 부탁드립니다.",
+    "폐를 끼쳐 죄송합니다. 회계 장부 47쪽부터 다시 봐 주시겠습니까.",
+    "촛불은 켜지 말아 주십시오. 등을 쓰시면 됩니다. 부탁드립니다.",
+    "미안합니다. 그 지출은 가치가 없다고 판단했습니다.",
+    "수고 많으십니다. 차는 해초차로 하시겠습니까, 환초 홍차로 하시겠습니까.",
+    "정말 죄송합니다만, 그 숫자는 0이 하나 더 붙어야 맞습니다.",
+    "사과부터 드리겠습니다. 이번 배속 변경으로 비용이 두 배가 되었습니다.",
+    "실례합니다. 남방 기관 부품 단가가 또 올랐습니다. 9퍼센트입니다.",
+    "번거롭겠지만 영수증은 원본으로 부탁드립니다. 사본은 받지 않습니다.",
+    "송구합니다. 서기의 이번 달 수당은 정박지에서만 지급됩니다. 규정이라서요.",
+    "차를 한 잔 더 드릴까요? 아, 그 전에 서명부터 부탁드려도 될까요.",
+    "미안합니다. 웃으실 일이 아닌데 제가 웃었군요. 화재 이야기는 그만두시지요.",
+    "부족한 제가 죄송합니다. 그래도 계산은 틀리지 않았습니다.",
+    "실례합니다. 하르발 중장님께 올릴 예산안, 마지막 장만 다시 써 주시겠습니까.",
+    "걱정 마십시오. 손해는 제가 다 기억해 두겠습니다.",
+    "사과드립니다. 지난번 보고서, 저 혼자 세 번 읽었습니다.",
+    "미안합니다만 오늘 저녁 식사는 늦어질 것 같습니다. 서기께서도요.",
+    "수고하셨습니다. 차는 제가 치우겠습니다. 장부는 두고 가 주십시오.",
+    "송구합니다. 이 숫자 하나가 배 한 척의 한 달입니다.",
+    "실례합니다, 잠시만요. 펜촉이 마음에 들지 않으시면 새것을 드리겠습니다.",
+    "죄송합니다. 그 요청은 이번 분기에는 없던 일로 하겠습니다.",
+    "감사합니다. 덕분에 오늘도 장부가 맞았습니다."
+  ],
+  "sq1-03":[
+    "{cs}~ 밥은 먹었어? 안 먹었으면 인사국 들러요. 사탕 남았어~",
+    "@다들 오늘 무사하지~? 아픈 사람 있으면 말해요~",
+    "응~ 그 전출 건은 내가 정리할게. 넌 신경 쓰지 마~",
+    "{cs}~ 오늘 잠은 좀 잤어? 눈 밑이 까만 것 같던데~",
+    "@화분에 물 줬어~ 아직은 안 죽었어. 대단하지?",
+    "스콜 소위 하나가 오늘 생일이래~ 축하 편지 하나 써 줄래?",
+    "서기~ 손 시리지? 하르발 중장님 방 다녀왔으면 꼭 녹이고 와~",
+    "@이번 달 전출 명단 나왔어~ …응, 괜찮아. 다들 잘 갈 거야.",
+    "주머니 봐 봐~ 사탕 하나 넣어 놨는데, 언제 넣었는지 몰랐지?",
+    "@템페스트에서 또 연락 왔네~ …빈자리가 세 개래. 채워야지, 응.",
+    "{cs}~ 가족한테 편지 보냈어? 안 보냈으면 지금 써~ 루시앙이 읽겠지만~",
+    "덱스한테 또 혼났어? 괜찮아~ 걔 원래 웃으면서 혼내~",
+    "남방 쪽 아이들 소식 들었어~? …아니, 그냥. 궁금해서~",
+    "@오늘 회의 길었어~ 다들 표정이 무서웠지만 나는 웃었어~",
+    "응~ 이름은 다 외웠어. 생일도. 너도, {cs}~",
+    "사탕 무슨 맛 좋아해~? 다음엔 그걸로 챙겨 줄게~",
+    "@다들 무리하지 말고~ 무리해서 쓰러지면 내가 정리해야 하잖아~",
+    "@덩굴이 오늘 잎을 하나 냈어~ 무풍대에서도 자라긴 하네~",
+    "{cs}~ 춥지 않아? 담요 하나 더 보낼까~",
+    "이번 배속은 좀 아파~ …아, 나 말고. 받는 사람이~",
+    "걱정 마~ 서류 한 장으로 사람 보내는 거, 내가 제일 잘해~",
+    "오늘 저녁 메뉴 알아? 해조죽이래~ 또~",
+    "인사국 문 열려 있어~ 들어와서 쉬다 가도 돼~",
+    "응~ 그 사람 이름? 알지. 동생이 둘이야. 막내는 아직 어려~",
+    "루시앙 또 몰래 들어와 있었지? 나도 놀랐어~",
+    "@다친 사람 명단 보는데, 이번엔 짧아서 좋다~",
+    "{cs}~ 웃는 거 오랜만에 봤으면 좋겠네~",
+    "사탕 떨어지면 말해~ 나 아직 한 봉지 있어~",
+    "전출 통보는 내가 직접 할게~ 남한테 시키면 너무 차갑잖아~",
+    "오늘도 고생했어~ 응, 진짜로~"
+  ],
+  "sq1-04":[
+    "…방금, 문서고에 들르셨죠… 세 번째 서랍은, 닫아 두시는 게…",
+    "편지가 한 통… 더 왔습니다. 봉투는… 이미 열려 있었고요.",
+    "…괜찮습니다. 무슨 말을 하려던 건지는… 알고 있으니까요.",
+    "…뒤에 있습니다. 놀라지 마시고…",
+    "그 필체는… 처음 보는군요. 누가 대신 써 줬습니까…",
+    "…어제 밤 통신실 불이 늦게까지 켜져 있었죠.",
+    "답장은… 아직 안 왔습니다. 오지 않을 수도… 있고요.",
+    "…말하지 않으셔도 됩니다. 이미 읽었으니까요.",
+    "스콜에서 온 보고서… 함장의 필체가 아니더군요… 부장일까요…",
+    "…발소리를 내는 편이 좋습니까. 원하시면… 그렇게 하겠습니다.",
+    "편지는 전부 저를 거칩니다… 알고 계셨겠지만…",
+    "…지금 숨을 멈추셨네요.",
+    "누군가… 서기실 책상 아래에 쪽지를 두고 갔습니다. 읽어 드릴까요…",
+    "…등록되지 않은 주파수가 하나 있습니다. 혹시… 들으셨습니까.",
+    "@…템페스트 전사자 명단, 이번엔 손으로 쓴 게 아니더군요.",
+    "쉬셔도 됩니다… 다만, 꿈 이야기는… 하지 않는 게 좋겠습니다.",
+    "…서기의 고향 섬은… 남쪽으로 2도쯤 가라앉았다고 들었습니다.",
+    "그 이름은… 기록에서 지워졌습니다. 묻지 않는 게…",
+    "…오늘은 누구에게 편지를 쓰실 겁니까.",
+    "…덱스 중령이 또 저를 유령이라고 불렀습니까. 들었습니다.",
+    "문서고 열쇠는… 제가 가지고 있습니다. 필요하면… 부르세요.",
+    "…방금 거짓말을 하셨군요. 괜찮습니다. 기록하지는 않겠습니다.",
+    "@…식사는 했습니다. 아무도 보지 못했겠지만.",
+    "@외양 회유권에서… 전령선 하나가 늦습니다. 이유는… 아직.",
+    "…창밖을 보셨습니까. 오늘도 바람이 없군요.",
+    "그 편지… 보내지 않는 편이 좋겠습니다. 이유는… 아실 텐데요.",
+    "…누가 서기의 이름을 물었습니다. 대답은… 하지 않았습니다.",
+    "…글씨가 떨리는군요. 추워서입니까, 아니면…",
+    "…저는 여기 있습니다. 처음부터.",
+    "…그럼, 다음 편지에서."
+  ],
+  "sq1-05":[
+    "어이, 서기. 깃 단추 하나 풀렸다며? 제7조 2항, 읽어 줄까?",
+    "@감찰 순회 돈다~ 다들 책상 정리해 둬라. 걸리면 진짜 골치 아파진다.",
+    "웃으니까 만만하지? 그게 제일 위험한 거야, 서기.",
+    "@식당 국 또 싱겁다. 소금 필요한 사람? 나 주머니에 있다.",
+    "@어이, 유령 대령님 방금 지나갔냐? 발소리가 하나도 안 나, 진짜 소름이야.",
+    "@스콜 쪽 정박 기록 엉망이네. 제12조 5항 위반이다, 이거.",
+    "서기, 오늘 표정 왜 그래. 누가 괴롭혔으면 이름 대. 조항은 내가 찾아 줄게.",
+    "피어싱 하나 늘었다? 응, 큰 거 하나 끝냈거든.",
+    "…어이. 방금 그 말, 다시 해 봐. 농담이면 웃어 줄게.",
+    "규정은 사람 살리는 거야. 나도 그거 하나로 살았어.",
+    "@템페스트 애들 또 술판 벌였대. 전투 밖이라고 봐주는 거, 그거 다 칼름 허락이다.",
+    "어이, 서기. 휴일? 없어. 제3조 1항.",
+    "배신하는 놈들 있잖아. 나 그런 놈들 제일 싫어. 진짜로.",
+    "하르발 중장님 방 들어갔다 나오면 손 녹여. 동상 걸리면 그것도 보고서 써야 돼.",
+    "오늘은 웃으면서 끝낼게. 내일은 모르고.",
+    "서기, 도장 거꾸로 찍었다? 하하, 괜찮아. 이번 한 번만.",
+    "내가 해적선 출신인 거 알지? 그러니까 거짓말은 냄새로 알아.",
+    "제9조 4항. 근무 중 졸음. …농담이야, 깨워 준 거야.",
+    "어이, 에밀 준장님 사탕 받았냐? 받았으면 이제 도망 못 간다, 너.",
+    "@감찰 보고 들어간다. 이번엔 스콜 기관장 이름이 또 있네. 하하.",
+    "서기, 목 꺾는 소리 들었지? 그거 들리면 조항 나온다는 뜻이야.",
+    "@웃는 놈 하나쯤은 있어야지. 여기 너무 조용하잖아.",
+    "오늘 순회 끝. 걸린 사람 셋. 너는 아니야, 아직은.",
+    "무소속 출신이 칼름에 있는 거, 이상하지? 나도 가끔 이상해.",
+    "어이, 그 편지 루시앙한테 먼저 갔다. 알고 쓰라고.",
+    "@이탈자 명단 또 왔네. …하, 이런 건 진짜 웃기지가 않아.",
+    "서기, 제복은 반듯하게. 자세가 무너지면 사람도 무너져.",
+    "소금 좀 줄까? 여기 밥 진짜 맛없어.",
+    "조항 번호 외우는 법 알려 줘? 하나만 기억해. 다 위반이야.",
+    "됐다, 오늘은 봐준다. 웃을 때 들어가."
+  ],
+  "sq2-01":[
+    "보충 인원 여러분, 아직 살아 계십니까? 다행이네요. 이름은 다음 항해 뒤에 여쭙겠습니다.",
+    "곧 교전 해역입니다. 떨리시면 지금 떠는 편이 좋겠어요, 하하.",
+    "@부장, 오늘 저녁은 넉넉히 준비해 두세요. 남는 쪽이 낫지 않겠습니까.",
+    "생존 확률은 지금 61퍼센트쯤입니다. 나쁘지 않네요.",
+    "@포술장, 원하시면 먼저 쏘셔도 됩니다. 원하지 않으셔도 쏘시겠지만요, 후후.",
+    "@강습대장께 전해 주세요. 오늘은 먼저 뛰지 않으셔도 된다고. 물론 뛰시겠지만.",
+    "보충 인원 분, 장갑이 마음에 안 드십니까? 저는 벗지 않는 편을 권합니다.",
+    "@오늘도 이겼습니다. 늘 그렇듯이요.",
+    "선미 안치소에 자리가 둘 남았습니다. 채우지 않는 쪽으로 해 볼까요.",
+    "스콜 이야기는 이 배에서 하지 않는 게 예의입니다. 아시죠?",
+    "@항해장, 항로는 그대로 두세요. 저쪽이 먼저 도망칠 테니까요.",
+    "@해적 깃발이 보이네요. 손님이 오셨으니 인사는 해야겠죠.",
+    "보충 인원 여러분께 부탁드립니다. 명령은 부장께 들으세요. 제 말은 가끔 웃기니까요.",
+    "후후, 방금 그건 근탄입니다. 놀라셨다면 정상입니다.",
+    "전사자 계급장은 제 방 서랍에 있습니다. 서랍이 꽤 무겁습니다.",
+    "@오늘 밤은 조용하겠네요. 이런 밤에 꼭 뭔가 오더군요.",
+    "원하시면 기도하셔도 됩니다. 이 바다에 신은 없지만요.",
+    "@부장이 또 제 명령을 순하게 바꿔서 전달했더군요. 고맙게 생각합니다.",
+    "흰 새가 보였답니다. 사흘 안에 폭풍이겠네요. 좋은 소식이죠.",
+    "이번 보충 인원은 표정이 좋네요. 한 항해쯤은 버티실 것 같습니다.",
+    "@카시안, 조명이 불편하면 꺼도 됩니다. 저는 어둠에서도 잘 보이니까요.",
+    "@섬에서는 우리를 영웅이라고 부른다더군요. 듣기 좋은 말입니다.",
+    "@항복 신호가 올라왔습니다. 받아 줄지 말지는… 조금 더 보고 정하죠.",
+    "보충 인원 분, 손이 떨리시네요. 괜찮습니다. 곧 멈출 테니까요.",
+    "@주드 중위, 사탕 하나 저도 주시겠습니까? 농담입니다.",
+    "@이번 교전 기록은 짧게 쓰겠습니다. 길게 쓸 만한 일이 없었으니까요.",
+    "@칼름에서 또 서류가 왔습니다. 읽어 보지는 않겠습니다, 하하.",
+    "@전원 정위치 부탁드립니다. 부탁이라고 했지만, 아시죠.",
+    "오늘 수장은 일몰에 하겠습니다. 보충 인원 분도 보러 오세요. 공부가 됩니다.",
+    "수고하셨습니다. 내일도 살아 계시면 좋겠네요."
+  ],
+  "sq2-02":[
+    "신참. 장비 다시 점검해.",
+    "…다친 데 있으면 말해. 숨기지 말고.",
+    "됐다. 교대하고 자.",
+    "전대장님 말씀은 이거다. 좌현에 붙어. 끝.",
+    "신참. 갈고리 줄 감는 법 다시 봐.",
+    "…밥 먹었냐.",
+    "겁나면 내 뒤에 서.",
+    "포성 들리면 엎드려. 생각하지 말고.",
+    "강습대 뛸 때 따라가지 마. 아직 아니다.",
+    "…괜찮다. 다들 처음엔 그래.",
+    "갑판 젖었다. 미끄러지지 마.",
+    "전대장님 웃으신다고 따라 웃지 마.",
+    "신참. 이름 아직 안 물었지. 다음 항해 뒤에 물을게.",
+    "…수장 끝났다. 들어가서 쉬어.",
+    "탄약고 앞에서는 뛰지 마.",
+    "@부상자는 의무실로. 걸을 수 있으면 걸어서.",
+    "…괜찮냐. 대답 짧게.",
+    "로프 풀어. 천천히.",
+    "오늘은 내가 지휘 넘긴다. 강습대장 말 들어.",
+    "물 마셔. 한 모금만.",
+    "…가슴 타투? 묻지 마.",
+    "@좌현 포좌 교대. 지금.",
+    "@폭풍 온다. 고정할 거 고정해.",
+    "…흔들리면 난간 잡아.",
+    "신참, 손 내놔. …됐다, 안 다쳤네.",
+    "@승조원 둘 열 난다. 의무실 확인.",
+    "…그 얘기는 전대장님 앞에서 하지 마.",
+    "하나만 기억해. 살아서 돌아와.",
+    "…잘했다.",
+    "됐다. 가서 쉬어."
+  ],
+  "sq2-03":[
+    "항로 2도 수정합니다. 받아 적으셨습니까?",
+    "@해류 속도 4노트 증가. 예상 도착 40분 지연입니다.",
+    "좌표를 또 틀리셨군요. 괜찮습니다, 바다가 아주 친절하게 정정해 줄 테니까요.",
+    "@현재 위치, 남방 항로 진입 7해리 전입니다.",
+    "@풍향 북북서. 속도 유지합니다.",
+    "해도실 출입은 저만 됩니다. 들어오신 건 못 본 걸로 하겠습니다.",
+    "@추격 거리 3.2해리. 줄이고 있습니다.",
+    "정박일이라 잠을 못 잤습니다. 육지는 너무 안 움직이거든요.",
+    "스콜 말입니까? 산책선이요. 제가 처음 그렇게 불렀습니다.",
+    "@수심 40미터. 좌초 걱정은 아직 안 하셔도 됩니다.",
+    "방금 그 질문, 세 번째입니다. 답은 여전히 북위 쪽입니다.",
+    "@전방 11시, 섬 그림자. 비는 섬일 가능성 높습니다.",
+    "@해무 진입 예상 시각 20분 후. 견시 강화 바랍니다.",
+    "안경 닦는 중입니다. 잠깐만요. …네, 들립니다.",
+    "@이 해류면 해적선은 남동으로 빠집니다. 늘 그렇죠.",
+    "좌현 15도 선회. 받아 적으셨으면 복창하십시오.",
+    "@폭풍철 진입 전 마지막 순항입니다. 즐기시죠, 할 수 있다면.",
+    "수년 전 그 해역은 지나가지 않겠습니다. 이유는 묻지 마십시오.",
+    "@예상 교전 시각 14시 20분. 오차는 5분 이내입니다.",
+    "보충 인원 분, 별 보는 법 아십니까? 모르시면 그냥 저를 믿으십시오.",
+    "항로 계산은 틀린 적 없습니다. 틀리는 건 늘 지시입니다.",
+    "@회류기라 회유권 배가 많습니다. 아군 깃발 확인하고 쏘십시오.",
+    "좌표 다시 부르겠습니다. 북위 ██, 동경 ██. 이번엔 받아 적으십시오.",
+    "@연료 잔량 기준 최대 항속 이틀. 칼름에 보고는 제가 하겠습니다.",
+    "흰 새요? 미신입니다. …다만 기압도 내려가고 있긴 하군요.",
+    "방향을 바꾸자는 의견, 잘 들었습니다. 바꾸지 않겠습니다.",
+    "목의 흉터요? 계산 밖의 일이었습니다. 그 뒤로는 계산에 넣습니다.",
+    "@추적 대상 속도 저하. 기관 고장으로 보입니다. 운이 좋네요, 우리가.",
+    "@야간 항해 들어갑니다. 등불 점멸 신호 준비하십시오.",
+    "@현재 위치 확인 끝. 이상 없습니다. 오늘은요."
+  ],
+  "sq2-04":[
+    "@어어… 포탑 쪽 조명 좀 꺼 줘… 눈부셔…",
+    "@탄약고 재고… 음, 대충 맞아~",
+    "[포성] …방금 건 시험 사격이야~ 놀랐어?",
+    "밤이 좋아~ 밤에는 다 잘 맞거든…",
+    "보충 인원~ 귀 막아. 곧 쏜다…",
+    "세베린이 웃는 거 봤어? 그럼 곧 쏘는 거야~",
+    "@진동이 이상해… 저쪽 배, 기관 하나 꺼졌네~",
+    "@피어싱 하나 더 할까 봐~ 오늘 하나 넘겼으니까…",
+    "해무 낀 날이 제일 좋아… 아무도 안 보이잖아~",
+    "어어, 그거~ 내가 쏠게.",
+    "@…좌현 포좌. 장전. 사격.",
+    "@졸린데… 아, 교전이구나. 일어날게~",
+    "신참~ 거기 서 있지 마. 포구 앞이야…",
+    "규율? 음… 쏘는 거 빼고는 대충~",
+    "@밝은 데 싫어… 함교 등 좀 줄여 주라~",
+    "@방금 그거 맞았어~ 소리로 알아…",
+    "@세베린~ 다음 거 언제 쏴?",
+    "@탄 아끼래~ 가레스가… 음, 노력은 해 볼게~",
+    "보충 인원, 이름 뭐야~? …아, 아직 안 물어보는 거였지~",
+    "@야간 사격 들어간다~ 다들 눈 감아도 돼. 난 원래 감고 쏴~",
+    "@주드 또 먼저 뛰었어? 엄호해야겠네… 귀찮게~",
+    "@포성 좋아하는 사람? 나~",
+    "@…조용히. 저쪽에서 뭐가 움직여.",
+    "폭풍 오기 전에는 바다가 웅웅거려~ 너도 들려?",
+    "탄약 냄새 맡으면 잠이 와~ 이상하지?",
+    "신참~ 포술 통제실 구경 올래? 어두워서 좋아~",
+    "세베린이 날 데려온 이유? 음… 비밀~",
+    "@…사격 중지. 아군이야.",
+    "@오늘 몇 발 쐈더라… 몰라~ 많이~",
+    "수고했어~ 이제 불 꺼도 되지?"
+  ],
+  "sq2-05":[
+    "@대장님! 강습대 준비 끝났슴다! 언제 뜁니까!",
+    "야 신참, 갈고리 그렇게 쥐면 손 날아간다? 하하!",
+    "@오늘은 그 해적 놈들 도망 안 가겠지? 아 진짜 근질근질하네!",
+    "@넵, 대장님. 근데 저 먼저 뛰어도 됩니까? 안 돼도 뛸 건데.",
+    "신참! 로프 탈 줄 알아? 모르면 그냥 내 등 보고 와!",
+    "@부장님, 저 안 다쳤슴다! 피는 저쪽 거예요!",
+    "사탕 하나 줄까? 담배 끊으니까 입이 심심해서 말이지.",
+    "@이 새끼들 오늘 진짜 다 잡는다. 하하, 농담 아님.",
+    "갑판 위에선 내가 대장이야, 알지? 계급장은 배 안에서나 세.",
+    "@야, 포술장님 또 졸고 계신다? 누가 좀 깨워!",
+    "고향 섬 얘기? 됐어. 그거 해적 놈들이 다 털어 갔어.",
+    "@강습대 집결! 늦는 놈은 바다에 던진다!",
+    "신참, 무서우면 소리 질러. 그럼 덜 무서워! 아아아!",
+    "@넵! 대장님 말씀은 들었고요, 하고 싶은 대로 하겠슴다!",
+    "방금 그 배 봤냐? 해적 깃발 걸고 도망치는 꼴, 웃기지도 않네.",
+    "목 문신? 경고 문양이야. 만지면 너 죽어. 진짜로.",
+    "야 신참! 오늘 살아남으면 사탕 두 개 준다!",
+    "@갈고리 던진다! 셋, 둘— 아 몰라, 던졌다!",
+    "@부장님, 열 받으셨슴까? 그럼 제가 대신 뛰고 오겠슴다!",
+    "이 배가 해적 제일 많이 잡는다길래 왔지. 진짜더라.",
+    "@[교신 끊김] …아 씨, 줄 끊겼다! 다시 간다!",
+    "신참, 칼 그렇게 잡으면 니 손가락부터 날아가!",
+    "@오늘 피어싱은 포술장님이 하겠네. 나는 문신이나 하나 더 할까.",
+    "@하하! 저놈 바다에 빠졌다! 건져 줄까? 아니 됐다!",
+    "@항해장님 또 좌표 부르신다. 네 네, 받아 적었슴다. 대충.",
+    "@심심하다… 언제 싸우냐… 대장님?",
+    "신참, 쫄지 마. 쫄면 먼저 죽어. 그거 하나만 기억해.",
+    "@강습대 전원 생존! 봤냐 이 새끼들아!",
+    "@넵, 쉬겠슴다. 근데 저 안 졸린데요.",
+    "내일도 뛴다. 살아 있으면."
+  ],
+  "sq3-01":[
+    "소위. 함교로.",
+    "@견시, 좌현 주시.",
+    "@전 대원, 정위치.",
+    "소위. 보고.",
+    "@속도 유지.",
+    "@우현 10도.",
+    "@등불 점멸 준비.",
+    "@작전관, 해도 가져와.",
+    "@부장. 함교로.",
+    "@기관장. 출력 올려.",
+    "소위. 자리로.",
+    "@해무 진입. 견시 강화.",
+    "@조난 신호 확인. 좌표 대조.",
+    "대기.",
+    "@연락정 준비.",
+    "@정찰관, 전방 확인.",
+    "@교대.",
+    "소위. 다시.",
+    "@사격 준비. 명령 대기.",
+    "무전 짧게.",
+    "@신호탄 확인. 진위 판단 후 보고.",
+    "@정박지 상륙, 절반만.",
+    "소위. 쉬어.",
+    "@폭풍 대비. 고정.",
+    "@남동 해역으로.",
+    "@드리프트 흔적 확인. 추적.",
+    "소위. 함장실로.",
+    "@작전 변경 없음.",
+    "이상 없으면 보고하지 마.",
+    "수고했다."
+  ],
+  "sq3-02":[
+    "소위, 규정 3장 12항은 외웠습니까?",
+    "새벽 당직 교대 시각이 몇 시였습니까?",
+    "방금 그 보고, 다시 할 수 있습니까?",
+    "소위, 함내 구조도는 보지 않고 그릴 수 있습니까?",
+    "그게 최선이었습니까?",
+    "조난 신호를 받았을 때 첫 번째로 확인하는 건 무엇입니까?",
+    "소위, 오늘 시험지는 받았습니까?",
+    "그 판단의 근거는 무엇입니까?",
+    "같은 실수를 두 번 했습니까?",
+    "함장님께 보고하기 전에, 저에게 먼저 말할 생각은 없었습니까?",
+    "기관실 출입 허가는 받았습니까?",
+    "소위, 지금 위치가 어디입니까?",
+    "붉은 신호탄과 정해진 점멸, 그 차이를 설명할 수 있습니까?",
+    "방금 웃은 이유가 있습니까?",
+    "소위, 식사는 했습니까? 당직 중에 쓰러질 생각입니까?",
+    "규정을 모르면 누가 먼저 죽습니까?",
+    "그 질문을 왜 지금 합니까?",
+    "견시 근무 중 무엇을 봤습니까? 정확히요.",
+    "소위, 제복 깃이 왜 그렇습니까?",
+    "작전실 해도는 반출 금지입니다. 알고 있었습니까?",
+    "그 이름은 어디서 들었습니까?",
+    "오늘 영창은 비어 있습니다. 계속 비어 있게 할 수 있습니까?",
+    "소위, 무전 수칙 2조는 무엇입니까?",
+    "함장님 명령에 이유가 붙어 있었습니까?",
+    "그 대답, 확신합니까?",
+    "해무 속에서 정찰관 신호를 놓치면 어떻게 됩니까?",
+    "소위, 오늘 하루를 세 문장으로 보고할 수 있습니까?",
+    "방금 그 소리, 들었습니까?",
+    "준비는 됐습니까?",
+    "내일 시험도 같은 강도입니다. 알고 있습니까?"
+  ],
+  "sq3-03":[
+    "혹시 바쁘지 않으시면… 작전실에 잠시 들러 주실 수 있을까요? 해도 정리를 같이 봐 주셨으면 해서요.",
+    "소위님, 오늘 함장님께는… 아니요, 별일은 아닙니다. 다만 보고는 짧게 하시는 편이 좋을 것 같아요.",
+    "부장님께서 시험지를 새로 만드셨다고 들었는데요… 미리 말씀드리는 게 도움이 될까 해서요.",
+    "괜찮으시다면, 제가 함내 구조를 한 번 더 설명해 드려도 될까요?",
+    "함장님께서 '대기'라고 하신 건… 아마 조금 오래 기다리라는 뜻일 거예요.",
+    "혹시, 다른 방법을 한 번만 더 생각해 보셔도 괜찮을까요?",
+    "기관장님께 부탁드려 볼까요? 제가 직접 내려가서 여쭤보겠습니다.",
+    "소위님, 식사는 하셨나요? 사관 식당에 해조죽이 남아 있다고 들었어요.",
+    "부장님 질문은 무섭게 들리지만… 사실은 답을 같이 찾아 주시려는 거예요. 대부분은요.",
+    "작전 계획이 조금… 아니, 꽤 바뀌었습니다. 천천히 말씀드릴게요.",
+    "죄송하지만, 좌표를 한 번만 다시 확인해 주실 수 있을까요?",
+    "@오늘은 바람이 좋네요. 이런 날은 사고가 적어서 다행이에요.",
+    "함장님과 부장님 사이 분위기가 조금… 음, 오늘은 작전실에 계시는 편이 좋을 것 같아요.",
+    "소위님 보고서, 잘 쓰셨어요. 다만 두 군데만… 아주 조금만 고치면 어떨까 싶어서요.",
+    "혹시 무서우셨다면, 그건 이상한 게 아니에요.",
+    "기관장님께도 존댓말을 쓰느냐고요? 네. 그분이 없으면 이 배는 멈추니까요.",
+    "정박지에 술집이 하나뿐이라… 혹시 같이 가실 분 계시면, 저는 빠지겠습니다.",
+    "드리프트 추적 경로를 다시 그려 봤는데요… 결론부터 말씀드리면, 또 놓쳤습니다.",
+    "제가 크게 서 있어서 불편하시면, 앉아서 말씀드릴게요.",
+    "그 판단이 틀렸다고는 하지 않겠습니다. 다만… 다른 답도 있었을지 모르겠어요.",
+    "소위님, 새벽 당직 끝나셨죠? 따뜻한 해초차 한 잔 드릴까요?",
+    "작전실 해도는 반출이 안 돼서요… 보고 싶으시면 언제든 들르세요.",
+    "함장님께서 고개를 끄덕이셨어요. 그건… 꽤 좋은 신호예요.",
+    "폭풍철이 다가와서요, 고정 장비 점검을 한 번만 부탁드려도 될까요?",
+    "혹시 제가 너무 길게 말하고 있나요? 나쁜 소식일수록 길어지는 버릇이 있어서…",
+    "환초권에서는 이럴 때 차를 한 잔 마셔요. 여기선… 해초차밖에 없지만요.",
+    "부장님께서 웃으셨다고요? 음… 그건 제가 확인해 봐야겠어요.",
+    "소위님 덕분에 오늘 작전실이 덜 조용했어요. 감사합니다.",
+    "오늘 하루, 많이 힘드셨죠. 충분히 잘하셨어요.",
+    "그럼… 내일 아침에 작전실에서 뵐까요?"
+  ],
+  "sq3-04":[
+    "{cs} 소위님. …남동쪽 해무가 짙어집니다.",
+    "@…제3항로 진입. 이상 없습니다.",
+    "{cs} 소위님. …식사는 하셨습니까.",
+    "@…전방 2해리, 섬 그림자 하나. 비는 섬입니다.",
+    "{cs} 소위님. 견시대는 바람이 셉니다. …옷을 더 입으십시오.",
+    "@…수평선 이상 없습니다.",
+    "@케이프를 펼쳤습니다. …정찰 들어갑니다.",
+    "{cs} 소위님. …방금 보고, 정확했습니다.",
+    "@…야광 해역 진입. 밤바다가 푸릅니다.",
+    "@…해류가 바뀌었습니다. 함장님께 보고드리겠습니다.",
+    "{cs} 소위님. …무리하지 마십시오.",
+    "@…흰 새 한 마리. 미신이지만, 보고는 드립니다.",
+    "@…남쪽에서 등불 셋. 신호는 아닙니다.",
+    "{cs} 소위님. …새벽 당직 수고하셨습니다.",
+    "@…해무 속입니다. 소리로 확인 중입니다.",
+    "@…회유권 전령선이 지나갑니다. 아군입니다.",
+    "{cs} 소위님. …제 이름은 부르지 않으셔도 됩니다. 저는 부르겠습니다.",
+    "@…조난 신호탄. 진위는 아직 판단 불가.",
+    "@…별이 잘 보입니다. 위치 정확합니다.",
+    "{cs} 소위님. …괜찮으십니까.",
+    "@…파고 상승. 폭풍철이 가깝습니다.",
+    "@…좌현 후방, 쾌속선 흔적. 확인 중입니다.",
+    "{cs} 소위님. …필요하시면 부르십시오.",
+    "@…정박지 등불 확인. 입항 경로 이상 없습니다.",
+    "@…바람이 멈췄습니다.",
+    "{cs} 소위님. …오늘 하늘은 맑습니다.",
+    "@…정찰 종료. 케이프를 접습니다.",
+    "…부장님께서 시험 이야기를 하셨습니다. 3장부터 보십시오. …제가 말한 건 아닙니다.",
+    "{cs} 소위님. …쉬십시오.",
+    "@…이상 없습니다."
+  ],
+  "sq3-05":[
+    "야, 신참! 기관실 내려올래? 좋은 거 있는데. 아, 이건 비밀.",
+    "엔진 소리 좋지? 오늘 기분 좋은가 봐, 얘.",
+    "함장님한테는 말하지 마. 방금 그 진동, 별거 아냐. 아마도.",
+    "야, 얼어붙었잖아. 숨 쉬어, 숨.",
+    "신참~ 부장 시험 또 봤어? 답 알려 줄까? 농담이야, 나도 몰라.",
+    "@출력 올리라고? 함장님— 아니, 함장님 명령이면 올려야지.",
+    "기관실 덥지? 그래서 다들 여기서 술 마시는 거야. 아, 이것도 비밀.",
+    "야, 신참! 위에서 무슨 일 있었어? 진동이 갑자기 튀던데.",
+    "@바다뼈 질이 이번엔 좀 별로네. 칼름에서 싼 거 샀나 봐.",
+    "내 머리 색? 예쁘지? 근데 이거 경고색이다, 너.",
+    "작전관님이 또 존댓말 썼어. 나한테. 진짜 웃겨, 그 사람.",
+    "신참~ 오늘 잘 버텼어? 버텼으면 과일주 반 잔.",
+    "기관실 들어오려면 내 허락 받아야 돼. 근데 너는 그냥 와도 돼.",
+    "방금 그 소리? 2번 축이 투정 부리는 거야. 달래 주면 돼.",
+    "함장님이 나 태운 이유? 몰라~ 내가 제일 잘하니까?",
+    "야, 진지한 얼굴 하지 마. 무섭잖아. 농담 하나 해 줄까?",
+    "이 배 멈추는 거, 나만 할 수 있다? 그러니까 나한테 잘해~",
+    "신참, 해먹 타 봤어? 기관실 구석에 하나 있어. 내 거지만.",
+    "@폭풍철 오면 엔진이 제일 힘들어해. 나도 같이 힘들어.",
+    "부장이 나 또 감찰 보고에 올렸대. 하하, 칼름 그 웃는 놈 짓이야.",
+    "야, 신참! 소금 흘렸지? 불운 온다~ 농담이야. 아니, 반쯤.",
+    "엔진 기름 냄새 좋지 않아? 나만 좋아해? 알았어.",
+    "함장님! …아, 무전 잘못 탔네. 미안, 신참.",
+    "@남방 쪽 섬 또 가라앉았대. …뭐, 그렇대.",
+    "신참, 손에 기름 묻었다. 닦지 마, 훈장이야.",
+    "@출력 안정. 오늘은 얌전하네, 우리 애.",
+    "야, 위에서 다들 혼자 놀지? 기관실은 안 그래. 내려와.",
+    "조개껍데기 도박 할래? 공식적으론 금지야. 공식적으론.",
+    "신참~ 오늘 무사했으면 됐어. 나머진 내가 고칠게.",
+    "@끊는다~ 엔진이 부른다."
+  ]
+};
+
+/* ==========================================================
+   출처 불명 신호 — 화면에 창으로 뜹니다. 누구인지 밝히지 않습니다 (드리프트 5인 × 30문장)
+   ========================================================== */
+const INTERCEPT = {
+  "drift-01":[ // 카르네
+    "…거기까지다.",
+    "…그건 안 한다.",
+    "…아직이다. 움직이지 마라.",
+    "…돌아와라.",
+    "…들린다.",
+    "…그 배는 건드리지 않는다.",
+    "…먹었으면 됐다.",
+    "…알고 있다.",
+    "…오늘은 아니다.",
+    "…남방 항로. 사흘 뒤.",
+    "…아이들은 아래에 있다.",
+    "…모선은 움직이지 않는다.",
+    "…그 이름은 여기서 쓰지 않는다.",
+    "…쾌속선 둘. 나머지는 남는다.",
+    "…된다.",
+    "…안 된다.",
+    "…누가 이 주파수를 열었나.",
+    "…바람이 없군.",
+    "…그쪽 함장은 아직 같은 자리에 있다.",
+    "…나간 자는 돌아오지 않는다.",
+    "…몫은 나눴다.",
+    "…등불 꺼라.",
+    "…조용히.",
+    "…출신은 묻지 않는다.",
+    "…그건 거부한다.",
+    "…밤이 길다.",
+    "…그 배는 날씨다. 피하면 된다.",
+    "…다 들었다.",
+    "…내려가라.",
+    "…끝내라."
+  ],
+  "drift-02":[ // 리스
+    "…여기는 화물선 시라. 침수 중이에요. …거기, 누구 있죠? 이름 알려 줄래요?",
+    "{cs}… 맞죠? 목소리 기억해요. 또 들으러 올게요.",
+    "괜찮아요, 천천히 와도 돼요. 불빛 보이죠? 그쪽이에요.",
+    "…[잡음] 구조 요청… 아이가 있어요… 빨리요… [교신 끊김]",
+    "메이데이, 메이데이… 아, 미안해요. 연습이었어요. 들으셨어요?",
+    "{cs}, 지난번에 하던 말버릇 그대로네요. 반가워요.",
+    "거기 춥지 않아요? 목소리가 조금 떨려서요.",
+    "…좌표 불러 드릴까요? 아니면 그냥, 제 목소리만 따라올래요?",
+    "이 주파수, 아무도 안 듣는 줄 알았어요. 당신 말고는요.",
+    "괜찮아요, 아무 말 안 해도 돼요. 제가 대신 말할게요.",
+    "…승무원 열두 명… 기관 정지… 아, 이건 다음에 쓸 거예요.",
+    "이름 하나만 알려 줘요. 그럼 다음에 꼭 불러 줄게요.",
+    "{cs}. 이름 예쁘네요. 잊지 않을게요.",
+    "통신실이 좀 좁아서요. 숨소리 들려도 이해해 줘요.",
+    "붉은 신호탄 보이면, 그거 제가 보낸 거예요. 아닐 수도 있지만.",
+    "호위함은 꼭 와요. 규정이 그렇잖아요? 고마워요, 정말.",
+    "…거기 계속 있어요? 저도 계속 있을게요.",
+    "웃고 있는 거 들려요? 저 원래 이래요.",
+    "다정한 사람 좋아해요? 저는 처음 보는 사람한테 제일 다정해요.",
+    "…녹슨 냄새 나요? 여긴 늘 그래요.",
+    "{cs}, 오늘은 무슨 일 있었어요? 다 말해 줘요.",
+    "[잡음] …섬이 가라앉고 있어요… 아, 그건 진짜예요.",
+    "제 앞머리에서 빛이 새요. 밤에는 그게 편해요.",
+    "구조 요청, 진짜일까요 가짜일까요? 맞혀 봐요.",
+    "…저기요. 그쪽 배, 오늘 어디로 가요? 아니, 그냥 궁금해서요.",
+    "한 번 들은 목소리는 안 잊어요. 당신 것도요.",
+    "끊지 마요. 조금만 더.",
+    "…여기는 시라. 아직 침수 중이에요. 거기, 아직 들려요?",
+    "{cs}, 다음엔 제가 먼저 부를게요.",
+    "잘 자요. 오늘 밤 신호는 제가 다 보낼게요."
+  ],
+  "drift-03":[ // 베인
+    "…만지지 마. [방전음]",
+    "너희 기관, 소리 이상해. 2번 축. 곧 나간다.",
+    "…끊어.",
+    "…시끄러워.",
+    "[방전음] …저리 가.",
+    "산호권 기관이네. 봉인 안 뜯었지? 뜯지 마. 그거 열면 못 돌아가.",
+    "…기관실 들어오지 마.",
+    "회전수 너무 높아. 그렇게 돌리면 사흘 안에 터져.",
+    "…덥다.",
+    "[방전음] …아, 또.",
+    "남방 항로 화물선. 기관 세 대. 하나만 멈추면 돼.",
+    "…말 걸지 마.",
+    "바다뼈 질 나쁘네. 너희도 싼 거 쓰냐.",
+    "…절연 밴드 어디 뒀더라.",
+    "기관 소리로 배 이름 다 안다. 너희 거 낮게 운다.",
+    "…건드리면 터진다.",
+    "[잡음] …냉각수 새. 너희 쪽.",
+    "…쉬는 거? 안 해.",
+    "도면 없이 만든 기관이다. 손으로 기억해야 돼. 너희 쪽 기관장, 그거 알아?",
+    "…기름 냄새 좋다.",
+    "[방전음] [방전음] …괜찮아. 늘 이래.",
+    "…눈 보고 말하는 거, 기계 얘기할 때만이다.",
+    "…멈춰라. 그 엔진.",
+    "공방에서 쫓겨났다. 그게 다야.",
+    "…아무도 안 만져. 그게 편해.",
+    "압력 떨어졌다. 그쪽 배.",
+    "…쓸데없는 말 하지 마.",
+    "화물선 기관 정지. 다음.",
+    "…불 켜지 마. 눈 아파.",
+    "…끝."
+  ],
+  "drift-04":[ // 셰이드
+    "느리네? 오늘도 따라올 거야?",
+    "거기 부장 아직 있지? 안부 전해 줄래?",
+    "쾌속선 하나쯤은 놓쳐도 되잖아, 응?",
+    "따라올 수 있으면 따라와 봐?",
+    "오늘은 누가 먼저 오를까? 나겠지?",
+    "그 회색 머리, 오늘도 칼 차고 있어? 궁금한데?",
+    "웃기지? 너희 배 또 한 발 늦었어.",
+    "신참이야? 목소리가 새거든. 무서워?",
+    "갑판에 먼저 오르는 건 늘 나야. 기억해 둬?",
+    "상처 하나 더 생겼어. 누구 칼인지 맞혀 볼래?",
+    "왜 조용해? 숨는 거야?",
+    "오늘 바다 좋다. 싸우기 딱 좋은데?",
+    "무기 몇 개 찼게? 세어 볼 시간은 없을 거야.",
+    "너희 견시, 해무에서 아무것도 못 보지?",
+    "재밌다, 진짜. 또 해?",
+    "…[잡음] 아, 두목 부른다. 나중에.",
+    "내가 가장 빨라. 그건 너희도 알잖아?",
+    "이름 불러 주면 좋아할까, 그 사람? 아니면 화낼까?",
+    "순찰 경로 또 바꿨네? 우리가 모를 줄 알았어?",
+    "해군학교? 하, 그런 데 있었던 적 없는데?",
+    "칼 맞대 본 적 있어? 없으면 한번 와 봐?",
+    "쾌속선 시동 걸었다. 들려?",
+    "오늘은 안 싸워. 두목이 안 된대. …아쉽지?",
+    "웃으면서 싸우는 게 이상해? 원래 이런데?",
+    "화물선 하나 털었어. 너희 늦었다?",
+    "다음엔 내가 그쪽 갑판에 서 있을걸?",
+    "칼 갈았다. 오늘 날씨 좋네?",
+    "도망? 우린 산책 중인데?",
+    "그 부장한테 전해. 다음엔 안 진다고. 아니, 지난번에도 안 졌지?",
+    "끊는다~ 쫓아오든가?"
+  ],
+  "drift-05":[ // 유안
+    "글쎄요, 이 주파수 누가 알려 줬을까요?",
+    "다음 정박지 술집, 아직 그 자리죠? 아, 대답 안 해도 돼요.",
+    "몇 살로 들려요, 제 목소리?",
+    "출신은 안 물어요. 여기선 그게 예의거든요.",
+    "…바다뼈, 남는 거 있어요?",
+    "그 항구 시장, 요즘 과일 들어왔어요? 아, 정박지에서만 나오죠.",
+    "저요? 그냥 지나가던 사람이에요. 당신은요?",
+    "재미있네요. 연합 무전은 늘 이렇게 정직해요?",
+    "오늘 몇 살이냐고요? 음… 스물아홉? 아니, 서른넷?",
+    "그 이야기, 어디서 들었어요? 저도 궁금하네요.",
+    "제 얘기는 됐고요, 당신 배는 요즘 어때요?",
+    "항구에서 한 번 마주쳤을지도 몰라요. 기억 안 나죠? 다들 그래요.",
+    "흰 새 봤어요? 그럼 사흘 뒤에 폭풍이겠네요. 어디 계실 거예요?",
+    "보급선 일정 바뀐 거, 알고 계셨어요? 몰랐으면 지금 알았네요.",
+    "이 주파수, 다음엔 안 열릴 수도 있어요. 아쉽죠?",
+    "당신 같은 목소리, 술집에서 들었던 것 같은데. 아닌가요?",
+    "저 같은 사람은 어디에나 있어요. 그래서 아무 데도 없고요.",
+    "질문 하나만 할게요. 대신 대답은 질문으로 해 드릴게요.",
+    "…[잡음] 군도 북측 보급선, 출항 이틀 연기. 그렇다더라고요.",
+    "편지 쓰세요? 칼름이 다 읽던데. 알고 쓰시는 거죠?",
+    "제 이름이요? 들어도 금방 잊어버릴 거예요. 그게 좋아요.",
+    "요즘 연합 쪽은 등유가 모자라다면서요? 소문이에요, 소문.",
+    "신입이세요? 그럼 제가 제일 먼저 인사하는 게 관례인데.",
+    "어디 소속이냐고 묻는 건 실례예요. 아시죠?",
+    "오늘 날씨요? 당신 쪽보다는 맑아요. 아마도.",
+    "이 신호를 보고하실 거예요? 그럼 뭐라고 쓰실 거예요?",
+    "세 번째 섬 술집 주인이 안부 전해 달래요. 누구한테인지는 몰라도.",
+    "재배치 명단, 직접 보셨어요? 저는 봤는데.",
+    "사흘이면 어디서든 단골이 돼요. 그쪽 배도요.",
+    "그럼 또… 다른 항구에서요."
+  ]
+};
+const INTERCEPT_ALL = Object.values(INTERCEPT).flat();
+
+
+/* 진영별 채널 생성: 공용 + 1인 직통 */
+for(const id of ORDER){
+  const u=UNITS[id];
+  u.crew={}; u.img={}; u.keys.forEach(k=>{ u.crew[PEOPLE[k].nm]=PEOPLE[k].role; u.img[PEOPLE[k].nm]=k });
+  const names=Object.keys(u.crew);
+  u.channels=[{id:"all", name:u.allName, members:names, freq:u.base}]
+    .concat(names.map((n,i)=>({id:"p"+i, name:n, members:[n], freq:u.base+0.15*(i+1)+(i>2?.35:0)})));
+}
+
+/* ==========================================================
+   저장
+   ========================================================== */
+const $=id=>document.getElementById(id);
+const store={ get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+              set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+let S=Object.assign({callsign:"",passcode:"",profile:"",sound:true,unit:"skoll",ch:{}}, store.get("tacnet_settings",{}));
+let logs=store.get("tacnet_logs",{});
+let unit=UNITS[S.unit]?S.unit:"skoll";
+let ch=null, busy=false, rxLevel=0, txLevel=0;
+const key=()=>unit+":"+ch.id;
+const save=()=>store.set("tacnet_settings",S);
+
+/* ==========================================================
+   효과음
+   ========================================================== */
+let ac=null;
+const A=()=>{ if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}} return ac };
+function hiss(dur,vol){
+  if(!S.sound) return; const a=A(); if(!a) return; const snd=UNITS[unit].sound;
+  const b=a.createBuffer(1,Math.max(1,a.sampleRate*dur),a.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.4);
+  const s=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+  f.type="bandpass"; f.frequency.value=snd.band; f.Q.value=.6; g.gain.value=vol??snd.noise;
+  s.buffer=b; s.connect(f).connect(g).connect(a.destination); s.start();
+}
+function tone(fq,dur,vol=.035,at=0,type="square"){
+  if(!S.sound) return; const a=A(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain(), t=a.currentTime+at;
+  o.type=type; o.frequency.value=fq; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur);
+}
+const sfx={
+  tx(){ hiss(.1); tone(1400,.05,.03,.04) },
+  rx(){ hiss(UNITS[unit].sound.tail) },
+  roger(){ if(unit==="calm"){ tone(660,.12,.025,0,"sine") } else { tone(1250,.05); tone(950,.06,.035,.07) } },
+  tune(){ hiss(.18,.06) },
+  ghost(){ hiss(.7,.13); tone(520,.35,.025,.12,"sawtooth"); tone(347,.4,.02,.4,"sawtooth") },
+  err(){ hiss(.5,.14) },
+};
+
+/* ==========================================================
+   LCD 파형
+   ========================================================== */
+const cv=$("scope"), cx=cv.getContext("2d");
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let phase=0;
+function fit(){ const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1; cv.width=r.width*dpr; cv.height=r.height*dpr; cx.setTransform(dpr,0,0,dpr,0,0) }
+function draw(){
+  const w=cv.clientWidth, h=cv.clientHeight, sc=UNITS[unit].scope;
+  const glow=getComputedStyle(document.body).getPropertyValue("--glow").trim();
+  cx.clearRect(0,0,w,h);
+  // 눈금
+  cx.globalAlpha=.14; cx.strokeStyle=glow; cx.lineWidth=1;
+  for(let x=0;x<w;x+=w/12){ cx.beginPath(); cx.moveTo(x+.5,0); cx.lineTo(x+.5,h); cx.stroke() }
+  cx.beginPath(); cx.moveTo(0,h/2+.5); cx.lineTo(w,h/2+.5); cx.stroke();
+  // 파형
+  const lv=Math.max(rxLevel,txLevel), amp=(.04+lv*sc.amp)*h/2;
+  cx.globalAlpha=1; cx.lineWidth=1.6; cx.shadowColor=glow; cx.shadowBlur=8; cx.beginPath();
+  for(let x=0;x<=w;x+=2){
+    const t=x/w*Math.PI*2;
+    let y=Math.sin(t*3+phase)*.6+Math.sin(t*7.3-phase*1.7)*.3;
+    y+=(Math.random()*2-1)*(sc.jitter+lv*.4);
+    y*=amp*(.6+.4*Math.sin(t*.5+phase*.3));
+    x?cx.lineTo(x,h/2+y):cx.moveTo(x,h/2+y);
+  }
+  cx.strokeStyle=glow; cx.stroke(); cx.shadowBlur=0;
+  phase+=.05*sc.speed*(1+lv*2);
+  rxLevel*=.97; txLevel*=.9;
+  if(!reduce) requestAnimationFrame(draw);
+}
+
+/* ==========================================================
+   화면 구성
+   ========================================================== */
+const state=(t,err)=>{ const s=$("state"); s.textContent=t; s.classList.toggle("err",!!err) };
+const hhmm=t=>new Date(t).toTimeString().slice(0,5);
+const isAlt=n=>(UNITS[unit].alt||[]).includes(n);
+
+function renderUnits(){
+  $("units").innerHTML="";
+  ORDER.forEach(id=>{
+    const u=UNITS[id], b=document.createElement("button");
+    b.className="unit"; b.setAttribute("aria-pressed",id===unit);
+    b.innerHTML=`<strong>${u.tab}</strong><span>${u.sub}</span>`;
+    b.onclick=()=>switchUnit(id); $("units").appendChild(b);
+  });
+}
+function renderKeys(){
+  const u=UNITS[unit]; $("keys").innerHTML="";
+  u.channels.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="key"+(c.members.length===1&&isAlt(c.members[0])?" alt":"");
+    b.setAttribute("aria-pressed",c.id===ch.id);
+    if(c.id!=="all"){ const im=avatarImg(c.name); if(im) b.appendChild(im) }
+    b.appendChild(document.createTextNode(c.id==="all"?c.name:c.name.split(" ")[0]));
+    b.onclick=()=>switchCh(c); $("keys").appendChild(b);
+  });
+}
+function renderScreen(){
+  const u=UNITS[unit];
+  $("unitLabel").textContent=u.label;
+  $("freq").textContent=ch.freq.toFixed(3);
+  $("chName").textContent=ch.id==="all"?ch.name:ch.name+" 직통";
+  $("chWho").textContent=ch.id==="all"?`${ch.members.length}명 청취 중`:(u.crew[ch.name]||"");
+}
+function avatarImg(name){
+  const k=UNITS[unit].img[name]; if(!k) return null;
+  const im=new Image(); im.src=IMG_BASE+k+".jpg"; im.alt=""; im.loading="lazy"; im.decoding="async";
+  im.onerror=()=>im.remove();
+  return im;
+}
+function bubble(e){
+  if(e.kind==="ghost"){
+    const t=document.createElement("button"); t.className="trace";
+    t.innerHTML=`출처 불명 신호 수신 <span>${hhmm(e.t)}</span>`;
+    t.onclick=()=>showIntercept(e,false);
+    return t;
+  }
+  const d=document.createElement("div");
+  d.className="m"+(e.kind==="me"?" me":e.kind==="ghost"?" ghost":isAlt(e.who)?" alt":"");
+  const role=e.kind==="crew"?(UNITS[unit].crew[e.who]||""):"";
+  d.innerHTML=`<div class="av"></div><div class="name"><span class="n"></span></div><div class="say"></div>`;
+  const av=d.querySelector(".av");
+  if(e.kind==="crew"){ const im=avatarImg(e.who); im?av.appendChild(im):(av.className="av none",av.textContent=e.who[0]) }
+  else { av.className="av none"; av.textContent=e.kind==="ghost"?"?":"" }
+  d.querySelector(".n").textContent=e.kind==="ghost"?UNITS[unit].ghostName:e.who;
+  const nm=d.querySelector(".name");
+  if(role){ const em=document.createElement("em"); em.textContent=role; nm.appendChild(em) }
+  const t=document.createElement("span"); t.className="time"; t.textContent=hhmm(e.t); nm.appendChild(t);
+  return d;
+}
+function contactCard(name){
+  const k=UNITS[unit].img[name], p=PEOPLE[k];
+  const c=document.createElement("div"); c.className="contact"+(isAlt(name)?" alt":"");
+  c.innerHTML=`<div class="pic"></div><div><b></b><div class="r"></div><div class="s"></div><q></q></div>`;
+  const im=avatarImg(name); if(im) c.querySelector(".pic").appendChild(im);
+  c.querySelector("b").textContent=p.nm; c.querySelector(".r").textContent=p.role;
+  c.querySelector(".s").textContent=`${p.sp} · ${p.from}`; c.querySelector("q").textContent=p.q;
+  return c;
+}
+function fill(el,text){
+  el.textContent="";
+  text.split(/(\[[^\]]+\])/).forEach(p=>{
+    if(/^\[[^\]]+\]$/.test(p)){ const s=document.createElement("span"); s.className="tag"; s.textContent=p; el.appendChild(s) }
+    else if(p) el.appendChild(document.createTextNode(p));
+  });
+}
+function renderLog(){
+  const log=$("log"), list=logs[key()]||[]; log.innerHTML="";
+  const o=document.createElement("div"); o.className="open";
+  o.textContent=`${ch.freq.toFixed(3)} MHz 연결됨`; log.appendChild(o);
+  if(ch.id!=="all") log.appendChild(contactCard(ch.name));
+  if(!list.length){
+    const e=document.createElement("div"); e.className="empty";
+    e.textContent=ch.id==="all"?"아직 교신 기록이 없습니다. 아래에 첫 무전을 보내보세요.":`${ch.name}에게 직접 연결된 주파수입니다.`;
+    log.appendChild(e);
+  }
+  list.forEach(m=>{ const b=bubble(m); if(m.kind!=="ghost") fill(b.querySelector(".say"),m.text); log.appendChild(b) });
+  log.scrollTop=log.scrollHeight;
+}
+function flash(){ const s=$("screen"); s.classList.remove("shift"); void s.offsetWidth; s.classList.add("shift") }
+
+function switchUnit(id){
+  if(busy||id===unit) return;
+  unit=id; S.unit=id; save();
+  document.body.dataset.unit=id;
+  ch=UNITS[id].channels.find(c=>c.id===S.ch[id])||UNITS[id].channels[0];
+  flash(); sfx.tune(); rxLevel=.8;
+  renderUnits(); renderKeys(); renderScreen(); renderLog(); state("주파수 이동 완료");
+  setTimeout(()=>{ if(!busy) state("대기 중") },1200);
+  if(reduce) draw();
+}
+function switchCh(c){
+  if(busy||c.id===ch.id) return;
+  ch=c; S.ch[unit]=c.id; save();
+  sfx.tune(); rxLevel=.5; flash();
+  renderKeys(); renderScreen(); renderLog(); state("대기 중");
+  if(reduce) draw();
+}
+
+/* 신호 · 배터리 · 시계 */
+let sig=4;
+function drawBars(){ [...$("bars").children].forEach((b,i)=>b.classList.toggle("on",i<sig)) }
+setInterval(()=>{ if(!busy){ sig=Math.max(2,Math.min(5,sig+(Math.random()<.5?-1:1))); drawBars() } },2600);
+const tick=()=>{ $("clock").textContent=new Date().toTimeString().slice(0,5) }; tick(); setInterval(tick,10000);
+if(navigator.getBattery) navigator.getBattery().then(b=>{ const f=()=>$("batt").style.setProperty("--lv",Math.round(b.level*100)+"%"); f(); b.onlevelchange=f }).catch(()=>{});
+
+/* ==========================================================
+   송수신
+   ========================================================== */
+function push(e){ const k=key(); (logs[k]||=[]).push(e); if(logs[k].length>300) logs[k].shift(); store.set("tacnet_logs",logs) }
+function chatHistory(){
+  const out=[];
+  (logs[key()]||[]).filter(e=>e.kind!=="ghost").slice(-24).forEach(e=>{
+    const role=e.kind==="me"?"user":"assistant", c=e.kind==="me"?`[${e.who}] ${e.text}`:`${e.who}|${e.text}`;
+    if(out.length&&out[out.length-1].role===role) out[out.length-1].content+="\n"+c; else out.push({role,content:c});
+  });
+  while(out.length&&out[0].role!=="user") out.shift();
+  return out;
+}
+function parse(text){
+  const res=[], ok=ch.members;
+  text.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{
+    const m=l.match(/^([^|]{1,20})\|\s*(.+)$/);
+    if(m&&ok.includes(m[1].trim())) res.push({who:m[1].trim(),text:m[2].trim()});
+    else if(res.length) res[res.length-1].text+=" "+l;
+    else res.push({who:ok[0],text:l});
+  });
+  return res;
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function ask(){
+  if(!WORKER_URL){
+    await wait(800+Math.random()*900);
+    const u=UNITS[unit], pool=[...ch.members].sort(()=>Math.random()-.5), n=ch.members.length>1?1+Math.floor(Math.random()*2):1;
+    // 데모: 말투가 어긋나지 않게 사이트의 대표 대사로만 응답
+    return pool.slice(0,n).map(who=>({who,text:PEOPLE[u.img[who]].q}));
+  }
+  const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({unit,channel:ch.id,callsign:S.callsign,profile:S.profile,passcode:S.passcode,history:chatHistory()})});
+  if(r.status===401) throw new Error("auth");
+  if(r.status===429) throw new Error("limit");
+  if(!r.ok) throw new Error("net");
+  return parse((await r.json()).text||"");
+}
+function typeIn(node,text){
+  return new Promise(done=>{
+    const el=node.querySelector(".say"), caret=document.createElement("span"); caret.className="caret";
+    const G="▒░█▓"; let i=0;
+    if(reduce){ fill(el,text); return done() }
+    (function step(){
+      i+=1+(Math.random()<.2?1:0);
+      let s=text.slice(0,i); if(i<text.length&&Math.random()<.05) s+=G[Math.floor(Math.random()*G.length)];
+      fill(el,s); el.appendChild(caret); rxLevel=Math.min(1,rxLevel+.25);
+      $("log").scrollTop=$("log").scrollHeight;
+      if(i<text.length) setTimeout(step,18+Math.random()*34); else { fill(el,text); done() }
+    })();
+  });
+}
+async function send(){
+  const text=$("input").value.trim(); if(!text||busy) return;
+  if(!S.callsign){ openSet(); return }
+  busy=true; $("ptt").disabled=true; $("ptt").classList.add("live");
+  $("input").value=""; grow();
+  const emp=$("log").querySelector(".empty"); if(emp) emp.remove();
+
+  sfx.tx(); txLevel=1; state("송신 중");
+  const me={kind:"me",who:S.callsign,text,t:Date.now()}; push(me);
+  const b=bubble(me); fill(b.querySelector(".say"),text); $("log").appendChild(b); $("log").scrollTop=$("log").scrollHeight;
+  await wait(300); state("응답 대기 중");
+  try{
+    const rs=await ask();
+    for(const r of rs){
+      sfx.rx(); sig=3+Math.floor(Math.random()*3); drawBars(); state(`${r.who} 수신 중`);
+      const e={kind:"crew",who:r.who,text:r.text,t:Date.now()}, n=bubble(e); $("log").appendChild(n);
+      await typeIn(n,r.text); push(e); sfx.roger(); await wait(380);
+    }
+    state("대기 중");
+  }catch(err){
+    sfx.err(); sig=1; drawBars();
+    state({auth:"접속 암호가 맞지 않습니다. 설정에서 다시 입력하세요.",limit:"오늘 송신 가능 횟수를 모두 썼습니다.",net:"신호가 끊겼습니다. 잠시 후 다시 송신하세요."}[err.message]||"신호가 끊겼습니다.",true);
+  }
+  busy=false; $("ptt").disabled=false; $("ptt").classList.remove("live"); schedule();
+}
+
+/* ==========================================================
+   입력 · 설정
+   ========================================================== */
+function grow(){ const t=$("input"); t.style.height="auto"; t.style.height=Math.min(t.scrollHeight,130)+"px" }
+$("input").addEventListener("input",grow);
+$("input").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); send() } });
+$("ptt").onclick=send;
+
+const dlg=$("set");
+function openSet(){
+  $("sCs").value=S.callsign; $("sPass").value=S.passcode; $("sSnd").checked=S.sound; $("sProf").value=S.profile||""; countProf();
+  $("sNote").textContent=WORKER_URL?"":"지금은 데모 모드입니다. Worker 주소를 넣으면 대원들이 실제로 대답합니다.";
+  dlg.showModal();
+}
+$("openSet").onclick=openSet;
+dlg.addEventListener("click",e=>{ if(e.target===dlg) dlg.close() });
+$("sSave").onclick=()=>{
+  Object.assign(S,{callsign:$("sCs").value.trim(),passcode:$("sPass").value,sound:$("sSnd").checked,profile:$("sProf").value.trim().slice(0,300)});
+  save(); $("cs").textContent=S.callsign||"미설정"; dlg.close();
+};
+$("sClear").onclick=()=>{ if(confirm(`${ch.name} 채널의 교신 기록을 지울까요?`)){ logs[key()]=[]; store.set("tacnet_logs",logs); renderLog(); dlg.close() } };
+$("sExport").onclick=()=>{
+  const u=UNITS[unit], lines=(logs[key()]||[]).map(e=>`[${hhmm(e.t)}] ${e.kind==="ghost"?"출처 불명":e.who}: ${e.text}`).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([`${u.label} / ${ch.name} / ${ch.freq.toFixed(3)} MHz\n\n${lines}`],{type:"text/plain"}));
+  a.download=`tacnet_${unit}_${ch.id}.txt`; a.click();
+};
+
+
+/* ==========================================================
+   출처 불명 신호 창
+   ========================================================== */
+const ix=$("ix"), ixCv=$("ixScope"), ixCx=ixCv.getContext("2d");
+let ixRun=false, ixLv=0;
+function ixDraw(){
+  if(ix.hidden){ ixRun=false; return }
+  const r=ixCv.getBoundingClientRect(), dpr=devicePixelRatio||1;
+  if(ixCv.width!==Math.round(r.width*dpr)){ ixCv.width=r.width*dpr; ixCv.height=r.height*dpr; ixCx.setTransform(dpr,0,0,dpr,0,0) }
+  const w=r.width, h=r.height; ixCx.clearRect(0,0,w,h);
+  ixCx.strokeStyle="#FF5C6E"; ixCx.lineWidth=1.4; ixCx.shadowColor="#FF5C6E"; ixCx.shadowBlur=6; ixCx.beginPath();
+  for(let x=0;x<=w;x+=2){
+    const burst=Math.random()<.04?(Math.random()*2-1)*h*.45:0;
+    const y=h/2+(Math.random()*2-1)*h*(.06+ixLv*.3)+burst;
+    x?ixCx.lineTo(x,y):ixCx.moveTo(x,y);
+  }
+  ixCx.stroke(); ixLv*=.96;
+  if(!reduce) requestAnimationFrame(ixDraw);
+}
+const mask=str=>str.replace(/\d/g,d=>Math.random()<.45?"█":d);
+async function showIntercept(e,fresh){
+  $("ixFreq").textContent=e.freq||"█".repeat(3)+".███";
+  $("ixTime").textContent=hhmm(e.t);
+  $("ixFrom").textContent=["역탐지 실패","좌표 불명","신호 반사 · 추적 불가"][e.t%3];
+  ix.hidden=false; ix.classList.remove("glitch"); void ix.offsetWidth; ix.classList.add("glitch");
+  if(!ixRun){ ixRun=true; ixDraw() }
+  const el=$("ixText"); el.textContent="";
+  if(fresh){ sfx.ghost(); sig=1; drawBars(); state("출처 불명 신호 포착",true); rxLevel=1 }
+  if(reduce||!fresh){ fill(el,e.text); return }
+  const G="▒░█▓#"; let i=0;
+  await new Promise(done=>{ (function step(){
+    i++; let t=e.text.slice(0,i);
+    if(i<e.text.length&&Math.random()<.14) t+=G[Math.floor(Math.random()*G.length)];
+    fill(el,t); ixLv=Math.min(1,ixLv+.3);
+    if(i<e.text.length&&!ix.hidden) setTimeout(step,45+Math.random()*70); else { fill(el,e.text); done() }
+  })() });
+  state("대기 중"); drawBars();
+}
+$("ixClose").onclick=()=>{ ix.hidden=true; schedule() };
+/* 창 끌어서 옮기기 */
+(function(){
+  const bar=$("ixBar"); let sx=0,sy=0,ox=0,oy=0,drag=false;
+  bar.addEventListener("pointerdown",e=>{ if(e.target.closest("button")) return; drag=true; bar.setPointerCapture(e.pointerId);
+    const r=ix.getBoundingClientRect(); sx=e.clientX; sy=e.clientY; ox=r.left; oy=r.top; });
+  bar.addEventListener("pointermove",e=>{ if(!drag) return;
+    const x=Math.max(8,Math.min(innerWidth-ix.offsetWidth-8,ox+e.clientX-sx)), y=Math.max(8,Math.min(innerHeight-60,oy+e.clientY-sy));
+    ix.style.left=x+"px"; ix.style.top=y+"px"; ix.style.transform="none"; });
+  bar.addEventListener("pointerup",()=>drag=false);
+})();
+function intercept(){
+  const txt=INTERCEPT_ALL[pickIndex(INTERCEPT_ALL.length,"ix")].replaceAll("{cs}",S.callsign||"거기");
+  const f=(100+Math.random()*90).toFixed(3);
+  const e={kind:"ghost",who:"",text:txt,t:Date.now(),freq:mask(f)+" MHz"};
+  push(e); $("log").appendChild(bubble(e)); $("log").scrollTop=$("log").scrollHeight;
+  return showIntercept(e,true);
+}
+
+/* ==========================================================
+   대원 자동 무전 (30초 안팎)
+   ========================================================== */
+const recent={};
+function pickIndex(n,tag){
+  const used=recent[tag]||(recent[tag]=[]); let i, guard=0;
+  do{ i=Math.floor(Math.random()*n) }while(used.includes(i)&&guard++<20);
+  used.push(i); if(used.length>Math.max(1,Math.floor(n*.6))) used.shift();
+  return i;
+}
+let ambTimer=null;
+function schedule(){ clearTimeout(ambTimer); ambTimer=setTimeout(ambient,25000+Math.random()*12000) }
+async function ambient(){
+  if(busy||document.hidden||!S.callsign||dlg.open||!ix.hidden){ schedule(); return }
+  if(Math.random()<.22){ await intercept(); schedule(); return }
+  const who=ch.members[Math.floor(Math.random()*ch.members.length)], k=UNITS[unit].img[who];
+  const direct=ch.id!=="all", pool=(AMBIENT[k]||[]).filter(x=>!direct||!x.startsWith("@")).map(x=>x.replace(/^@/,""));
+  if(!pool.length){ schedule(); return }
+  busy=true; $("ptt").disabled=true;
+  const text=pool[pickIndex(pool.length,k+(direct?":d":":a"))].replaceAll("{cs}",S.callsign);
+  sfx.rx(); sig=3+Math.floor(Math.random()*3); drawBars(); state(`${who} 수신 중`);
+  const e={kind:"crew",who,text,t:Date.now()}, n=bubble(e);
+  const emp=$("log").querySelector(".empty"); if(emp) emp.remove();
+  $("log").appendChild(n); await typeIn(n,text); push(e); sfx.roger(); state("대기 중");
+  busy=false; $("ptt").disabled=false; schedule();
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) schedule() });
+
+function countProf(){ $("sCount").textContent=`${$("sProf").value.length} / 300` }
+$("sProf").addEventListener("input",countProf);
+
+/* 시작 */
+/* 주소에 담긴 암호 읽기: …/radio/?code=암호 로 들어오면 자동 저장 후 주소에서 지움 */
+(function(){
+  try{
+    const u=new URL(location.href), c=u.searchParams.get("code");
+    if(c){
+      S.passcode=c; save();
+      u.searchParams.delete("code");
+      window.history.replaceState(null,"",u.pathname+(u.search||"")+u.hash);
+    }
+  }catch(e){}
+})();
+document.body.dataset.unit=unit;
+ch=UNITS[unit].channels.find(c=>c.id===S.ch[unit])||UNITS[unit].channels[0];
+$("cs").textContent=S.callsign||"미설정";
+renderUnits(); renderKeys(); renderScreen(); renderLog(); drawBars();
+fit(); addEventListener("resize",fit); draw();
+if(!S.callsign) setTimeout(openSet,500);
+schedule();
+</script>
+</body>
+</html>
