@@ -4,234 +4,442 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>연합해군 전술 무전망</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
 <style>
 /* ==========================================================
-   전술 무전망 — 진영마다 단말기 외장·LCD 백라이트·파형이 바뀝니다
+   전술 무전망 — 낡은 CRT 단말기
+   진영마다 인광 색 · 깜빡임 · 노이즈 · 상징 화면이 바뀝니다
    ========================================================== */
 :root{
-  --digit:'Azeret Mono',ui-monospace,monospace;
-  --sans:'IBM Plex Sans KR',system-ui,sans-serif;
-  --ease:cubic-bezier(.2,.7,.2,1);
+  --ui:'Galmuri11','Galmuri9',ui-monospace,monospace;      /* 12px 단위 */
+  --tiny:'Galmuri9','Galmuri11',ui-monospace,monospace;    /* 10px 단위 */
+  --read:'Galmuri14','Galmuri11',ui-monospace,monospace;   /* 15px 단위 · 대사 */
+  --mono:'GalmuriMono11','Galmuri11',ui-monospace,monospace;
+  --red:#FF5C6E;
 }
-/* 제3전대 스콜 — 그래파이트 외장, 일렉트릭 블루 LCD */
-body[data-unit="skoll"]{
-  --shell:#0d1114; --shell2:#161c21; --edge:#232c33; --ink:#dce6eb; --mute:#6f7f8a;
-  --lcd:#021619; --glow:#00E5FF; --glow-soft:rgba(0,229,255,.16); --alt:#FF7A00;
-  --tex:radial-gradient(circle at 1px 1px,rgba(255,255,255,.035) 1px,transparent 0) 0 0/4px 4px;
-}
-/* 제1전대 칼름 — 검은 제복과 은사 자수, 무풍대처럼 고요한 화면 */
+/* 제1전대 칼름 — 은빛 인광, 거의 흔들리지 않는 화면 */
 body[data-unit="calm"]{
-  --shell:#09090b; --shell2:#111114; --edge:#2a2a30; --ink:#e4e6ea; --mute:#7a7c84;
-  --lcd:#0c0d10; --glow:#D3D8E0; --glow-soft:rgba(211,216,224,.10); --alt:#D3D8E0;
-  --tex:repeating-linear-gradient(135deg,rgba(211,216,224,.035) 0 1px,transparent 1px 9px);
+  --ph:#DCE1E9; --ph-2:rgba(220,225,233,.55); --ph-3:rgba(220,225,233,.22); --ph-4:rgba(220,225,233,.08);
+  --bg:#050506; --panel:#09090b; --ink:#e8ebf0; --mute:#80838c; --alt:#DCE1E9;
+  --flicker:0; --grain:.07; --bloom:4px;
 }
-/* 제2전대 템페스트 — 전투 레이더 인광 */
+/* 제2전대 템페스트 — 녹색 레이더 인광, 거칠게 떨리는 화면 */
 body[data-unit="tempest"]{
-  --shell:#0b100e; --shell2:#121a16; --edge:#22302a; --ink:#d9e8df; --mute:#6c8276;
-  --lcd:#03110a; --glow:#6CFFA8; --glow-soft:rgba(108,255,168,.13); --alt:#6CFFA8;
-  --tex:repeating-linear-gradient(100deg,rgba(255,255,255,.025) 0 1px,transparent 1px 7px);
+  --ph:#7CFF9E; --ph-2:rgba(124,255,158,.55); --ph-3:rgba(124,255,158,.24); --ph-4:rgba(124,255,158,.08);
+  --bg:#020804; --panel:#041009; --ink:#dcffe6; --mute:#5f8f6d; --alt:#7CFF9E;
+  --flicker:1; --grain:.16; --bloom:9px;
 }
+/* 제3전대 스콜 — 청록 소나 인광, 소금기 낀 화면 */
+body[data-unit="skoll"]{
+  --ph:#3FE6FF; --ph-2:rgba(63,230,255,.55); --ph-3:rgba(63,230,255,.24); --ph-4:rgba(63,230,255,.08);
+  --bg:#02080a; --panel:#051014; --ink:#d9f7fc; --mute:#5b8c96; --alt:#FF7A00;
+  --flicker:.5; --grain:.11; --bloom:7px;
+}
+/* 숨은 주파수 드리프트 — 녹슨 붉은 인광, 가장 심하게 떨리는 화면 */
+body[data-unit="drift"]{
+  --ph:#FF5C6E; --ph-2:rgba(255,92,110,.55); --ph-3:rgba(255,92,110,.26); --ph-4:rgba(255,92,110,.08);
+  --bg:#0a0304; --panel:#120506; --ink:#f5dfe1; --mute:#9a6a70; --alt:#FF5C6E;
+  --flicker:1.4; --grain:.22; --bloom:8px;
+}
+body[data-unit="drift"] .tube{background:radial-gradient(ellipse 60% 40% at 85% 10%,rgba(120,40,20,.22),transparent 70%),radial-gradient(ellipse 40% 50% at 5% 90%,rgba(110,35,20,.25),transparent 70%),var(--bg)}
+body[data-unit="drift"] .app{transform:rotate(-.25deg)}
+body{ --glow:var(--ph); --glow-soft:var(--ph-3); --lcd:var(--bg); --edge:var(--ph-3); }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{background:var(--shell);background-image:var(--tex);color:var(--ink);font-family:var(--sans);
-  display:flex;flex-direction:column;height:100dvh;overflow:hidden;transition:background-color .6s var(--ease),color .6s}
+html,body{height:100%;background:#000}
+body{color:var(--ink);font:12px/1.6 var(--ui);height:100dvh;overflow:hidden;-webkit-font-smoothing:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
-.wrap{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;height:100%}
+:focus-visible{outline:1px dashed var(--ph);outline-offset:2px}
+::selection{background:var(--ph);color:var(--bg)}
 
-/* ---------- 진영 선택 ---------- */
-.units{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:10px 12px 0}
-.unit{padding:8px 4px 9px;border-radius:10px 10px 4px 4px;text-align:center;color:var(--mute);
-  background:transparent;border:1px solid transparent;transition:all .3s var(--ease)}
-.unit strong{display:block;font-size:14px;font-weight:600;letter-spacing:.02em}
-.unit span{display:block;font-size:10.5px;margin-top:1px;opacity:.8}
-.unit[aria-pressed="true"]{color:var(--ink);background:var(--shell2);border-color:var(--edge);border-bottom-color:var(--shell2)}
-.unit[aria-pressed="true"] strong{color:var(--glow)}
+/* ---------- CRT 틀 ---------- */
+.crt{position:fixed;inset:0;padding:8px;background:#000}
+.tube{position:relative;height:100%;border-radius:18px;overflow:hidden;background:var(--bg);
+  box-shadow:inset 0 0 0 1px #111,inset 0 0 90px rgba(0,0,0,.85);transition:background .5s}
+.tube::before{content:"";position:absolute;inset:0;z-index:40;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px)}
+.tube::after{content:"";position:absolute;inset:0;z-index:41;pointer-events:none;border-radius:18px;
+  background:radial-gradient(ellipse 120% 95% at 50% 50%,transparent 62%,rgba(0,0,0,.72) 100%),
+             linear-gradient(115deg,rgba(255,255,255,.035),transparent 30%)}
+.grain{position:absolute;inset:-50%;z-index:39;pointer-events:none;opacity:var(--grain);mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 -.35'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain .9s steps(4) infinite}
+@keyframes grain{25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-1%,3%)}}
+.roll{position:absolute;left:0;right:0;top:-20%;height:18%;z-index:38;pointer-events:none;opacity:calc(.25 + .35*var(--flicker));
+  background:linear-gradient(transparent,var(--ph-4) 45%,rgba(255,255,255,.035) 50%,var(--ph-4) 55%,transparent);animation:roll 7s linear infinite}
+@keyframes roll{to{top:110%}}
+.app{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 1fr auto;
+  animation:flicker 4s infinite steps(1);filter:drop-shadow(0 0 var(--bloom) var(--ph-4))}
+@keyframes flicker{
+  0%,100%{opacity:1} 11%{opacity:calc(1 - .05*var(--flicker))} 12%{opacity:1}
+  47%{opacity:calc(1 - .09*var(--flicker));transform:translateX(calc(1px*var(--flicker)))} 48%{opacity:1;transform:none}
+  83%{opacity:calc(1 - .04*var(--flicker))} 84%{opacity:1}}
 
-/* ---------- 단말기 본체 ---------- */
-.device{margin:0 12px;padding:14px;background:var(--shell2);border:1px solid var(--edge);border-radius:4px 4px 18px 18px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 14px 30px -18px #000}
-.screen{position:relative;background:var(--lcd);border-radius:8px;padding:12px 14px 10px;overflow:hidden;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 6px 18px rgba(0,0,0,.55),0 0 24px var(--glow-soft)}
-.screen::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 35%),repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--glow);font-family:var(--digit);font-size:11px;font-weight:500}
-.row .dim{opacity:.55}
-.freq{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;color:var(--glow)}
-.freq b{font-family:var(--digit);font-weight:300;font-size:46px;line-height:1;letter-spacing:-.02em;text-shadow:0 0 14px var(--glow-soft),0 0 2px var(--glow)}
-.freq small{font-family:var(--digit);font-size:12px;opacity:.6}
-.chline{display:flex;justify-content:space-between;align-items:baseline;color:var(--glow);font-size:13px}
-.chline .who{opacity:.65;font-size:11.5px}
-canvas{display:block;width:100%;height:46px;margin-top:8px}
-.state{margin-top:4px;font-size:11.5px;color:var(--glow);min-height:16px}
-.state.err{color:#ff7d7d}
-.screen.shift{animation:shift .55s var(--ease)}
-@keyframes shift{0%{filter:brightness(1)}20%{filter:brightness(2.4) blur(1px)}45%{filter:brightness(.15)}100%{filter:brightness(1)}}
+/* ---------- 공통 박스 (얇은 선 + 모서리 점) ---------- */
+.box{position:relative;border:1px solid var(--ph-3);background:linear-gradient(var(--ph-4),transparent 40%)}
+.box::before,.box::after{content:"";position:absolute;left:-3px;right:-3px;height:5px;pointer-events:none;
+  background:radial-gradient(circle,var(--ph) 1.6px,transparent 2px) 0 0/5px 5px no-repeat,
+             radial-gradient(circle,var(--ph) 1.6px,transparent 2px) 100% 0/5px 5px no-repeat}
+.box::before{top:-3px}.box::after{bottom:-3px}
+.head{display:flex;align-items:center;gap:8px;padding:5px 9px;border-bottom:1px solid var(--ph-3);
+  color:var(--ph);font:10px/1.4 var(--tiny);letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+.head .lbl::after{content:" _";animation:caret 1.1s steps(1) infinite}
+.head .sp{flex:1}
+.head .num{color:var(--ph-2)}
+.glow{color:var(--ph);text-shadow:0 0 6px var(--ph-3)}
 
-.bars{display:flex;gap:2px;align-items:flex-end;height:11px}
-.bars i{width:3px;background:currentColor;opacity:.18;display:block}
-.bars i:nth-child(1){height:3px}.bars i:nth-child(2){height:5px}.bars i:nth-child(3){height:7px}.bars i:nth-child(4){height:9px}.bars i:nth-child(5){height:11px}
+/* ---------- 상단 ---------- */
+.top{display:flex;align-items:stretch;gap:10px;padding:12px 14px 0}
+.brand{display:flex;flex-direction:column;justify-content:center;color:var(--ph);font:700 12px/1.2 var(--ui);letter-spacing:.06em}
+.brand small{font:10px var(--tiny);color:var(--mute);letter-spacing:0}
+.units{display:flex;gap:6px;margin-left:auto}
+.unit{padding:6px 10px;border:1px solid var(--ph-3);color:var(--mute);text-align:left;min-width:64px}
+.unit b{display:block;font:12px var(--ui)}
+.unit span{display:block;font:10px var(--tiny);opacity:.7}
+.unit[aria-pressed="true"]{background:var(--ph);color:var(--bg);border-color:var(--ph);box-shadow:0 0 12px var(--ph-3)}
+.unit[aria-pressed="true"] span{opacity:.8}
+.unit.hid{min-width:0;border-style:dashed;border-color:rgba(255,92,110,.45);color:rgba(255,92,110,.7)}
+.unit.hid[aria-pressed="true"]{background:#FF5C6E;border-color:#FF5C6E;color:#0a0304}
+
+/* 수동 동조 다이얼 — 주파수 숫자를 누르면 열림 (안내 없음) */
+.freq b{cursor:pointer}
+.tuner{position:absolute;inset:0;z-index:5;background:var(--bg);display:flex;flex-direction:column;justify-content:center;padding:10px}
+.tuner[hidden]{display:none}
+.tn-dial{display:flex;justify-content:center;align-items:center;gap:4px;margin:8px 0}
+.tn-col{display:flex;flex-direction:column;align-items:center}
+.tn-col button{width:34px;height:22px;color:var(--ph-2);font:12px var(--ui)}
+.tn-col button:hover{color:var(--ph)}
+.tn-d{width:34px;text-align:center;font:700 40px/1 var(--ui);color:var(--ph);text-shadow:0 0 10px var(--ph-3);border:1px solid var(--ph-3);padding:4px 0;outline:none}
+.tn-d:focus{border-color:var(--ph);background:var(--ph-4)}
+.tn-dot{font:700 40px/1 var(--ui);color:var(--ph);align-self:center;padding-top:6px}
+.tn-unit{font:12px var(--ui);color:var(--ph-2);align-self:flex-end;padding:0 0 30px 4px}
+.tn-acts{display:flex;justify-content:center;gap:8px}
+.tn-acts button{padding:5px 12px;border:1px solid var(--ph-3);color:var(--ph-2)}
+.tn-acts .go{border-color:var(--ph);color:var(--ph)}
+.tn-acts .go:hover{background:var(--ph);color:var(--bg)}
+.tn-acts button::before{content:"[ "}.tn-acts button::after{content:" ]"}
+
+/* ---------- 왼쪽: 단말기 ---------- */
+.side{display:flex;flex-direction:column;gap:12px;padding:12px 14px 0;min-height:0;min-width:0}
+.dev .body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:10px 10px 6px}
+#emblem{width:84px;height:84px;image-rendering:pixelated;border:1px solid var(--ph-3);display:block}
+.freq{display:flex;align-items:baseline;gap:6px;color:var(--ph);text-shadow:0 0 10px var(--ph-3),0 0 2px var(--ph)}
+.freq b{font:700 48px/1 var(--ui);letter-spacing:-.02em}
+.freq small{font:12px var(--ui);color:var(--ph-2)}
+.chline{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 8px;margin-top:4px;color:var(--ph)}
+.chline .who{color:var(--mute);font:10px var(--tiny);text-align:right}
+.unitlbl{font:10px var(--tiny);color:var(--mute);margin-bottom:2px}
+canvas#scope{display:block;width:100%;height:40px;margin:0 0 2px}
+.state{padding:5px 10px 7px;border-top:1px dashed var(--ph-3);color:var(--ph);min-height:28px}
+.state::before{content:"▸ "}
+.state.err{color:var(--red);text-shadow:0 0 8px rgba(255,92,110,.4)}
+.dev.shift{animation:shift .55s steps(5)}
+@keyframes shift{0%{filter:none}20%{filter:brightness(2.4) contrast(1.6)}40%{filter:brightness(.2);transform:translateX(3px)}60%{filter:brightness(1.4);transform:translateX(-2px)}100%{filter:none;transform:none}}
+
+.bars{display:inline-flex;gap:2px;align-items:flex-end;height:10px}
+.bars i{width:3px;background:var(--ph);opacity:.18;display:block}
+.bars i:nth-child(1){height:3px}.bars i:nth-child(2){height:5px}.bars i:nth-child(3){height:7px}.bars i:nth-child(4){height:9px}.bars i:nth-child(5){height:10px}
 .bars i.on{opacity:1}
-.batt{display:inline-flex;align-items:center;gap:1px}
-.batt i{width:16px;height:8px;border:1px solid currentColor;border-radius:1px;padding:1px;display:block}
+.batt{display:inline-flex;align-items:center;gap:1px;color:var(--ph)}
+.batt i{width:15px;height:8px;border:1px solid currentColor;padding:1px;display:block}
 .batt i::after{content:"";display:block;height:100%;width:var(--lv,80%);background:currentColor}
 .batt::after{content:"";width:2px;height:4px;background:currentColor}
 
-/* 채널 버튼 — 단말기의 물리 키 */
-.keys{display:flex;gap:6px;overflow-x:auto;margin-top:12px;padding-bottom:2px;scrollbar-width:none}
+/* 채널 */
+.keys{display:flex;gap:6px;overflow-x:auto;padding:8px 9px;scrollbar-width:none}
 .keys::-webkit-scrollbar{display:none}
-.key{flex:0 0 auto;padding:8px 12px;border-radius:7px;font-size:12.5px;color:var(--mute);
-  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.15));border:1px solid var(--edge);
-  box-shadow:0 2px 0 rgba(0,0,0,.5);transition:transform .08s,color .2s}
-.key:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
-.key[aria-pressed="true"]{color:var(--glow);border-color:color-mix(in srgb,var(--glow) 45%,var(--edge))}
-.key[aria-pressed="true"]::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--glow);margin-right:6px;vertical-align:2px;box-shadow:0 0 6px var(--glow)}
-.key.alt[aria-pressed="true"]{color:var(--alt)}
-.key.alt[aria-pressed="true"]::before{background:var(--alt);box-shadow:0 0 6px var(--alt)}
+.key{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border:1px solid var(--ph-3);color:var(--mute);white-space:nowrap}
+.key img,.key .ph{width:22px;height:22px;object-fit:cover;object-position:50% 12%;image-rendering:pixelated;display:block;background:var(--ph-4)}
+.key .r{display:none}
+.key.all{padding-left:8px}
+.key[aria-pressed="true"]{color:var(--bg);background:var(--ph);border-color:var(--ph)}
+.key.alt[aria-pressed="true"]{background:var(--alt);border-color:var(--alt)}
+.key[aria-pressed="true"] img{filter:brightness(0)}
 
-/* ---------- 교신 기록 ---------- */
-#log{flex:1;overflow-y:auto;padding:18px 16px 12px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
-.open{align-self:center;font-size:11.5px;color:var(--mute);padding:4px 10px;border:1px dashed var(--edge);border-radius:20px}
-.empty{color:var(--mute);font-size:13px;line-height:1.7;text-align:center;margin:auto 0;padding:0 20px}
-.m{display:grid;grid-template-columns:40px 1fr;gap:3px 11px;max-width:94%}
-.m .av{grid-row:1/3;width:40px;height:40px;border-radius:11px;overflow:hidden;background:var(--shell2);border:1px solid var(--edge);position:relative}
-.m .av img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block;filter:saturate(.9) contrast(1.05)}
-.m .av::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);pointer-events:none}
-.m .av.none{display:grid;place-items:center;color:var(--mute);font-family:var(--digit);font-size:13px}
-.m .name{font-size:12.5px;font-weight:600;color:var(--glow);grid-column:2;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.m .name em{font-style:normal;font-weight:400;color:var(--mute);font-size:11.5px}
-.m .time{font-family:var(--digit);font-size:10px;color:var(--mute);font-weight:400;margin-left:auto}
-.m .say{grid-column:2;font-size:14.5px;line-height:1.7;word-break:keep-all;overflow-wrap:anywhere}
-.m.alt .name{color:var(--alt)}
-.m.alt .av{border-color:color-mix(in srgb,var(--alt) 50%,var(--edge))}
-.m.me{align-self:flex-end;grid-template-columns:1fr;max-width:86%}
-.m.me .name{grid-column:1;justify-content:flex-end;color:var(--ink)}
-.m.me .name .time{margin-left:0;order:-1}
-.m.me .say{grid-column:1}
+/* 함선 제원 */
+.spec{display:none}
+.spec dl{display:grid;grid-template-columns:auto 1fr;padding:4px 0}
+.spec dt,.spec dd{padding:4px 10px;border-bottom:1px dashed var(--ph-4)}
+.spec dt{color:var(--ph-2);font:10px/1.8 var(--tiny)}
+.spec dt::before{content:"// "}
+.spec dd{text-align:right;color:var(--ph)}
+.spec dd.blink{animation:caret 1s steps(1) infinite}
+.spec .seg{display:inline-flex;gap:3px;vertical-align:middle}
+.spec .seg i{width:7px;height:9px;border:1px solid var(--ph);display:block}
+.spec .seg i.on{background:var(--ph)}
+.stamp{position:absolute;right:10px;bottom:10px;padding:2px 6px;border:2px solid var(--ph-2);color:var(--ph-2);
+  font:700 12px var(--ui);transform:rotate(-8deg);letter-spacing:.2em;opacity:.7;pointer-events:none}
+
+/* ---------- 오른쪽: 교신 기록 ---------- */
+.pane{display:flex;flex-direction:column;min-height:0;min-width:0;margin:12px 14px 0}
+.pane>.head{border:1px solid var(--ph-3);border-bottom:0}
+#log{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--ph-3);border-top:1px dashed var(--ph-3);
+  scrollbar-width:thin;scrollbar-color:var(--ph-3) transparent}
+.open{display:flex;align-items:center;gap:10px;color:var(--mute);font:10px var(--tiny)}
+.open::before,.open::after{content:"";flex:1;border-top:1px dashed var(--ph-3)}
+.empty{color:var(--mute);margin:auto 0;text-align:center}
+.empty::after{content:"_";color:var(--ph);animation:caret 1s steps(1) infinite}
+
+.m{display:grid;grid-template-columns:36px 1fr;gap:2px 10px}
+.m .av{grid-row:1/3;width:36px;height:44px;border:1px solid var(--ph-3);overflow:hidden;background:var(--ph-4)}
+.m .av img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block;image-rendering:pixelated}
+.m .av.none{display:grid;place-items:center;color:var(--mute)}
+.m .name{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:var(--ph)}
+.m .name .n::before{content:"RX ";color:var(--ph-2);font:10px var(--tiny)}
+.m .name em{font:10px var(--tiny);color:var(--mute);font-style:normal}
+.m .time{margin-left:auto;font:10px var(--tiny);color:var(--mute)}
+.m .say{font:15px/1.6 var(--read);color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.m.alt .name,.m.alt .name .n::before{color:var(--alt)}
+.m.alt .av{border-color:var(--alt)}
+.m.me{grid-template-columns:1fr;padding-left:46px}
 .m.me .av{display:none}
-
-/* 직통 채널 상대 카드 */
-.contact{display:grid;grid-template-columns:76px 1fr;gap:14px;align-items:center;padding:12px;border:1px solid var(--edge);border-radius:14px;background:var(--shell2)}
-.contact .pic{width:76px;height:96px;border-radius:9px;overflow:hidden;position:relative;background:var(--shell)}
-.contact .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 8%;display:block}
-.contact .pic::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 -30px 30px -20px rgba(0,0,0,.6)}
-.contact b{display:block;font-size:17px;font-weight:600;color:var(--ink)}
-.contact .r{font-size:12px;color:var(--glow);margin:2px 0 6px}
-.contact .s{font-size:11.5px;color:var(--mute)}
-.contact q{display:block;font-size:13px;color:var(--ink);opacity:.85;margin-top:8px;line-height:1.55;quotes:"「" "」"}
-.contact.alt .r{color:var(--alt)}
-.key img{width:18px;height:18px;border-radius:5px;object-fit:cover;object-position:50% 10%;vertical-align:-4px;margin-right:6px;opacity:.75}
-.key[aria-pressed="true"] img{opacity:1}
-.key[aria-pressed="true"]:has(img)::before{display:none}
-.m.me .say{background:color-mix(in srgb,var(--glow) 9%,transparent);border:1px solid color-mix(in srgb,var(--glow) 22%,transparent);
-  padding:8px 12px;border-radius:14px 14px 4px 14px;text-align:left}
-/* 기록에 남는 출처 불명 신호 흔적 */
-.trace{align-self:center;display:flex;align-items:center;gap:8px;font-size:11.5px;color:#ff8f9b;padding:6px 12px;
-  border:1px solid rgba(255,92,110,.35);border-radius:20px;background:rgba(255,92,110,.06)}
-.trace::before{content:"";width:6px;height:6px;border-radius:50%;background:#FF5C6E;box-shadow:0 0 8px #FF5C6E;animation:pulse 1.6s infinite}
-.trace span{font-family:var(--digit);font-size:10px;opacity:.7}
-@keyframes pulse{50%{opacity:.25}}
-
-/* 출처 불명 신호 창 */
-.ix{position:fixed;left:50%;top:18%;width:min(340px,calc(100% - 32px));transform:translateX(-50%);z-index:70;
-  background:#120708;border:1px solid #5a1f26;border-radius:6px;color:#f3d6d9;
-  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 24px 60px -10px rgba(0,0,0,.9),0 0 40px rgba(255,92,110,.18);
-  font-family:var(--sans);overflow:hidden;animation:ixIn .5s steps(6,end)}
-.ix[hidden]{display:none}
-@keyframes ixIn{0%{clip-path:inset(48% 0 48% 0);filter:brightness(3)}60%{clip-path:inset(0 0 0 0);filter:brightness(1.6)}100%{filter:none}}
-.ix.glitch{animation:ixShake .18s 3}
-@keyframes ixShake{0%{transform:translateX(-50%)}33%{transform:translateX(calc(-50% + 3px)) skewX(-2deg)}66%{transform:translateX(calc(-50% - 2px))}}
-.ix-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:linear-gradient(90deg,#3a0d13,#1c0709);border-bottom:1px solid #5a1f26;font-size:12px;cursor:grab;touch-action:none;user-select:none}
-.ix-bar b{font-weight:600;color:#FF5C6E;flex:1}
-.ix-bar .rec{width:7px;height:7px;border-radius:50%;background:#FF5C6E;box-shadow:0 0 8px #FF5C6E;animation:pulse 1s infinite}
-.ix-x{width:26px;height:26px;border-radius:4px;color:#f3d6d9;opacity:.7;font-size:16px;line-height:1}
-.ix-x:hover{opacity:1;background:rgba(255,255,255,.06)}
-.ix-body{padding:12px 14px 14px;position:relative}
-.ix-body::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
-.ix-meta{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:11px;color:#a77a80;margin-bottom:10px}
-.ix-meta dd{font-family:var(--digit);color:#ffb3bc}
-.ix canvas{height:34px;margin:0 0 10px}
-.ix-text{font-family:var(--digit);font-size:13.5px;line-height:1.75;color:#ffd5da;min-height:48px;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 0 6px rgba(255,92,110,.35)}
-.ix-text .tag{color:#a77a80}
-.ix-foot{font-size:11px;color:#a77a80;margin-top:10px}
-.f textarea{width:100%;background:var(--shell);border:1px solid var(--edge);color:var(--ink);padding:10px 12px;font:14px/1.6 var(--sans);border-radius:10px;outline:none;resize:vertical;min-height:110px;max-height:none}
-.count{text-align:right;font-family:var(--digit);font-size:10.5px;color:var(--mute);margin-top:4px}
-.tag{color:var(--mute);font-size:12px}
-.caret{display:inline-block;width:2px;height:15px;background:var(--glow);vertical-align:-3px;margin-left:1px;animation:caret .8s steps(1) infinite}
+.m.me .name{color:var(--ink)}
+.m.me .name .n{background:var(--ph);color:var(--bg);padding:0 5px}
+.m.me .name .n::before{content:"TX ";color:var(--bg);opacity:.7}
+.m.me .say{color:var(--ph-2)}
+.m.me .say::before{content:"> ";color:var(--ph)}
+.tag{color:var(--mute);font:12px var(--ui)}
+.caret{display:inline-block;width:8px;height:14px;background:var(--ph);vertical-align:-2px;margin-left:2px;animation:caret .7s steps(1) infinite}
 @keyframes caret{50%{opacity:0}}
 
+/* 직통 채널 신상 기록 */
+.contact{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:10px;max-width:560px}
+.contact .pic{position:relative;width:96px;height:120px;border:1px solid var(--ph-3);background:var(--ph-4)}
+.contact .pic img{width:100%;height:100%;object-fit:cover;object-position:50% 10%;display:block;image-rendering:pixelated}
+.contact .pic::before,.contact .pic::after{content:"";position:absolute;width:12px;height:12px;border:1px solid var(--ph)}
+.contact .pic::before{top:-4px;left:-4px;border-right:0;border-bottom:0}
+.contact .pic::after{bottom:-4px;right:-4px;border-left:0;border-top:0}
+.contact dl{display:grid;grid-template-columns:auto 1fr;align-content:start}
+.contact dt,.contact dd{padding:3px 0;border-bottom:1px dashed var(--ph-4)}
+.contact dt{color:var(--ph-2);font:10px/1.9 var(--tiny);padding-right:10px}
+.contact dt::before{content:"// "}
+.contact dd{color:var(--ph);text-align:right}
+.contact q{grid-column:1/-1;font:15px/1.6 var(--read);color:var(--ink);quotes:"「" "」";padding-top:2px}
+.contact.alt dd{color:var(--alt)}
+
+/* 출처 불명 신호 흔적 */
+.trace{align-self:flex-start;display:flex;gap:8px;align-items:center;color:var(--red);padding:3px 8px;border:1px solid rgba(255,92,110,.5);text-shadow:0 0 8px rgba(255,92,110,.4)}
+.trace::before{content:"[!]";animation:caret 1.2s steps(1) infinite}
+.trace span{font:10px var(--tiny);opacity:.75}
+
 /* ---------- 송신부 ---------- */
-.tx{padding:10px 12px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--edge);background:color-mix(in srgb,var(--shell) 85%,#000)}
-.txtop{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--mute);margin:0 4px 7px}
-.txtop button{color:var(--mute);font-size:11.5px;text-decoration:underline;text-underline-offset:3px}
-.txtop b{color:var(--ink);font-weight:500}
+.tx{border:1px solid var(--ph-3);border-top:0;padding:8px 10px 10px}
+.txtop{display:flex;justify-content:space-between;align-items:center;font:10px var(--tiny);color:var(--mute);margin-bottom:6px}
+.txtop b{color:var(--ph);font:12px var(--ui)}
+.txtop button{color:var(--ph-2);font:10px var(--tiny)}
+.txtop button::before{content:"[ "}.txtop button::after{content:" ]"}
 .field{display:flex;gap:8px;align-items:flex-end}
-textarea{flex:1;resize:none;background:var(--shell2);border:1px solid var(--edge);color:var(--ink);font:15px/1.5 var(--sans);
-  padding:11px 14px;border-radius:22px;max-height:130px;outline:none;transition:border-color .2s}
-textarea:focus{border-color:color-mix(in srgb,var(--glow) 55%,var(--edge))}
+.prompt{color:var(--ph);padding:8px 0 0;font:15px/1.6 var(--read);white-space:nowrap}
+textarea#input{flex:1;resize:none;background:transparent;border:0;border-bottom:1px dashed var(--ph-3);color:var(--ink);
+  font:15px/1.6 var(--read);padding:8px 2px 6px;max-height:130px;outline:none;caret-color:var(--ph)}
+textarea#input:focus{border-bottom-color:var(--ph)}
 textarea::placeholder{color:var(--mute)}
-.ptt{flex:0 0 auto;width:50px;height:46px;border-radius:23px;background:var(--glow);color:var(--lcd);font-weight:600;font-size:13px;
-  box-shadow:0 0 0 0 var(--glow-soft);transition:transform .1s,box-shadow .3s,opacity .2s}
-.ptt:active{transform:scale(.94)}
-.ptt.live{box-shadow:0 0 0 8px var(--glow-soft)}
-.ptt:disabled{opacity:.45}
+.ptt{flex:0 0 auto;padding:7px 12px;border:1px solid var(--ph);color:var(--ph);font:12px var(--ui)}
+.ptt::before{content:"[ "}.ptt::after{content:" ]"}
+.ptt:hover{background:var(--ph);color:var(--bg)}
+.ptt.live{background:var(--ph);color:var(--bg);animation:caret .5s steps(1) infinite}
+.ptt:disabled{opacity:.4}
+
+/* ---------- 상태 줄 ---------- */
+.status{display:flex;gap:0;margin:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--ph);color:var(--bg);font:10px/18px var(--tiny);white-space:nowrap;overflow:hidden}
+.status span{padding:0 8px;flex:0 0 auto}
+.status #stUnit{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.status .sp{flex:1 1 0;padding:0}
+.status .inv{background:var(--bg);color:var(--ph)}
+.status .sp{flex:1}
 
 /* ---------- 설정 ---------- */
-dialog{margin:auto auto 0;width:100%;max-width:560px;max-height:92dvh;overflow-y:auto;border:0;border-top:1px solid var(--edge);background:var(--shell2);color:var(--ink);
-  padding:20px 18px calc(20px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-dialog h2{font-size:16px;font-weight:600;margin-bottom:4px}
-dialog p{font-size:12.5px;color:var(--mute);margin-bottom:16px;line-height:1.6}
-.f{margin-bottom:12px}
-.f label{display:block;font-size:12px;color:var(--mute);margin-bottom:5px}
-.f input{width:100%;background:var(--shell);border:1px solid var(--edge);color:var(--ink);padding:10px 12px;font:14px var(--sans);border-radius:10px;outline:none}
-.sw{display:flex;justify-content:space-between;align-items:center;padding:11px 0;font-size:14px;border-top:1px solid var(--edge)}
-.sw input{accent-color:var(--glow);width:20px;height:20px}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.acts button{padding:11px;border:1px solid var(--edge);font-size:13px;border-radius:10px}
-.acts .go{grid-column:1/-1;background:var(--glow);color:var(--lcd);border-color:var(--glow);font-weight:600}
-.acts .warn{color:#ff8a8a}
-.note{font-size:11.5px;color:var(--mute);margin-top:12px}
+dialog{margin:auto;width:min(480px,calc(100% - 32px));max-height:88dvh;overflow-y:auto;background:var(--bg);color:var(--ink);
+  border:1px solid var(--ph);padding:0;box-shadow:0 0 0 4px var(--bg),0 0 0 5px var(--ph-3),0 0 40px var(--ph-4)}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+dialog h2{font:12px var(--ui);color:var(--bg);background:var(--ph);padding:4px 10px}
+dialog p{font:10px/1.7 var(--tiny);color:var(--mute);padding:10px 14px 0}
+.f{padding:10px 14px 0}
+.f label{display:block;font:10px var(--tiny);color:var(--ph-2);margin-bottom:4px}
+.f label::before{content:"// "}
+.f input,.f textarea{width:100%;background:transparent;border:1px solid var(--ph-3);color:var(--ink);padding:8px 10px;font:15px/1.6 var(--read);outline:none}
+.f input:focus,.f textarea:focus{border-color:var(--ph)}
+.f textarea{resize:vertical;min-height:110px}
+.count{text-align:right;font:10px var(--tiny);color:var(--mute);margin-top:3px}
+.sw{display:flex;justify-content:space-between;align-items:center;margin:12px 14px 0;padding-top:10px;border-top:1px dashed var(--ph-3)}
+.sw input{accent-color:var(--ph);width:16px;height:16px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px}
+.acts button{padding:8px;border:1px solid var(--ph-3);color:var(--ph-2)}
+.acts .go{grid-column:1/-1;background:var(--ph);color:var(--bg);border-color:var(--ph)}
+.acts .warn{color:var(--red);border-color:rgba(255,92,110,.4)}
+.note{font:10px var(--tiny);color:var(--mute);padding:0 14px 14px}
 
+/* ---------- 출처 불명 신호 창 (드리프트) — 녹슬고 젖은, 비뚤게 끼어드는 화면 ---------- */
+.ix{position:fixed;left:50%;top:15%;width:min(360px,calc(100% - 40px));transform:translateX(-50%) rotate(-1.6deg);z-index:70;
+  color:#ffd5da;font:12px var(--ui);background:#0d0404;
+  box-shadow:0 0 0 1px rgba(255,92,110,.7),5px 7px 0 -1px rgba(120,30,20,.55),0 0 60px rgba(255,92,110,.28),0 30px 60px -20px #000;
+  clip-path:polygon(0 0,100% 0,100% 93%,96% 95%,91% 92%,84% 96%,77% 93%,69% 97%,61% 94%,52% 98%,44% 94%,36% 97%,27% 93%,19% 96%,11% 93%,5% 97%,0 94%);
+  padding-bottom:14px;animation:ixIn .5s steps(6,end)}
+.ix[hidden]{display:none}
+@keyframes ixIn{0%{clip-path:inset(49% 0 49% 0);filter:brightness(4) hue-rotate(-20deg)}60%{clip-path:inset(0)}100%{filter:none}}
+.ix.glitch{animation:ixShake .14s 4 steps(2)}
+@keyframes ixShake{50%{transform:translateX(calc(-50% + 5px)) rotate(-2.4deg) skewX(-4deg)}}
+/* 녹 · 물얼룩 · 소금기 */
+.ix::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;mix-blend-mode:screen;opacity:.9;
+  background:
+    radial-gradient(ellipse 38% 26% at 88% 18%,rgba(150,58,28,.38),transparent 70%),
+    radial-gradient(ellipse 26% 40% at 6% 72%,rgba(120,44,24,.42),transparent 70%),
+    radial-gradient(ellipse 50% 14% at 55% 100%,rgba(170,70,40,.30),transparent 70%),
+    radial-gradient(circle at 30% 40%,rgba(255,255,255,.05) 0 2px,transparent 3px) 0 0/23px 31px}
+.ix::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.5;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='turbulence' baseFrequency='.035 .09' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .35 0 0 0 0 .2 0 0 0 1.6 -.55'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23r)'/%3E%3C/svg%3E")}
+.ix-bar{position:relative;z-index:2;display:flex;align-items:center;gap:8px;padding:4px 4px 4px 10px;color:#0d0404;cursor:grab;touch-action:none;user-select:none;
+  background:repeating-linear-gradient(-45deg,#FF5C6E 0 9px,#c2384a 9px 18px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.35)}
+.ix-bar b{flex:1;font:700 12px var(--ui);background:#FF5C6E;padding:0 6px;justify-self:start;flex:0 0 auto;margin-right:auto}
+.ix-bar .rec{width:8px;height:8px;background:#0d0404;animation:caret .6s steps(1) infinite}
+.ix-x{width:24px;height:22px;color:#0d0404;background:#FF5C6E}
+.ix-body{position:relative;z-index:2;padding:10px 12px 6px}
+.ix-body::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 1px,transparent 1px 3px)}
+.ix-meta{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font:10px var(--tiny);color:#b07a82;margin-bottom:8px}
+.ix-meta dt::before{content:"// "}
+.ix-meta dd{color:#ffb3bc;text-align:right}
+.ix canvas{display:block;width:100%;height:34px;margin:0 0 8px;border-top:1px dashed rgba(255,92,110,.35);border-bottom:1px dashed rgba(255,92,110,.35)}
+.ix-text{position:relative;font:15px/1.7 var(--read);color:#ffd5da;min-height:52px;word-break:keep-all;overflow-wrap:anywhere;
+  text-shadow:-1.5px 0 rgba(255,40,70,.75),1.5px 0 rgba(60,220,255,.35),0 0 10px rgba(255,92,110,.5);animation:tear 3.2s steps(1) infinite}
+@keyframes tear{0%,100%{clip-path:none;transform:none}
+  31%{clip-path:polygon(0 0,100% 0,100% 38%,0 38%,0 46%,100% 46%,100% 100%,0 100%);transform:translateX(3px)}
+  32%{clip-path:none;transform:none}
+  73%{transform:translateX(-4px) skewX(6deg)} 74%{transform:none}}
+.ix-text .tag{color:#b07a82}
+.ix-foot{font:10px var(--tiny);color:#b07a82;margin-top:8px}
+.ix-foot::before{content:"※ "}
+/* 신호가 끼어들 때 본 화면 교란 */
+.jam .app{animation:jam .9s steps(6) 1}
+.tube.jam{box-shadow:inset 0 0 0 1px #111,inset 0 0 90px rgba(0,0,0,.85),inset 0 0 120px rgba(255,92,110,.25)}
+@keyframes jam{0%{filter:none}15%{filter:hue-rotate(-60deg) saturate(2) brightness(1.4);transform:translateX(4px)}
+  30%{filter:brightness(.4);transform:translate(-3px,1px)}45%{filter:hue-rotate(-90deg) contrast(1.6)}60%{transform:skewX(-2deg)}100%{filter:none;transform:none}}
+
+/* ---------- 부팅 ---------- */
+.boot{position:absolute;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity .5s}
+.boot.gone{opacity:0;pointer-events:none}
+.boot-in{width:min(560px,100%)}
+.boot h1{font:700 48px/1 var(--ui);color:var(--ph);letter-spacing:-.01em;text-shadow:0 0 14px var(--ph-3)}
+.boot h1 i{font-style:normal;color:var(--ph-2)}
+.boot .sub{font:10px/1.8 var(--tiny);color:var(--mute);margin:8px 0 22px}
+.power{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border:1px solid var(--ph);color:var(--ph);font:12px var(--ui)}
+.power::before{content:"";width:8px;height:8px;border:1px solid var(--ph);border-radius:50%}
+.power:hover{background:var(--ph);color:var(--bg)}
+.power:hover::before{border-color:var(--bg)}
+#bootLog{font:12px/1.75 var(--mono);color:var(--ph);white-space:pre-wrap;text-shadow:0 0 6px var(--ph-3);min-height:1.75em}
+#bootLog .ok{color:var(--ink)}
+#bootLog .dim{color:var(--mute)}
+#bootLog div:empty{height:1.75em}
+.boot.on .boot-in{animation:tubeOn .6s steps(8) both}
+@keyframes tubeOn{0%{transform:scale(1,.004);filter:brightness(6)}45%{transform:scale(1,.004);filter:brightness(6)}70%{transform:scale(1,1);filter:brightness(2)}100%{transform:none;filter:none}}
+.boot .skip{display:block;margin-top:16px;font:10px var(--tiny);color:var(--mute)}
+
+/* ---------- 넓은 화면: 좌우 분할 ---------- */
+@media (min-width:960px){
+  .app{grid-template-columns:440px minmax(0,1fr);grid-template-rows:auto 1fr auto}
+  .top{grid-column:1/-1}
+  .side{grid-row:2;overflow-y:auto;padding-bottom:2px;scrollbar-width:none}
+  .pane{grid-row:2;margin-left:0}
+  .status{grid-column:1/-1}
+  #emblem{width:108px;height:108px}
+  .freq b{font-size:54px}
+  .keys{flex-direction:column;overflow:visible}
+  .key{padding:4px 8px 4px 4px}
+  .key img,.key .ph{width:30px;height:36px}
+  .key .r{display:block;margin-left:auto;font:10px var(--tiny);opacity:.75}
+  .key.all{padding:8px}
+  .spec{display:block}
+}
+@media (max-width:959px){
+  .side{gap:10px}
+  .dev .head{display:none}
+  .dev .body{padding:8px 10px 4px}
+}
+@media (max-width:420px){
+  .brand{display:none}
+  .top{padding:10px 10px 0}
+  .side{padding:10px 10px 0}
+  .pane{margin:10px 10px 0}
+  .status{margin:8px 10px calc(8px + env(safe-area-inset-bottom))}
+  .units{margin-left:0;flex:1}
+  .unit{flex:1;min-width:0}
+  .freq b{font-size:40px}
+  #emblem{width:72px;height:72px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body data-unit="skoll">
-<div class="wrap">
+<div class="crt"><div class="tube">
+<div class="grain" aria-hidden="true"></div><div class="roll" aria-hidden="true"></div>
+<div class="app">
 
-  <nav class="units" id="units" aria-label="진영 선택"></nav>
+  <header class="top">
+    <div class="brand">UAN // TAC-NET<small>군도연합 해군 전술 무전망</small></div>
+    <nav class="units" id="units" aria-label="진영 선택"></nav>
+  </header>
 
-  <section class="device">
-    <div class="screen" id="screen">
-      <div class="row">
-        <span id="unitLabel">연합해군 제3전대</span>
-        <span style="display:flex;gap:10px;align-items:center">
-          <span id="clock" class="dim">--:--</span>
-          <span class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></span>
-          <span class="batt"><i id="batt"></i></span>
-        </span>
+  <aside class="side">
+    <section class="box dev" id="screen">
+      <div class="head"><span class="lbl">주파수</span><span class="sp"></span>
+        <span class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></span><span class="batt"><i id="batt"></i></span></div>
+      <div class="body">
+        <canvas id="emblem" width="64" height="64" aria-hidden="true"></canvas>
+        <div>
+          <div class="unitlbl" id="unitLabel">연합해군 제3전대</div>
+          <div class="freq"><b id="freq">141.200</b><small>MHz</small></div>
+          <div class="chline"><span id="chName">전 대원</span><span class="who" id="chWho"></span></div>
+        </div>
       </div>
-      <div class="freq"><b id="freq">141.200</b><small>MHz</small></div>
-      <div class="chline"><span id="chName">전 대원</span><span class="who" id="chWho"></span></div>
       <canvas id="scope" aria-hidden="true"></canvas>
       <div class="state" id="state" role="status">대기 중</div>
-    </div>
-    <div class="keys" id="keys"></div>
-  </section>
+      <div class="tuner" id="tuner" hidden>
+        <div class="head" style="border:0;padding:0"><span class="lbl">수동 동조</span><span class="sp"></span><span class="num">MANUAL</span></div>
+        <div class="tn-dial" id="tnDial"></div>
+        <div class="tn-acts"><button class="go" id="tnGo">동조</button><button id="tnX">취소</button></div>
+      </div>
+    </section>
 
-  <main id="log" aria-live="polite"></main>
+    <section class="box">
+      <div class="head"><span class="lbl">채널</span><span class="sp"></span><span class="num" id="chCount"></span></div>
+      <div class="keys" id="keys"></div>
+    </section>
 
-  <footer class="tx">
-    <div class="txtop"><span>내 콜사인 <b id="cs">미설정</b></span><button id="openSet">무전기 설정</button></div>
-    <div class="field">
-      <textarea id="input" rows="1" placeholder="무전 내용을 입력하세요"></textarea>
-      <button class="ptt" id="ptt" aria-label="송신">송신</button>
-    </div>
-  </footer>
+    <section class="box spec" id="spec">
+      <div class="head"><span class="lbl">함선 제원</span><span class="sp"></span><span class="num" id="specNo"></span></div>
+      <dl id="specList"></dl>
+      <div class="stamp" id="stamp"></div>
+    </section>
+  </aside>
+
+  <main class="pane">
+    <div class="head"><span class="lbl">교신 기록</span><span class="sp"></span><span class="num" id="logInfo"></span></div>
+    <div id="log" aria-live="polite"></div>
+    <footer class="tx">
+      <div class="txtop"><span>// 콜사인 _ <b id="cs">미설정</b></span><button id="openSet">무전기 설정</button></div>
+      <div class="field">
+        <span class="prompt" aria-hidden="true">&gt;</span>
+        <textarea id="input" rows="1" placeholder="무전 내용을 입력하세요"></textarea>
+        <button class="ptt" id="ptt" aria-label="송신">송신</button>
+      </div>
+    </footer>
+  </main>
+
+  <div class="status" id="status" aria-hidden="true">
+    <span class="inv">TAC-NET</span><span id="stUnit"></span><span class="sp"></span><span id="stCs"></span><span class="inv" id="clock">--:--</span>
+  </div>
 </div>
+
+<div class="boot" id="boot">
+  <div class="boot-in">
+    <div id="bootIntro">
+      <h1>TAC<i>-</i>NET</h1>
+      <div class="sub">군도연합 해군 통신국 · 휴대 무전 단말 Mk.III<br>관급 장비 · 무단 반출 금지</div>
+      <button class="power" id="power">전원 켜기</button>
+    </div>
+    <div id="bootLog" aria-live="polite"></div>
+  </div>
+</div>
+</div></div>
 
 <dialog id="set">
   <h2>무전기 설정</h2>
@@ -282,7 +490,12 @@ const PEOPLE = {
   "sq3-02":{"nm":"사른 베커","role":"소령 · 부장","q":"그게 답입니까?","sp":"백상아리","from":"북방 심해권"},
   "sq3-03":{"nm":"아마데오 리렌","role":"대위 · 작전관","q":"혹시, 다른 방법을 한 번만 더 생각해보셔도 괜찮을까요?","sp":"고래상어","from":"중앙 환초권"},
   "sq3-04":{"nm":"이븐 사엘","role":"중위 · 항해정찰관","q":"제3항로 진입했습니다. 이상 없습니다.","sp":"만타가오리","from":"외양 회유권"},
-  "sq3-05":{"nm":"로렐 반디에르","role":"준위 · 기관장","q":"야, 얼어붙었잖아. 숨 쉬어, 숨.","sp":"사자물고기","from":"남방 산호권"}
+  "sq3-05":{"nm":"로렐 반디에르","role":"준위 · 기관장","q":"야, 얼어붙었잖아. 숨 쉬어, 숨.","sp":"사자물고기","from":"남방 산호권"},
+  "drift-01":{"nm":"카르네","role":"두목","q":"먹었으면 됐다.","sp":"곰치","from":"무소속"},
+  "drift-02":{"nm":"리스","role":"유인 · 기만","q":"괜찮아요, 천천히 말해도 돼요. 이름이 뭐였죠?","sp":"심해아귀","from":"무소속"},
+  "drift-03":{"nm":"베인","role":"기관 · 파괴","q":"만지지 마. 터져.","sp":"전기뱀장어","from":"남방 산호권"},
+  "drift-04":{"nm":"셰이드","role":"주력 전투","q":"따라올 수 있으면 따라와 봐?","sp":"바라쿠다","from":"무소속"},
+  "drift-05":{"nm":"유안","role":"정보","q":"글쎄요, 몇 살로 보이세요?","sp":"뱀장어","from":"무소속"}
 };
 
 /* 진영 정의 — 말투·성격 등 상세 설정은 worker.js에 있습니다 */
@@ -309,8 +522,17 @@ const UNITS = {
     sound:{ band:1800, noise:.08, tail:.3 },
     scope:{ amp:.5, jitter:.12, speed:1 },
   },
+  /* 숨은 주파수 — 탭에 없음. 단말기 주파수 숫자를 눌러 156.800에 직접 동조해야 열립니다 */
+  drift: {
+    tab:"∅", sub:"미등록", label:"미등록 주파수 · 발신지 불명", base:156.8, hidden:true,
+    keys:["drift-01","drift-02","drift-03","drift-04","drift-05"],
+    allName:"선내 공용",
+    sound:{ band:700, noise:.13, tail:.4 },
+    scope:{ amp:.7, jitter:.55, speed:.7 },
+  },
 };
 const ORDER = ["calm","tempest","skoll"];
+const SECRET_FREQ = "156.800";
 /* ==========================================================
    대원 자동 무전 — 30초 안팎마다 하나씩 들어옵니다 (1인당 30문장 · API 비용 없음)
    {cs}는 유저 콜사인으로 바뀝니다
@@ -966,10 +1188,11 @@ const INTERCEPT = {
   ]
 };
 const INTERCEPT_ALL = Object.values(INTERCEPT).flat();
+for(const k in INTERCEPT) AMBIENT[k]=INTERCEPT[k];   // 드리프트 주파수에서는 이 문장들이 이름을 달고 들어옵니다
 
 
 /* 진영별 채널 생성: 공용 + 1인 직통 */
-for(const id of ORDER){
+for(const id of Object.keys(UNITS)){
   const u=UNITS[id];
   u.crew={}; u.img={}; u.keys.forEach(k=>{ u.crew[PEOPLE[k].nm]=PEOPLE[k].role; u.img[PEOPLE[k].nm]=k });
   const names=Object.keys(u.crew);
@@ -985,7 +1208,7 @@ const store={ get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v
               set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
 let S=Object.assign({callsign:"",passcode:"",profile:"",sound:true,unit:"skoll",ch:{}}, store.get("tacnet_settings",{}));
 let logs=store.get("tacnet_logs",{});
-let unit=UNITS[S.unit]?S.unit:"skoll";
+let unit=UNITS[S.unit]&&(S.unit!=="drift"||S.driftFound)?S.unit:"skoll";
 let ch=null, busy=false, rxLevel=0, txLevel=0;
 const key=()=>unit+":"+ch.id;
 const save=()=>store.set("tacnet_settings",S);
@@ -1055,13 +1278,58 @@ function draw(){
 const state=(t,err)=>{ const s=$("state"); s.textContent=t; s.classList.toggle("err",!!err) };
 const hhmm=t=>new Date(t).toTimeString().slice(0,5);
 const isAlt=n=>(UNITS[unit].alt||[]).includes(n);
+const phColor=()=>getComputedStyle(document.body).getPropertyValue("--ph").trim()||"#3FE6FF";
+
+/* 진영별 함선 제원 — 사이트 전대 특징 기준 */
+const SPEC = {
+  calm:   { no:"FLAGSHIP · 무풍대", stamp:"기밀", rows:[["소재","무풍대 · 본부 겸 기함"],["임무","예산 · 인사 · 통신 · 감찰"],["교전 기록","없음"],["회의","매주 첫날 오후"],["관례","첫 보고는 반드시 반려"]] },
+  tempest:{ no:"CL · TEMPEST", stamp:"최전선", rows:[["함종","순양함"],["배치","최전선 상시"],["승조원","약 120명"],["교체율","연합 최고"],["교전 상태","경계",1]] },
+  drift:  { no:"∅ · UNREGISTERED", stamp:"표류", rows:[["선체","개조 화물선"],["거주","60~80명"],["거점","없음 · 비는 섬 순회"],["교전","쾌속선 3~4척"],["등록","무소속",1]] },
+  skoll:  { no:"DD · SKOLL", stamp:"초계", rows:[["함종","구축함"],["임무","항로 호위 · 외곽 초계"],["관할","드리프트"],["평판","좌천지"],["실권","함교 · 기관실"]] },
+};
+
+/* ---------- 초상 도트 처리 (4×4 베이어 디더링, 인광 한 색) ---------- */
+const DITHER={}, BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function ditherSrc(k,w,h){
+  const color=phColor(), id=`${k}|${w}|${color}`;
+  if(DITHER[id]) return DITHER[id];
+  DITHER[id]=new Promise(res=>{
+    const im=new Image(); im.crossOrigin="anonymous";
+    im.onload=()=>{
+      try{
+        const c=document.createElement("canvas"); c.width=w; c.height=h; const x=c.getContext("2d");
+        const s=Math.max(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s;
+        x.drawImage(im,(w-dw)/2,Math.min(0,(h-dh)*.12),dw,dh);
+        const d=x.getImageData(0,0,w,h), p=d.data;
+        const r=parseInt(color.slice(1,3),16), g=parseInt(color.slice(3,5),16), b=parseInt(color.slice(5,7),16);
+        for(let i=0;i<p.length;i+=4){
+          const px=(i/4)%w, py=Math.floor(i/4/w);
+          let L=(p[i]*.3+p[i+1]*.59+p[i+2]*.11)/255;
+          L=Math.min(1,Math.max(0,(L-.08)*1.35));
+          const on=L>(BAYER[(py%4)*4+(px%4)]+.5)/16;
+          p[i]=on?r:0; p[i+1]=on?g:0; p[i+2]=on?b:0; p[i+3]=on?255:0;
+        }
+        x.putImageData(d,0,0); res(c.toDataURL());
+      }catch(e){ res(IMG_BASE+k+".jpg") }   // 다른 주소에서 열면 원본 사진으로
+    };
+    im.onerror=()=>res(null);
+    im.src=IMG_BASE+k+".jpg";
+  });
+  return DITHER[id];
+}
+function avatarImg(name,w=36,h=44){
+  const k=UNITS[unit].img[name]; if(!k) return null;
+  const im=new Image(); im.alt=""; im.decoding="async";
+  ditherSrc(k,w,h).then(src=>{ if(src) im.src=src; else im.remove() });
+  return im;
+}
 
 function renderUnits(){
   $("units").innerHTML="";
-  ORDER.forEach(id=>{
+  ORDER.concat(S.driftFound?["drift"]:[]).forEach(id=>{
     const u=UNITS[id], b=document.createElement("button");
-    b.className="unit"; b.setAttribute("aria-pressed",id===unit);
-    b.innerHTML=`<strong>${u.tab}</strong><span>${u.sub}</span>`;
+    b.className="unit"+(u.hidden?" hid":""); b.setAttribute("aria-pressed",id===unit);
+    b.innerHTML=`<b>${u.tab}</b><span>${u.sub}</span>`;
     b.onclick=()=>switchUnit(id); $("units").appendChild(b);
   });
 }
@@ -1069,12 +1337,25 @@ function renderKeys(){
   const u=UNITS[unit]; $("keys").innerHTML="";
   u.channels.forEach(c=>{
     const b=document.createElement("button");
-    b.className="key"+(c.members.length===1&&isAlt(c.members[0])?" alt":"");
+    b.className="key"+(c.id==="all"?" all":"")+(c.members.length===1&&isAlt(c.members[0])?" alt":"");
     b.setAttribute("aria-pressed",c.id===ch.id);
-    if(c.id!=="all"){ const im=avatarImg(c.name); if(im) b.appendChild(im) }
-    b.appendChild(document.createTextNode(c.id==="all"?c.name:c.name.split(" ")[0]));
+    if(c.id!=="all"){ const im=avatarImg(c.name,30,36); if(im) b.appendChild(im) }
+    const n=document.createElement("span"); n.textContent=c.id==="all"?`${c.name} · ${c.members.length}명`:c.name; b.appendChild(n);
+    if(c.id!=="all"){ const r=document.createElement("span"); r.className="r"; r.textContent=u.crew[c.name]; b.appendChild(r) }
     b.onclick=()=>switchCh(c); $("keys").appendChild(b);
   });
+  $("chCount").textContent=`CH ${String(u.channels.indexOf(ch)).padStart(2,"0")} / ${String(u.channels.length-1).padStart(2,"0")}`;
+}
+function renderSpec(){
+  const sp=SPEC[unit]; $("specNo").textContent=sp.no; $("stamp").textContent=sp.stamp;
+  const dl=$("specList"); dl.innerHTML="";
+  sp.rows.forEach(([a,b,blink])=>{
+    const t=document.createElement("dt"), d=document.createElement("dd");
+    t.textContent=a; d.textContent=b; if(blink) d.className="blink"; dl.append(t,d);
+  });
+  const t=document.createElement("dt"), d=document.createElement("dd");
+  t.textContent="수신 감도"; d.innerHTML=`<span class="seg" id="specSeg">${"<i></i>".repeat(8)}</span>`; dl.append(t,d);
+  drawBars();
 }
 function renderScreen(){
   const u=UNITS[unit];
@@ -1082,28 +1363,24 @@ function renderScreen(){
   $("freq").textContent=ch.freq.toFixed(3);
   $("chName").textContent=ch.id==="all"?ch.name:ch.name+" 직통";
   $("chWho").textContent=ch.id==="all"?`${ch.members.length}명 청취 중`:(u.crew[ch.name]||"");
-}
-function avatarImg(name){
-  const k=UNITS[unit].img[name]; if(!k) return null;
-  const im=new Image(); im.src=IMG_BASE+k+".jpg"; im.alt=""; im.loading="lazy"; im.decoding="async";
-  im.onerror=()=>im.remove();
-  return im;
+  $("logInfo").textContent=`${ch.freq.toFixed(3)} MHz · ${ch.id==="all"?"공용":"직통"}`;
+  $("stUnit").textContent=`[${ORDER.indexOf(unit)+1}] ${unit}:${ch.id==="all"?"all":ch.name}  ${ch.freq.toFixed(3)}MHz`;
+  $("stCs").textContent=S.callsign?`CS ${S.callsign}`:"CS 미등록";
 }
 function bubble(e){
   if(e.kind==="ghost"){
     const t=document.createElement("button"); t.className="trace";
-    t.innerHTML=`출처 불명 신호 수신 <span>${hhmm(e.t)}</span>`;
+    t.innerHTML=`출처 불명 신호 수신 <span>${hhmm(e.t)} · 다시 열람</span>`;
     t.onclick=()=>showIntercept(e,false);
     return t;
   }
   const d=document.createElement("div");
-  d.className="m"+(e.kind==="me"?" me":e.kind==="ghost"?" ghost":isAlt(e.who)?" alt":"");
+  d.className="m"+(e.kind==="me"?" me":isAlt(e.who)?" alt":"");
   const role=e.kind==="crew"?(UNITS[unit].crew[e.who]||""):"";
   d.innerHTML=`<div class="av"></div><div class="name"><span class="n"></span></div><div class="say"></div>`;
   const av=d.querySelector(".av");
   if(e.kind==="crew"){ const im=avatarImg(e.who); im?av.appendChild(im):(av.className="av none",av.textContent=e.who[0]) }
-  else { av.className="av none"; av.textContent=e.kind==="ghost"?"?":"" }
-  d.querySelector(".n").textContent=e.kind==="ghost"?UNITS[unit].ghostName:e.who;
+  d.querySelector(".n").textContent=e.who;
   const nm=d.querySelector(".name");
   if(role){ const em=document.createElement("em"); em.textContent=role; nm.appendChild(em) }
   const t=document.createElement("span"); t.className="time"; t.textContent=hhmm(e.t); nm.appendChild(t);
@@ -1111,11 +1388,14 @@ function bubble(e){
 }
 function contactCard(name){
   const k=UNITS[unit].img[name], p=PEOPLE[k];
-  const c=document.createElement("div"); c.className="contact"+(isAlt(name)?" alt":"");
-  c.innerHTML=`<div class="pic"></div><div><b></b><div class="r"></div><div class="s"></div><q></q></div>`;
-  const im=avatarImg(name); if(im) c.querySelector(".pic").appendChild(im);
-  c.querySelector("b").textContent=p.nm; c.querySelector(".r").textContent=p.role;
-  c.querySelector(".s").textContent=`${p.sp} · ${p.from}`; c.querySelector("q").textContent=p.q;
+  const c=document.createElement("div"); c.className="box contact"+(isAlt(name)?" alt":"");
+  c.innerHTML=`<div class="pic"></div><dl></dl><q></q>`;
+  const im=avatarImg(name,96,120); if(im) c.querySelector(".pic").appendChild(im);
+  const dl=c.querySelector("dl");
+  [["이름",p.nm],["직책",p.role],["종",p.sp],["출신",p.from]].forEach(([a,b])=>{
+    const t=document.createElement("dt"), d=document.createElement("dd"); t.textContent=a; d.textContent=b; dl.append(t,d);
+  });
+  c.querySelector("q").textContent=p.q;
   return c;
 }
 function fill(el,text){
@@ -1132,7 +1412,7 @@ function renderLog(){
   if(ch.id!=="all") log.appendChild(contactCard(ch.name));
   if(!list.length){
     const e=document.createElement("div"); e.className="empty";
-    e.textContent=ch.id==="all"?"아직 교신 기록이 없습니다. 아래에 첫 무전을 보내보세요.":`${ch.name}에게 직접 연결된 주파수입니다.`;
+    e.textContent=ch.id==="all"?"교신 기록 없음. 첫 무전을 보내십시오":`${ch.name} 직통 주파수 대기 중`;
     log.appendChild(e);
   }
   list.forEach(m=>{ const b=bubble(m); if(m.kind!=="ghost") fill(b.querySelector(".say"),m.text); log.appendChild(b) });
@@ -1142,13 +1422,14 @@ function flash(){ const s=$("screen"); s.classList.remove("shift"); void s.offse
 
 function switchUnit(id){
   if(busy||id===unit) return;
+  if(UNITS[id].hidden&&!S.driftFound) return;
   unit=id; S.unit=id; save();
   document.body.dataset.unit=id;
   ch=UNITS[id].channels.find(c=>c.id===S.ch[id])||UNITS[id].channels[0];
   flash(); sfx.tune(); rxLevel=.8;
-  renderUnits(); renderKeys(); renderScreen(); renderLog(); state("주파수 이동 완료");
+  renderUnits(); renderKeys(); renderScreen(); renderSpec(); renderLog(); state("주파수 이동 완료");
   setTimeout(()=>{ if(!busy) state("대기 중") },1200);
-  if(reduce) draw();
+  if(reduce){ draw(); drawEmblem() }
 }
 function switchCh(c){
   if(busy||c.id===ch.id) return;
@@ -1158,9 +1439,58 @@ function switchCh(c){
   if(reduce) draw();
 }
 
+/* ---------- 진영 상징 화면: 칼름 와이어 지구본 · 템페스트 레이더 · 스콜 소나 ---------- */
+const ec=$("emblem"), ex=ec.getContext("2d");
+let eT=0, blips=[];
+function drawEmblem(){
+  const W=64, C=32, R=27, col=phColor();
+  ex.clearRect(0,0,W,W); ex.strokeStyle=col; ex.fillStyle=col; ex.lineWidth=1;
+  if(unit==="calm"){
+    ex.globalAlpha=.9;
+    ex.beginPath(); ex.arc(C,C,R,0,Math.PI*2); ex.stroke();
+    for(let m=0;m<6;m++){
+      const a=m*Math.PI/6+eT*.004, rx=Math.abs(Math.cos(a))*R;
+      ex.globalAlpha=Math.sin(a)>0?.75:.25;
+      ex.beginPath(); ex.ellipse(C,C,Math.max(.5,rx),R,0,0,Math.PI*2); ex.stroke();
+    }
+    ex.globalAlpha=.5;
+    for(let l=-2;l<=2;l++){ const y=Math.sin(l*Math.PI/6)*R, r=Math.cos(l*Math.PI/6)*R;
+      ex.beginPath(); ex.ellipse(C,C+y,r,r*.2,0,0,Math.PI*2); ex.stroke(); }
+  }else if(unit==="tempest"){
+    ex.globalAlpha=.35;
+    [9,18,27].forEach(r=>{ ex.beginPath(); ex.arc(C,C,r,0,Math.PI*2); ex.stroke() });
+    ex.beginPath(); ex.moveTo(C,4); ex.lineTo(C,60); ex.moveTo(4,C); ex.lineTo(60,C); ex.stroke();
+    const a=eT*.045;
+    for(let i=0;i<14;i++){ ex.globalAlpha=.9*(1-i/14);
+      ex.beginPath(); ex.moveTo(C,C); ex.lineTo(C+Math.cos(a-i*.05)*R,C+Math.sin(a-i*.05)*R); ex.stroke(); }
+    if(Math.random()<.04) blips.push({a:Math.random()*Math.PI*2,r:6+Math.random()*20,life:1});
+    blips.forEach(b=>{ ex.globalAlpha=b.life; ex.fillRect(Math.round(C+Math.cos(b.a)*b.r)-1,Math.round(C+Math.sin(b.a)*b.r)-1,2,2); b.life-=.012 });
+    blips=blips.filter(b=>b.life>0);
+  }else if(unit==="drift"){
+    /* 고장 난 나침반 — 바늘이 제멋대로 돈다 */
+    ex.globalAlpha=.5; ex.beginPath(); ex.arc(C+(Math.random()<.1?1:0),C,R,0,Math.PI*2); ex.stroke();
+    for(let i=0;i<12;i++){ const a=i*Math.PI/6; ex.globalAlpha=i%3?.3:.8;
+      ex.beginPath(); ex.moveTo(C+Math.cos(a)*(R-4),C+Math.sin(a)*(R-4)); ex.lineTo(C+Math.cos(a)*R,C+Math.sin(a)*R); ex.stroke(); }
+    const a=Math.sin(eT*.013)*2.6+Math.sin(eT*.051)*.8+(Math.random()<.03?Math.random()*6:0);
+    ex.globalAlpha=1; ex.lineWidth=2; ex.beginPath(); ex.moveTo(C,C); ex.lineTo(C+Math.cos(a)*(R-6),C+Math.sin(a)*(R-6)); ex.stroke();
+    ex.globalAlpha=.4; ex.beginPath(); ex.moveTo(C,C); ex.lineTo(C-Math.cos(a)*10,C-Math.sin(a)*10); ex.stroke(); ex.lineWidth=1;
+    ex.globalAlpha=.5; for(let i=0;i<70;i++) ex.fillRect(Math.random()*W|0,Math.random()*W|0,1,1);
+    if(Math.random()<.06){ ex.globalAlpha=.35; ex.fillRect(0,Math.random()*W|0,W,2) }
+  }else{
+    const p=(eT%150)/150;
+    for(let k=0;k<3;k++){ const q=(p+k/3)%1; ex.globalAlpha=1-q;
+      ex.beginPath(); ex.arc(C,C,2+q*R,0,Math.PI*2); ex.stroke(); }
+    ex.globalAlpha=.35;
+    for(let i=0;i<40;i++){ const x=Math.random()*W|0, y=Math.random()*W|0; if(Math.hypot(x-C,y-C)<R) ex.fillRect(x,y,1,1) }
+    ex.globalAlpha=1; ex.beginPath(); ex.moveTo(C,C-5); ex.lineTo(C+3,C+4); ex.lineTo(C-3,C+4); ex.closePath(); ex.fill();
+  }
+  ex.globalAlpha=1; eT++;
+  if(!reduce) requestAnimationFrame(drawEmblem);
+}
+
 /* 신호 · 배터리 · 시계 */
 let sig=4;
-function drawBars(){ [...$("bars").children].forEach((b,i)=>b.classList.toggle("on",i<sig)) }
+function drawBars(){ [...$("bars").children].forEach((b,i)=>b.classList.toggle("on",i<sig)); const g=$("specSeg"); if(g) [...g.children].forEach((b,i)=>b.classList.toggle("on",i<Math.round(sig*1.6))) }
 setInterval(()=>{ if(!busy){ sig=Math.max(2,Math.min(5,sig+(Math.random()<.5?-1:1))); drawBars() } },2600);
 const tick=()=>{ $("clock").textContent=new Date().toTimeString().slice(0,5) }; tick(); setInterval(tick,10000);
 if(navigator.getBattery) navigator.getBattery().then(b=>{ const f=()=>$("batt").style.setProperty("--lv",Math.round(b.level*100)+"%"); f(); b.onlevelchange=f }).catch(()=>{});
@@ -1291,20 +1621,22 @@ function ixDraw(){
   ixCx.stroke(); ixLv*=.96;
   if(!reduce) requestAnimationFrame(ixDraw);
 }
-const mask=str=>str.replace(/\d/g,d=>Math.random()<.45?"█":d);
+const mask=str=>{ let t; do{ t=str.replace(/\d/g,d=>Math.random()<.5?"█":d) }while(!t.includes("█")); return t };
 async function showIntercept(e,fresh){
   $("ixFreq").textContent=e.freq||"█".repeat(3)+".███";
   $("ixTime").textContent=hhmm(e.t);
-  $("ixFrom").textContent=["역탐지 실패","좌표 불명","신호 반사 · 추적 불가"][e.t%3];
+  $("ixFrom").textContent=["역탐지 실패","좌표 불명","신호 반사 · 추적 불가","무소속 해역 추정","남방 항로 부근 · 불확실"][e.t%5];
   ix.hidden=false; ix.classList.remove("glitch"); void ix.offsetWidth; ix.classList.add("glitch");
   if(!ixRun){ ixRun=true; ixDraw() }
   const el=$("ixText"); el.textContent="";
-  if(fresh){ sfx.ghost(); sig=1; drawBars(); state("출처 불명 신호 포착",true); rxLevel=1 }
+  if(fresh){ sfx.ghost(); sig=1; drawBars(); state("출처 불명 신호 포착",true); rxLevel=1;
+    const tb=document.querySelector(".tube"); tb.classList.remove("jam"); void tb.offsetWidth; tb.classList.add("jam"); setTimeout(()=>tb.classList.remove("jam"),1400) }
   if(reduce||!fresh){ fill(el,e.text); return }
-  const G="▒░█▓#"; let i=0;
+  const G="▒░█▓#ㅡㄱㅅ¿×"; let i=0;
   await new Promise(done=>{ (function step(){
     i++; let t=e.text.slice(0,i);
-    if(i<e.text.length&&Math.random()<.14) t+=G[Math.floor(Math.random()*G.length)];
+    if(i<e.text.length&&Math.random()<.2) t+=G[Math.floor(Math.random()*G.length)].repeat(1+(Math.random()*3|0));
+    if(Math.random()<.08) t=t.replace(/[가-힣](?=[^가-힣]*$)/,"▒");
     fill(el,t); ixLv=Math.min(1,ixLv+.3);
     if(i<e.text.length&&!ix.hidden) setTimeout(step,45+Math.random()*70); else { fill(el,e.text); done() }
   })() });
@@ -1323,7 +1655,7 @@ $("ixClose").onclick=()=>{ ix.hidden=true; schedule() };
 })();
 function intercept(){
   const txt=INTERCEPT_ALL[pickIndex(INTERCEPT_ALL.length,"ix")].replaceAll("{cs}",S.callsign||"거기");
-  const f=(100+Math.random()*90).toFixed(3);
+  const f=SECRET_FREQ;   // 매번 일부만 가려진 채 떠서, 모으면 맞출 수 있는 단서
   const e={kind:"ghost",who:"",text:txt,t:Date.now(),freq:mask(f)+" MHz"};
   push(e); $("log").appendChild(bubble(e)); $("log").scrollTop=$("log").scrollHeight;
   return showIntercept(e,true);
@@ -1343,7 +1675,7 @@ let ambTimer=null;
 function schedule(){ clearTimeout(ambTimer); ambTimer=setTimeout(ambient,25000+Math.random()*12000) }
 async function ambient(){
   if(busy||document.hidden||!S.callsign||dlg.open||!ix.hidden){ schedule(); return }
-  if(Math.random()<.22){ await intercept(); schedule(); return }
+  if(unit!=="drift"&&Math.random()<.22){ await intercept(); schedule(); return }
   const who=ch.members[Math.floor(Math.random()*ch.members.length)], k=UNITS[unit].img[who];
   const direct=ch.id!=="all", pool=(AMBIENT[k]||[]).filter(x=>!direct||!x.startsWith("@")).map(x=>x.replace(/^@/,""));
   if(!pool.length){ schedule(); return }
@@ -1360,6 +1692,75 @@ document.addEventListener("visibilitychange",()=>{ if(!document.hidden) schedule
 function countProf(){ $("sCount").textContent=`${$("sProf").value.length} / 300` }
 $("sProf").addEventListener("input",countProf);
 
+
+/* ==========================================================
+   수동 동조 — 주파수 숫자를 누르면 다이얼이 열립니다 (안내 없음)
+   156.800 에 맞추면 숨은 주파수(드리프트)가 열립니다
+   ========================================================== */
+let tnDigits=[];
+function openTuner(){
+  if(busy) return;
+  tnDigits=ch.freq.toFixed(3).replace(".","").split("").map(Number);
+  const dial=$("tnDial"); dial.innerHTML="";
+  tnDigits.forEach((d,i)=>{
+    if(i===3){ const dot=document.createElement("span"); dot.className="tn-dot"; dot.textContent="."; dial.appendChild(dot) }
+    const col=document.createElement("div"); col.className="tn-col";
+    col.innerHTML=`<button aria-label="올리기">▲</button><span class="tn-d" tabindex="0"></span><button aria-label="내리기">▼</button>`;
+    const [up,,dn]=col.children, dg=col.querySelector(".tn-d");
+    const set=v=>{ tnDigits[i]=(v+10)%10; dg.textContent=tnDigits[i]; tone(900+tnDigits[i]*60,.025,.015); rxLevel=Math.min(1,rxLevel+.15) };
+    set(d);
+    up.onclick=()=>set(tnDigits[i]+1); dn.onclick=()=>set(tnDigits[i]-1);
+    dg.addEventListener("wheel",e=>{ e.preventDefault(); set(tnDigits[i]+(e.deltaY<0?1:-1)) },{passive:false});
+    dg.addEventListener("keydown",e=>{
+      if(/^[0-9]$/.test(e.key)){ set(+e.key); const nx=dial.querySelectorAll(".tn-d")[i+1]; if(nx) nx.focus() }
+      else if(e.key==="ArrowUp"){ e.preventDefault(); set(tnDigits[i]+1) }
+      else if(e.key==="ArrowDown"){ e.preventDefault(); set(tnDigits[i]-1) }
+      else if(e.key==="Enter") tune();
+      else if(e.key==="Escape") closeTuner();
+    });
+    dial.appendChild(col);
+  });
+  const u=document.createElement("span"); u.className="tn-unit"; u.textContent="MHz"; dial.appendChild(u);
+  $("tuner").hidden=false; sfx.tune(); dial.querySelector(".tn-d").focus();
+}
+function closeTuner(){ $("tuner").hidden=true }
+async function tune(){
+  const f=tnDigits.slice(0,3).join("")+"."+tnDigits.slice(3).join("");
+  closeTuner();
+  for(const id of Object.keys(UNITS)){
+    if(UNITS[id].hidden&&!S.driftFound&&f!==SECRET_FREQ) continue;
+    const c=UNITS[id].channels.find(c=>c.freq.toFixed(3)===f);
+    if(!c) continue;
+    if(id==="drift"&&!S.driftFound) return discover();
+    if(id!==unit) switchUnit(id);
+    if(c.id!==ch.id) switchCh(c);
+    return;
+  }
+  hiss(.9,.1); sig=1; drawBars(); flash(); state(`${f} MHz · 신호 없음`,true);
+  setTimeout(()=>{ if(!busy){ state("대기 중"); drawBars() } },2200);
+}
+async function discover(){
+  busy=true;
+  const tb=document.querySelector(".tube");
+  tb.classList.remove("jam"); void tb.offsetWidth; tb.classList.add("jam");
+  sfx.ghost(); hiss(1.4,.14); sig=1; drawBars();
+  for(const t of ["…미등록 주파수","…동조 중","…회선 잡힘"]){ state(t,true); await wait(650) }
+  tb.classList.remove("jam");
+  S.driftFound=true; save(); busy=false;
+  switchUnit("drift");
+  await wait(1600);
+  if(unit!=="drift"||busy) return;
+  busy=true; $("ptt").disabled=true;
+  const first="…어머. 해군 무전기 소리네요? 여기까지 찾아온 사람은 처음인데. {cs}, 맞죠?".replaceAll("{cs}",S.callsign||"거기");
+  sfx.rx(); state("리스 수신 중");
+  const e={kind:"crew",who:"리스",text:first,t:Date.now()}, n=bubble(e);
+  const emp=$("log").querySelector(".empty"); if(emp) emp.remove();
+  $("log").appendChild(n); await typeIn(n,first); push(e); sfx.roger(); state("대기 중");
+  busy=false; $("ptt").disabled=false; schedule();
+}
+$("freq").addEventListener("click",openTuner);
+$("tnGo").onclick=tune; $("tnX").onclick=closeTuner;
+
 /* 시작 */
 /* 주소에 담긴 암호 읽기: …/radio/?code=암호 로 들어오면 자동 저장 후 주소에서 지움 */
 (function(){
@@ -1375,10 +1776,64 @@ $("sProf").addEventListener("input",countProf);
 document.body.dataset.unit=unit;
 ch=UNITS[unit].channels.find(c=>c.id===S.ch[unit])||UNITS[unit].channels[0];
 $("cs").textContent=S.callsign||"미설정";
-renderUnits(); renderKeys(); renderScreen(); renderLog(); drawBars();
-fit(); addEventListener("resize",fit); draw();
-if(!S.callsign) setTimeout(openSet,500);
-schedule();
+renderUnits(); renderKeys(); renderScreen(); renderSpec(); renderLog(); drawBars();
+fit(); addEventListener("resize",fit); draw(); drawEmblem();
+
+/* ==========================================================
+   부팅 — 전원을 눌러야 무전기가 켜집니다 (소리 재생 허용도 이때)
+   ========================================================== */
+(function(){
+  const boot=$("boot"), out=$("bootLog");
+  let skip=false, done=false;
+  const pad=(a,b)=>a+" "+".".repeat(Math.max(3,26-a.length*2))+" "+b;
+  function hum(){
+    if(!S.sound) return; const a=A(); if(!a) return;
+    const o=a.createOscillator(), g=a.createGain(), t=a.currentTime;
+    o.type="sine"; o.frequency.value=58; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.05,t+.15); g.gain.exponentialRampToValueAtTime(.0001,t+1.6);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t+1.7);
+    hiss(.5,.08); tone(1800,.04,.02,.5);
+  }
+  function finish(){
+    if(done) return; done=true;
+    boot.classList.add("gone"); setTimeout(()=>boot.remove(),600);
+    sfx.roger(); state("대기 중"); schedule();
+    if(!S.callsign) setTimeout(openSet,500);
+  }
+  async function run(){
+    const lines=[
+      ["UAN TAC-NET 휴대 무전 단말 Mk.III","dim"],
+      ["군도연합 해군 통신국 · 관급 장비","dim"],
+      ["",""],
+      [pad("전원 전압","정상"),""],
+      [pad("메모리 검사","640K OK"),""],
+      [pad("암호화 모듈","적재"),""],
+      [pad("안테나","전개"),""],
+      [pad("등록 해역","북방 · 중앙 · 외양 · 남방"),""],
+      [pad("주파수 동기화",ch.freq.toFixed(3)+" MHz"),""],
+      [pad("콜사인",S.callsign||"미등록"),""],
+      [pad("접속 암호",S.passcode?"확인됨":"없음"),""],
+      ["",""],
+      ["> 무전망 접속 완료","ok"],
+    ];
+    for(const [t,c] of lines){
+      const s=document.createElement("div"); if(c) s.className=c; out.appendChild(s);
+      if(skip||reduce){ s.textContent=t; continue }
+      for(let i=1;i<=t.length;i++){ s.textContent=t.slice(0,i)+"█"; await wait(9) }
+      s.textContent=t; await wait(t?70:40);
+      if(t.includes("....")) tone(1500+Math.random()*400,.02,.012);
+    }
+    await wait(skip?120:500); finish();
+  }
+  $("power").onclick=()=>{
+    hum(); $("bootIntro").remove();
+    boot.classList.add("on");
+    const sk=document.createElement("button"); sk.className="skip"; sk.textContent="[ 건너뛰기 ]";
+    sk.onclick=()=>{ skip=true }; boot.querySelector(".boot-in").appendChild(sk);
+    setTimeout(run,reduce?0:450);
+  };
+  boot.addEventListener("keydown",e=>{ if(e.key==="Escape"){ skip=true } });
+  $("power").focus();
+})();
 </script>
 </body>
 </html>
