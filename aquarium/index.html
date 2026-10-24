@@ -201,6 +201,23 @@ body{font-family:var(--f-body);font-size:14px;line-height:1.5;letter-spacing:-.0
 .skin .btn{grid-column:1/-1;padding:6px 10px;font-size:13px}
 .skins-h{grid-column:1/-1;font-size:12px;color:var(--dim);margin-bottom:-4px}
 @media (max-width:420px){.skins{grid-template-columns:1fr}}
+.talks{position:absolute;inset:0;pointer-events:none;z-index:2}
+.talk{position:absolute;transform:translate(-50%,calc(-100% - 8px));background:#F4F7FA;color:#121836;font:400 13px var(--f-disp);padding:4px 9px 5px;white-space:nowrap;max-width:70%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 0 2px #121836,3px 3px 0 2px rgba(4,6,15,.6);animation:pop .18s steps(3)}
+.talk::after{content:"";position:absolute;left:50%;bottom:-6px;width:6px;height:6px;background:#F4F7FA;box-shadow:2px 0 0 #121836,-2px 0 0 #121836,0 2px 0 #121836;transform:translateX(-50%)}
+.talk.zz{background:#1B2349;color:#C9D1E6;box-shadow:0 0 0 2px #3E4A8C}.talk.zz::after{background:#1B2349;box-shadow:2px 0 0 #3E4A8C,-2px 0 0 #3E4A8C,0 2px 0 #3E4A8C}
+.talk.sig{background:#0B0F24;color:#8FD9E4;font:11px var(--f-num);box-shadow:0 0 0 2px #FF5C6E}.talk.sig::after{background:#0B0F24;box-shadow:2px 0 0 #FF5C6E,-2px 0 0 #FF5C6E,0 2px 0 #FF5C6E}
+@keyframes pop{0%{transform:translate(-50%,calc(-100% - 2px)) scale(.6)}100%{transform:translate(-50%,calc(-100% - 8px)) scale(1)}}
+@media (max-width:480px){.talk{font-size:11.5px;padding:3px 7px 4px}}
+.logrow{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:11px 16px;align-items:baseline}
+.list>.logrow+.logrow{border-top:2px solid #1F2650}
+.logrow .lt{font:400 13px var(--f-disp);color:var(--gold)}.logrow .lt small{display:block;font:10px var(--f-num);color:var(--faint)}
+.logrow .lx{font-size:13px;line-height:1.5}
+.dybody{display:flex;flex-direction:column;gap:2px;background:#1F2650;box-shadow:0 0 0 2px var(--edge)}
+.dyrow{display:grid;grid-template-columns:88px 1fr;gap:12px;padding:12px 14px;background:#141A38}
+.dyrow b{font:400 14px var(--f-disp);color:var(--gold)}.dyrow span{font-size:13.5px;line-height:1.5}
+.shotimg{width:100%;image-rendering:pixelated;box-shadow:0 0 0 2px var(--edge2);background:#0A0D1E}
+.seg button .ico{flex:none}
+@media (max-width:420px){.seg button{flex-direction:column;gap:3px;font-size:13px;padding:8px 2px}}
 .growth{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
 .growth .gb{display:flex;gap:3px}.growth .gb i{width:14px;height:8px;background:#232A50}.growth .gb i.f{background:var(--ok);box-shadow:inset 0 -2px 0 #5EB58A}
 
@@ -271,6 +288,8 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
    <div class="srow"><button class="stog" type="button" id="tMus" aria-pressed="true" aria-label="배경음 켜기·끄기"><i class="ico" data-i="note" data-s="2"></i></button><label for="vMus">배경음</label><input type="range" id="vMus" min="0" max="100" step="5"><output id="vMusN">70</output></div>
    <div class="srow"><button class="stog" type="button" id="tSfx" aria-pressed="true" aria-label="효과음 켜기·끄기"><i class="ico" data-i="spk" data-s="2"></i></button><label for="vSfx">효과음</label><input type="range" id="vSfx" min="0" max="100" step="5"><output id="vSfxN">80</output></div>
    <div class="snote">아이콘을 누르면 켜고 끕니다</div>
+   <div class="sph" style="padding-top:10px;border-top:2px dashed #232A52;border-bottom:0;padding-bottom:0"><b>시간</b><span>DAY · NIGHT</span></div>
+   <div class="chips" id="todChips"><button class="chip" type="button" data-m="auto">실제 시간</button><button class="chip" type="button" data-m="day">늘 낮</button><button class="chip" type="button" data-m="night">늘 밤</button></div>
   </div><span class="count px"><i class="ico" data-i="star" data-s="2"></i><span id="count">0 / 20</span></span></div></div>
 
   <div class="win" id="win">
@@ -278,10 +297,11 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
     <div class="tank" id="tank">
       <canvas id="cv" width="960" height="600"></canvas>
       <div class="tag" id="tag" hidden></div>
+      <div class="talks" id="talks" aria-live="polite"></div>
       <div class="editbar" id="editbar" hidden><span>꾸미기 모드</span><button class="btn go" type="button" id="editDone">완료</button></div>
     </div>
     <div class="piphold" id="pipHold" hidden><b>수조를 따로 띄워 보는 중입니다</b><span>작은 창을 닫으면 이 자리로 돌아옵니다</span><button class="btn go" type="button" id="pipBack">여기로 돌아오기</button></div>
-    <div class="wbtns"><button type="button" id="bMin" aria-label="최소화">−</button><button type="button" id="bMax" aria-label="수조를 따로 띄우기" title="수조를 따로 띄우기">□</button><button type="button" class="x" id="bX" aria-label="닫기">X</button></div>
+    <div class="wbtns"><button type="button" id="bCam" aria-label="수조 사진 찍기" title="수조 사진 찍기"><i class="ico" data-i="cam" data-s="2"></i></button><button type="button" id="bMin" aria-label="최소화">−</button><button type="button" id="bMax" aria-label="수조를 따로 띄우기" title="수조를 따로 띄우기">□</button><button type="button" class="x" id="bX" aria-label="닫기">X</button></div>
   </div>
 
   <section class="px editpanel" id="editPanel" hidden>
@@ -307,6 +327,7 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
     <button type="button" role="tab" data-t="crew"><i class="ico" data-i="fish" data-s="2"></i>대원</button>
     <button type="button" role="tab" data-t="shop"><i class="ico" data-i="chest" data-s="2"></i>상점</button>
     <button type="button" role="tab" data-t="mine"><i class="ico" data-i="heart" data-s="2"></i>내 물고기</button>
+    <button type="button" role="tab" data-t="log"><i class="ico" data-i="book" data-s="2"></i>일지</button>
   </nav>
 
   <div class="panel" id="pCrew"></div>
@@ -316,6 +337,7 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
     <div class="grid" id="shopGrid"></div>
   </div>
   <div class="panel" id="pMine"></div>
+  <div class="panel" id="pLog" hidden></div>
 
   <footer><span>관측 기록은 이 브라우저에 자동 저장됩니다 · 자리를 비워도 최대 8시간까지 은화가 쌓입니다</span><button type="button" id="resetBtn">기록 초기화</button></footer>
 </div>
@@ -328,7 +350,7 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
     <dl class="facts" id="sD"></dl>
     <div class="skins" id="sSkins"></div>
     <label class="field"><span id="sNickL">별명</span><input id="sNick" maxlength="12" placeholder="별명 짓기 (최대 12자)" autocomplete="off"></label>
-    <div class="acts"><button class="btn ghost" type="button" id="sClose">닫기</button><button class="btn warn" type="button" id="sDel" hidden>삭제</button><button class="btn ghost" type="button" id="sEdit" hidden>다시 그리기</button><button class="btn ghost" type="button" id="sOut"></button><button class="btn go" type="button" id="sBuy"></button></div>
+    <div class="acts"><button class="btn ghost" type="button" id="sClose">닫기</button><button class="btn warn" type="button" id="sDel" hidden>삭제</button><button class="btn ghost" type="button" id="sEdit" hidden>다시 그리기</button><button class="btn ghost" type="button" id="sCard">자랑 카드</button><button class="btn ghost" type="button" id="sOut"></button><button class="btn go" type="button" id="sBuy"></button></div>
   </div>
 </div>
 <div class="sheet" id="ed" role="dialog" aria-label="내 물고기 만들기">
@@ -377,6 +399,13 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
     </div>
   </div>
 </div>
+<div class="sheet" id="daily" role="dialog" aria-label="오늘의 관측 일지"><div class="grab"></div><div class="sin">
+  <div class="shead"><div class="tile"><canvas id="dyPic" width="48" height="28"></canvas></div><div><div class="sk" style="color:var(--gold)">TODAY</div><h2 id="dyTitle">오늘의 관측 일지</h2></div></div>
+  <div class="dybody" id="dyBody"></div><div class="acts"><button class="btn go" type="button" id="dyOk">받기</button></div></div></div>
+<div class="sheet" id="shot" role="dialog" aria-label="사진"><div class="grab"></div><div class="sin">
+  <div class="shead"><div><div class="sk" style="color:var(--gold)">PHOTO</div><h2 id="shotT">수조 사진</h2></div></div>
+  <img id="shotImg" class="shotimg" alt="저장할 이미지"><div class="bnote">저장 버튼이 안 되면 이미지를 길게 눌러(컴퓨터는 오른쪽 클릭) 저장하세요.</div>
+  <div class="acts"><button class="btn ghost" type="button" id="shotClose">닫기</button><button class="btn go" type="button" id="shotDl">이미지 저장</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -515,9 +544,11 @@ const DECOS=[
  {id:'skollwreck',name:'가라앉은 구축함',price:800000000,desc:'선체 번호 03. 스콜호와 같은 급의 구축함 잔해.',x:110,y:0},
  {id:'driftship',name:'드리프트 해적선 잔해',price:20000000000,desc:'찢어진 검은 돛에 붉은 표식이 남아 있습니다.',x:64,y:0},
  {id:'calmgate',name:'칼름 해저 관문',price:200000000000,desc:'무풍대 깊은 곳의 은빛 문장 석문. 안쪽이 희미하게 빛납니다.',x:120,y:0},
+ {id:'trophy',name:'황금 조개 트로피',price:0,ex:'출석 7일 보상',desc:'7일 연속 관측한 사람만 받는 트로피.',x:118,y:4},
+ {id:'secretmap',name:'드리프트 비밀 지도',price:0,ex:'숨겨진 장식',desc:'금고 안에서 나온 지도. 붉은 X가 어딘가를 가리킵니다.',x:60,y:8},
  {id:'whalebone',name:'고래 화석',price:1000000000000,desc:'북방 심해권에서 발견된 거대한 고래 뼈.',x:80,y:4}].sort((a,b)=>a.price-b.price);
 const DCAT=[['plant','식물·산호'],['sea','바다 소품'],['navy','연합해군'],['calm','칼름'],['drift','드리프트'],['ruin','유적·지형']];
-(()=>{const M={plant:'kelp coralp moss coralb tallkelp glow anemone bigreef',sea:'star bottle clam giantclam compass chartscroll buoy lifering lighthouse',navy:'cargo skollflag cannon shells tempestbell radio anchor skollwreck',calm:'lantern calmpillar calmslab calmgate',drift:'barrel driftflag chain lockbox chest driftship',ruin:'arch cave wreck whalebone'};for(const k in M)M[k].split(' ').forEach(id=>{const d=DECOS.find(x=>x.id===id);if(d)d.cat=k});DECOS.forEach(d=>{if(!d.cat)d.cat='sea'})})();
+(()=>{const M={plant:'kelp coralp moss coralb tallkelp glow anemone bigreef',sea:'star bottle clam giantclam compass chartscroll buoy lifering lighthouse trophy',navy:'cargo skollflag cannon shells tempestbell radio anchor skollwreck',calm:'lantern calmpillar calmslab calmgate',drift:'barrel driftflag chain lockbox chest driftship secretmap',ruin:'arch cave wreck whalebone'};for(const k in M)M[k].split(' ').forEach(id=>{const d=DECOS.find(x=>x.id===id);if(d)d.cat=k});DECOS.forEach(d=>{if(!d.cat)d.cat='sea'})})();
 
 const KEY='archi-aquarium-v2';
 let S={coin:0,lv:Array(N).fill(0),out:Array(N).fill(false),nick:Array(N).fill(''),ate:Array(N).fill(0),user:[],uid:1,feed:3,last:Date.now(),
@@ -569,6 +600,7 @@ function coral(c,x0,y0,col,dir,len,ang,depth){let x=x0,y=y0;for(let i=0;i<len;i+
 const KELPS={kelp:[[-3,32,'#4E9A4A'],[3,24,'#6AB65A']],tallkelp:[[-5,46,'#3E8A52'],[1,34,'#5DAE62'],[6,40,'#4E9A4A']],glow:[[-2,30,'#2FB8B0'],[3,22,'#5EE6E0'],[7,26,'#2FB8B0']]};
 const DIMG={};
 const DFX={
+ trophy:(c,ox,oy,t)=>{if((t*.001)%3<.25)px(c,ox+10,oy+2,'#FFFFFF',1,2)},
  giantclam:(c,ox,oy,t)=>{const a=.12+Math.abs(Math.sin(t*.0015))*.18;c.fillStyle=`rgba(255,255,255,${a})`;c.fillRect(ox+17,oy+3,11,11);if((t*.001)%3<.3)px(c,ox+20,oy+6,'#FFFFFF',1,1)},
  cave:(c,ox,oy,t)=>{const p=(t*.001)%7;if(p<2.6&&!(p>1.2&&p<1.35)){px(c,ox+36,oy+40,'#FFE14A',2,1);px(c,ox+43,oy+40,'#FFE14A',2,1)}},
  calmgate:(c,ox,oy,t)=>{c.fillStyle=`rgba(230,238,243,${.04+Math.abs(Math.sin(t*.0009))*.08})`;c.fillRect(ox+18,oy+12,35,36)},
@@ -637,6 +669,8 @@ function buildDeco(){
    px(c,x,y,y<top+1.5?'#9A9DA6':rim?'#3A3D48':n>1.1?RK[3]:n<-1?RK[2]:(Math.floor(y/6)+Math.floor(x/10))%2?RK[1]:RK[0])}
    if(sd()<.35)px(c,x,top,'#62B44A',1,1+(sd()<.4?1:0))}
   for(let i=0;i<5;i++){const x=30+i*5;px(c,x,26+(i%2),'#3A3D48',1,2)}});
+ DIMG.trophy=cvs(16,20,c=>{px(c,2,0,'#FFD36E',12,1);for(let y=1;y<=8;y++){const w=6-Math.floor(y/3);px(c,8-w,y,'#E0B54A',w*2,1);px(c,8-w,y,'#FFF0A8',1,1)}px(c,0,2,'#E0B54A',2,4);px(c,14,2,'#E0B54A',2,4);px(c,7,9,'#C9A04A',2,4);px(c,4,13,'#B8862B',8,2);px(c,3,15,'#5A3A22',10,5);px(c,4,16,'#7E5634',8,3);for(let i=0;i<5;i++)px(c,6+i,3+Math.abs(i-2),'#FFFFFF')});
+ DIMG.secretmap=cvs(22,9,c=>{px(c,1,1,'#E6D2A0',20,7);px(c,0,0,'#C9A86C',2,9);px(c,20,0,'#C9A86C',2,9);[[4,3,5],[10,5,4],[6,6,3]].forEach(([x,y,w])=>px(c,x,y,'#8A6A3E',w,1));for(let i=0;i<3;i++){px(c,13+i,2+i,'#E8445A');px(c,15-i,2+i,'#E8445A')}px(c,3,2,'#5A8AC0',2,1)});
  const fnt={'0':['111','101','101','101','111'],'3':['111','001','111','001','111']};
  DIMG.skollwreck=cvs(96,40,c=>{const dk=x=>12+Math.round(x*.05);
   for(let x=2;x<=93;x++){const top=dk(x);for(let y=top;y<40;y++){if(x>93-(39-y)*.35)continue;if(x<6&&y<top+4-(x-2))continue;
@@ -777,7 +811,7 @@ function step(dt){
  for(const f of swim){const st=stageOf(f),bs=SP[f.kind];f.g=SCALE[st];f.w=bs.w*f.g;f.h=bs.h*f.g;let tx=f.tx,ty=f.ty,chase=false;
   if(pellets.length&&!f.crawl){let b=null,bd=1e9;for(const p of pellets){const d=Math.hypot(p.x-f.x,p.y-f.y);if(d<bd){bd=d;b=p}}if(b){tx=b.x;ty=b.y;chase=true;if(bd<Math.max(3,f.w*.3))eat(b,f)}}
   if(f.rest>0&&!chase){f.rest-=dt;f.vx*=.95;f.vy*=.95}
-  else{const dx=tx-f.x,dy=ty-f.y,d=Math.hypot(dx,dy)||1,sp=f.spd*(chase?2.2:1)*SLOW[stageOf(f)];
+  else{const dx=tx-f.x,dy=ty-f.y,d=Math.hypot(dx,dy)||1,sp=f.spd*(chase?2.2:1)*SLOW[stageOf(f)]*(isSleeping(f)&&!chase?.25:1)*(f.follow?1.6:1);
    f.vx+=dx/d*.036*sp;f.vy+=dy/d*.024*sp;const v=Math.hypot(f.vx,f.vy);if(v>sp){f.vx*=sp/v;f.vy*=sp/v}if(!chase&&d<4)pick(f)}
   if(f.crawl)f.vy=0;
   f.x+=f.vx*dt;f.y+=f.vy*dt;f.x=Math.max(f.w/2,Math.min(W-f.w/2,f.x));f.y=Math.max(8,Math.min(SAND-f.h/2+(f.crawl?1:-2),f.y));
@@ -796,7 +830,7 @@ function stageOf(f){return stOf(ateOf(f),capOf(SP[f.base||f.kind].w))}
 function eat(p,f){pellets.splice(pellets.indexOf(p),1);if(VIEW)return;const before=stageOf(f);
  if(f.u){const u=userBy(f.u);if(u)u.ate=(u.ate||0)+1}else S.ate[f.n]++;
  const g=Math.max(1,total()*2);S.coin+=g;pops.push({x:f.x,y:f.y-f.h/2-2,txt:'+'+fmt(g),life:60});
- sfx('eat');if(stageOf(f)>before){sfx('grow');const nm=f.u?(userBy(f.u)||{}).name:(S.nick[f.n]||ROSTER[f.n][1]);pops.push({x:f.x,y:f.y-f.h/2-10,txt:'GROW!',life:90});toast(nm+' · '+SLAB[stageOf(f)]+' 단계로 자랐습니다 (×'+SCALE[stageOf(f)]+')'+(stageOf(f)>=capOf(SP[f.base||f.kind].w)?' · 최대':''))}}
+ sfx('eat');if(stageOf(f)>before){sfx('grow');logAdd(josa(f.u?(userBy(f.u)||{}).name||'내 물고기':nameOf(f.n),'이','가')+' '+SLAB[stageOf(f)]+' 단계로 자랐습니다.');const nm=f.u?(userBy(f.u)||{}).name:(S.nick[f.n]||ROSTER[f.n][1]);pops.push({x:f.x,y:f.y-f.h/2-10,txt:'GROW!',life:90});toast(nm+' · '+SLAB[stageOf(f)]+' 단계로 자랐습니다 (×'+SCALE[stageOf(f)]+')'+(stageOf(f)>=capOf(SP[f.base||f.kind].w)?' · 최대':''))}}
 function drawSprite(c,f){const s=SP[f.kind],img=IMG[f.kind],k=f.g||1,w=s.w*k,h=s.h*k,q=v=>Math.round(v*4)/4;
  const ox=q(f.x-w/2),oy=q(f.y-h/2+(f.crawl?0:Math.round(Math.sin(f.ph*.7)*.6)*k));
  c.save();if(f.face<0){c.translate(ox*2+w,0);c.scale(-1,1)}
@@ -812,7 +846,7 @@ function render(t){cx.drawImage(bg,0,0);
  for(const p of pellets)px(cx,p.x,p.y,'#B07A45',2,1);
  if(editMode)cx.globalAlpha=.3;const order=[...swim].sort((a,b)=>(!!a.crawl)-(!!b.crawl));for(const f of order)drawSprite(cx,f);cx.globalAlpha=1;
  for(const s of sparks){for(let i=0;i<4;i++)px(cx,s.x-6+i*4,s.y-3+((i*5+Math.floor(s.life))%5),'#FFF6A0',2,1)}
- for(const b of bubbles)ring(cx,b.x,b.y,b.r);
+ for(const b of bubbles)ring(cx,b.x,b.y,b.r);drawStreaks();drawNight(t);drawHearts(1);drawZ(1);
  if(capsule){const x=Math.round(capsule.x),y=Math.round(capsule.y+Math.sin(capsule.ph)*2);px(cx,x-2,y-1,'#FFD36E',5,3);px(cx,x-1,y-2,'#FFD36E',3,5);px(cx,x-1,y-1,'#FFF4C8',1,1);px(cx,x-3,y,'rgba(255,211,110,.4)');px(cx,x+3,y,'rgba(255,211,110,.4)')}
  cx.font='8px Silkscreen, monospace';cx.textAlign='center';for(const p of pops){cx.fillStyle=`rgba(255,228,150,${Math.min(1,p.life/30)})`;cx.fillText(p.txt,Math.round(p.x),Math.round(p.y-(60-p.life)*.15))}}
 
@@ -867,7 +901,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button,summary')
 document.addEventListener('visibilitychange',()=>{if(!A)return;if(document.hidden&&!pipWin)A.ctx.suspend().catch(()=>{});else if(S.snd.music||S.snd.sfx)A.ctx.resume().catch(()=>{})});
 
 /* ---------- 공용 UI ---------- */
-const ICONS={note:[['...aaaaa','...aaaaa','...a...a','...a...a','...a...a','.aaa.aaa','aaaa.aaa','aaa..aa.'],{a:'#FFD36E',b:'#FFE9A8'}],
+const ICONS={cam:[['..aaa...','aaaaaaaa','abbccbba','abcddcba','abcddcba','abbccbba','aaaaaaaa'],{a:'#FFFFFF',b:'#C9D1E6',c:'#2A2E38',d:'#8FD9E4'}],
+ book:[['aaaaaaa.','abbbbbaa','abccbbaa','abbbbbaa','abccbbaa','abbbbbaa','aaaaaaa.'],{a:'#B07A45',b:'#F4F1DE',c:'#8F97BC'}],
+ note:[['...aaaaa','...aaaaa','...a...a','...a...a','...a...a','.aaa.aaa','aaaa.aaa','aaa..aa.'],{a:'#FFD36E',b:'#FFE9A8'}],
  spk:[['....a....','...aa..b.','aaaaa.b.b','aaaaa.b.b','aaaaa.b.b','aaaaa.b.b','...aa..b.','....a....'],{a:'#8FD9E4',b:'#C9EEF3'}],
  coin:[['..aaaa..','.abbbba.','abcbbdba','abcbbdba','abcbbdba','abcbbdba','.abddba.','..aaaa..'],{a:'#5C6584',b:'#C9D1E6',c:'#FFFFFF',d:'#9AA3BE'}],
  fish:[['...aaa...','a.aaaaaa.','aaaaaaaea','a.aaaaaa.','...aaa...'],{a:'#8FD9E4',e:'#0A0E22'}],
@@ -879,7 +915,7 @@ function paintIcons(root){root.querySelectorAll('.ico[data-i]').forEach(el=>{if(
 const $=id=>document.getElementById(id);
 function thumb(c,kind){const s=SP[kind],x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);const k=Math.max(1,Math.floor(Math.min(c.width/s.w,c.height/s.h)));x.drawImage(IMG[kind],(c.width-s.w*k)/2|0,(c.height-s.h*k)/2|0,s.w*k,s.h*k)}
 let tt;function toast(m){const el=$('toast');el.textContent=m;el.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('on'),2400)}
-function setTab(t){S.tab=t;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));$('pCrew').hidden=t!=='crew';$('pShop').hidden=t!=='shop';$('pMine').hidden=t!=='mine';if(t==='shop')buildShop();if(t==='mine')buildUser();save()}
+function setTab(t){S.tab=t;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));$('pCrew').hidden=t!=='crew';$('pShop').hidden=t!=='shop';$('pMine').hidden=t!=='mine';$('pLog').hidden=t!=='log';if(t==='shop')buildShop();if(t==='mine')buildUser();if(t==='log')buildLog();save()}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
 
 /* ---------- 대원 ---------- */
@@ -894,7 +930,7 @@ function buildCrew(){const g=$('pCrew');g.innerHTML='';
    r.innerHTML='<div class="tile" tabindex="0"><canvas width="40" height="22"></canvas></div><div class="who"><div class="nm"><span class="t"></span><em></em></div><div class="sub"></div></div><button class="btn" type="button"></button>';
    r.querySelector('button').onclick=()=>act(n);const o=()=>{if(S.lv[n])openSheet(n)};r.querySelector('.who').onclick=o;r.querySelector('.tile').onclick=o;L.appendChild(r)});g.appendChild(box)}}
 function ui(){
- $('coin').innerHTML=fmt(S.coin)+'<i>은화</i>';$('rate').textContent='+'+fmt(total())+' / 초';
+ $('coin').innerHTML=fmt(S.coin)+'<i>은화</i>';$('rate').textContent='+'+fmt(total()*curMul())+' / 초'+(cur?' · 해류 ×2':'');
  const own=S.lv.filter(l=>l).length;$('count').textContent=own+' / '+N;
  $('feed').innerHTML='먹이<span class="dots">'+[0,1,2].map(i=>`<b class="${i<S.feed?'':'e'}"></b>`).join('')+'</span>';
  const nx=nextIdx();
@@ -914,7 +950,7 @@ function ui(){
  if(!$('pShop').hidden)shopState();
  if(sel!=null||selU!=null)fillSheet()}
 function act(n){const st=rowState(n);if(!st.can||S.coin<st.cost)return;S.coin-=st.cost;S.lv[n]++;sfx(st.l===0?'hire':'up');
- if(st.l===0){swim.push(makeFish(n));toast(ROSTER[n][1]+' 입수');if(n===NAVY-1)setTimeout(()=>toast('미확인 주파수가 잡혔습니다'),1500)}save();ui()}
+ if(st.l===0){swim.push(makeFish(n));toast(ROSTER[n][1]+' 입수');logAdd(josa(ROSTER[n][1],'이','가')+' 수조에 들어왔습니다.');if(n===NAVY-1)setTimeout(()=>toast('미확인 주파수가 잡혔습니다'),1500)}save();ui()}
 
 /* ---------- 시트 ---------- */
 let sel=null,selU=null,delArm=0;
@@ -930,10 +966,10 @@ function fillSheet(){
  if(selU!=null){const u=userBy(selU);if(!u){closeSheet();return}
   $('sK').textContent='내 물고기';$('sN').textContent=u.name;$('sNickL').textContent='이름';
   $('sD').innerHTML=fact('상태',u.out?'보관 중':'수조 안')+fact('은화','꾸미기용 · 벌지 않음')+growFact(u.ate||0,capOf(SP['u'+u.id].w));
-  $('sSkins').hidden=true;$('sSkins').dataset.n='';$('sBuy').hidden=true;$('sEdit').hidden=false;$('sDel').hidden=false;$('sOut').textContent=u.out?'수조에 넣기':'꺼내기';return}
+  $('sCard').hidden=true;$('sSkins').hidden=true;$('sSkins').dataset.n='';$('sBuy').hidden=true;$('sEdit').hidden=false;$('sDel').hidden=false;$('sOut').textContent=u.out?'수조에 넣기':'꺼내기';return}
  const n=sel,d=ROSTER[n],st=rowState(n);$('sK').textContent=F[d[0]].full;$('sN').textContent=S.nick[n]||d[1];$('sNickL').textContent='별명';
  $('sD').innerHTML=fact('이름',d[1])+fact('직책',d[2])+fact('관측종',d[3])+fact('사육',`Lv.${S.lv[n]} / ${LVMAX}`)+fact('초당 은화','+'+fmt(rateOf(n)))+fact('상태',S.out[n]?'보관 중 · 은화는 계속 법니다':'수조 안')+growFact(S.ate[n],capOf(SP[d[4]].w));
- $('sEdit').hidden=true;$('sDel').hidden=true;$('sBuy').hidden=false;$('sOut').textContent=S.out[n]?'수조에 넣기':'꺼내기';
+ $('sCard').hidden=false;$('sEdit').hidden=true;$('sDel').hidden=true;$('sBuy').hidden=false;$('sOut').textContent=S.out[n]?'수조에 넣기':'꺼내기';
  const box=$('sSkins');box.hidden=false;const list=SKIN.filter(k=>k.n===n);
  if(box.dataset.n!==String(n)){box.dataset.n=n;box.innerHTML='<div class="skins-h">스킨 · 두 개를 함께 착용할 수 있습니다</div>'+list.map(k=>`<div class="skin" data-id="${k.id}"><div class="tile"><canvas width="40" height="22"></canvas></div><div style="min-width:0"><b>${k.name}</b><div class="bnote">${k.desc}</div></div><button class="btn" type="button"></button></div>`).join('');
   list.forEach(k=>{const el=box.querySelector(`[data-id="${k.id}"]`);thumb(el.querySelector('canvas'),skinPrev(k));el.querySelector('button').onclick=()=>skinAct(k)})}
@@ -941,12 +977,12 @@ function fillSheet(){
   el.classList.toggle('on',on);b.className='btn'+(own?(on?' on':' ghost'):(S.coin>=k.price?' go':''));b.textContent=own?(on?'벗기':'착용하기'):fmt(k.price)+' 은화';b.disabled=!own&&S.coin<k.price})
  const b=$('sBuy');b.textContent=st.label;b.disabled=!st.can||S.coin<st.cost;b.onclick=()=>act(n)}
 function skinAct(k){const n=k.n;if(!S.lv[n]){toast('먼저 영입해야 합니다');sfx('err');return}
- if(!S.ownSkin.includes(k.id)){if(S.coin<k.price)return;S.coin-=k.price;S.ownSkin.push(k.id);S.wear[n].push(k.id);sfx('coin');toast(k.name+' 구매 · 착용')}
+ if(!S.ownSkin.includes(k.id)){if(S.coin<k.price)return;S.coin-=k.price;S.ownSkin.push(k.id);S.wear[n].push(k.id);sfx('coin');toast(k.name+' 구매 · 착용');logAdd(nameOf(n)+'에게 「'+k.name+'」 스킨을 선물했습니다.')}
  else if(S.wear[n].includes(k.id)){S.wear[n]=S.wear[n].filter(x=>x!==k.id);sfx('tap');toast(k.name+' 벗음')}
  else{S.wear[n].push(k.id);sfx('up');toast(k.name+' 착용')}
  S.wear[n].sort();refreshFish(n);if(sel===n)thumb($('sPic'),kindOf(n));save();ui();if(!$('pShop').hidden&&S.stab==='skin')shopState()}
 function closeSheet(){sel=null;selU=null;showSheet(false);$('sDel').textContent='삭제';delArm=0}
-$('sClose').onclick=closeSheet;$('scrim').onclick=()=>{closeSheet();closeEditor();admClose()};
+$('sClose').onclick=closeSheet;$('scrim').onclick=()=>{closeSheet();closeEditor();admClose();['daily','shot'].forEach(id=>$(id).classList.remove('on'))};
 $('sOut').onclick=()=>{if(selU!=null){const u=userBy(selU);u.out=!u.out;swim=swim.filter(f=>f.u!==u.id);if(!u.out)swim.push(makeUser(u));toast(u.out?u.name+' 보관함으로':u.name+' 수조로');buildUser()}
  else if(sel!=null){const n=sel;S.out[n]=!S.out[n];swim=swim.filter(f=>f.n!==n);if(!S.out[n])swim.push(makeFish(n));toast((S.nick[n]||ROSTER[n][1])+(S.out[n]?' 보관함으로':' 수조로'))}
  save();ui()};
@@ -972,13 +1008,13 @@ function buildShop(){const s=S.stab;document.querySelectorAll('#stabs button').f
  if(s==='deco'){const cur=S.dcat||'all';const F2=[['all','전체'],...DCAT,['mine','보유만'],['placed','배치 중']];
   $('dfilter').innerHTML=F2.map(([k,l])=>`<button class="chip" type="button" data-c="${k}" aria-pressed="${k===cur}">${l}</button>`).join('');
   $('dfilter').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.dcat=b.dataset.c;buildShop();save()});
-  const groups={};const shown=DECOS.filter(it=>cur==='all'||cur===it.cat||(cur==='mine'&&S.own.deco.includes(it.id))||(cur==='placed'&&S.own.deco.includes(it.id)&&S.deco[it.id]&&S.deco[it.id].on));
+  const groups={};const shown=DECOS.filter(it=>!it.ex||S.own.deco.includes(it.id)).filter(it=>cur==='all'||cur===it.cat||(cur==='mine'&&S.own.deco.includes(it.id))||(cur==='placed'&&S.own.deco.includes(it.id)&&S.deco[it.id]&&S.deco[it.id].on));
   const cats=(cur==='all'||cur==='mine'||cur==='placed')?DCAT:DCAT.filter(c=>c[0]===cur);
   cats.forEach(([k,l])=>{const items=shown.filter(it=>it.cat===k);if(!items.length)return;const sec=document.createElement('div');sec.className='dgroup';const own=items.filter(it=>S.own.deco.includes(it.id)).length;
    sec.innerHTML=`<h4><span>${l}</span><em>${own} / ${items.length}</em></h4><div class="grid"></div>`;g.appendChild(sec);groups[k]=sec.querySelector('.grid')});
   if(!shown.length)g.innerHTML='<div class="empty">해당하는 장식이 없습니다</div>';
   target=it=>groups[it.cat];}
- (s==='deco'?DECOS.filter(it=>{const cur=S.dcat||'all';return cur==='all'||cur===it.cat||(cur==='mine'&&S.own.deco.includes(it.id))||(cur==='placed'&&S.own.deco.includes(it.id)&&S.deco[it.id]&&S.deco[it.id].on)}):list).forEach(it=>{const el=document.createElement('div');el.className='item px';el.dataset.id=it.id;
+ (s==='deco'?DECOS.filter(it=>!it.ex||S.own.deco.includes(it.id)).filter(it=>{const cur=S.dcat||'all';return cur==='all'||cur===it.cat||(cur==='mine'&&S.own.deco.includes(it.id))||(cur==='placed'&&S.own.deco.includes(it.id)&&S.deco[it.id]&&S.deco[it.id].on)}):list).forEach(it=>{const el=document.createElement('div');el.className='item px';el.dataset.id=it.id;
   el.innerHTML=`<div class="prev${s==='deco'?' d':''}"></div><div class="t">${it.name}</div><div class="s">${it.desc}</div><button class="btn" type="button"></button>`;
   const pv=el.querySelector('.prev');
   if(s==='theme'){const c=prevScene(it,SUBS.find(x=>x.id===S.sub));pv.appendChild(c)}
@@ -1024,6 +1060,10 @@ $('vSfx').addEventListener('input',e=>{S.snd.sv=+e.target.value;if(S.snd.sv>0&&!
 ['vMus','vSfx'].forEach(id=>$(id).addEventListener('change',()=>save()));
 $('tSfx').onclick=()=>{S.snd.sfx=!S.snd.sfx;if(S.snd.sfx){initAudio();setTimeout(()=>sfx('on'),30)}sndUI();save()};
 $('editBtn').onclick=()=>setEdit(true);
+$('bCam').onclick=()=>snapTank();$('sCard').onclick=()=>{if(sel!=null)profileCard(sel)};
+$('dyOk').onclick=()=>{$('daily').classList.remove('on');$('scrim').classList.toggle('on',$('sheet').classList.contains('on'));ui();if(S.tab==='log')buildLog()};
+$('shotClose').onclick=()=>{$('shot').classList.remove('on');$('scrim').classList.remove('on')};
+document.querySelectorAll('#todChips button').forEach(b=>b.onclick=()=>setTod(b.dataset.m));
 function epUI(){const p=$('editPanel');if(p.hidden)return;const d=editSel&&S.deco[editSel];if(!d||!d.on){editSel=null}
  p.classList.toggle('none',!editSel);$('epName').textContent=editSel?DECOS.find(x=>x.id===editSel).name:'장식을 눌러서 고르세요';
  $('epPos').textContent=editSel?`가로 ${d.x} · ${d.y<0?'위로 '+(-d.y):'바닥 '+d.y}${d.f?' · 반전':''}`:'배치된 장식 '+decoOrder().length+'개'}
@@ -1042,7 +1082,7 @@ $('epReset').onclick=()=>{if(!editSel)return;const o=DECOS.find(x=>x.id===editSe
 $('epRemove').onclick=()=>{if(!editSel)return;S.deco[editSel].on=false;toast(DECOS.find(x=>x.id===editSel).name+' 보관');editSel=null;save();epUI()};
 const cycle=k=>{const ids=decoOrder().sort((a,b)=>S.deco[a].x-S.deco[b].x);if(!ids.length)return;let i=ids.indexOf(editSel);i=i<0?0:(i+k+ids.length)%ids.length;editSel=ids[i];epUI()};
 $('epPrev').onclick=()=>cycle(-1);$('epNext').onclick=()=>cycle(1);
-$('editDone2').onclick=()=>{setEdit(false);toast('배치를 저장했습니다')};
+$('editDone2').onclick=()=>{checkSecret();setEdit(false);toast('배치를 저장했습니다')};
 /* ---------- 관리자 ---------- */
 const ADM='d4df83fc';
 function hs(v){let x=0x811c9dc5;for(const c of 'aqua~'+v.trim().toLowerCase()+'~net'){x^=c.codePointAt(0);x=Math.imul(x,0x01000193)>>>0}return x.toString(16)}
@@ -1067,7 +1107,7 @@ $('admFeed').onclick=()=>{S.feed=3;ui();sfx('drop')};
 $('admBig').onclick=()=>{S.ate=S.ate.map(()=>STAGE[STAGE.length-1]);S.user.forEach(u=>u.ate=STAGE[STAGE.length-1]);save();sfx('grow');toast('전원 최대 크기')};
 $('admSmall').onclick=()=>{S.ate=S.ate.map(()=>0);S.user.forEach(u=>u.ate=0);save();sfx('tap');toast('크기를 처음으로 되돌렸습니다')};
 $('admCap').onclick=()=>{capsule={x:-6,y:rnd(20,90),vx:.18,ph:0};admClose();toast('해류 캡슐이 들어옵니다')};
-$('admLockBtn').onclick=()=>{S.admin=false;save();admClose();toast('관리자 모드를 잠갔습니다')};$('editDone').onclick=()=>{setEdit(false);toast('배치를 저장했습니다')};
+$('admLockBtn').onclick=()=>{S.admin=false;save();admClose();toast('관리자 모드를 잠갔습니다')};$('editDone').onclick=()=>{checkSecret();setEdit(false);toast('배치를 저장했습니다')};
 
 /* ---------- 내 물고기 ---------- */
 const UMAX=6,GW=32,GH=16,FIX={w:'#F4F7FA',k:'#15151C'};
@@ -1220,29 +1260,155 @@ cv.addEventListener('pointermove',e=>{const[x,y]=toLogical(e);
  if(drag){const d=S.deco[drag.id],w=DIMG[drag.id].width;d.x=Math.round(Math.max(0,Math.min(W,x-drag.dx)));d.y=Math.round(Math.max(-110,Math.min(16,y-drag.dy-SAND-2)));epUI();return}
  if(e.pointerType==='mouse'&&!editMode)hover=hit(x,y)});
 cv.addEventListener('pointerleave',()=>{if(!drag)hover=null});
-['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{if(drag){drag=null;save()}}));
+let lp=null;['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>{if(drag){drag=null;save();checkSecret()}
+ if(lp){clearTimeout(lp.timer);const f=lp.f;if(!lp.done&&t==='pointerup'){const showing=talks.find(q=>q.f===f&&q.until>performance.now());if(showing&&!VIEW&&!pipWin){f.u?openUser(f.u):openSheet(f.n)}else talkTo(f)}lp=null}}));
+cv.addEventListener('contextmenu',e=>{if(lp)e.preventDefault()});
 cv.addEventListener('pointerdown',e=>{const[x,y]=toLogical(e);
  if(editMode){const id=hitDeco(x,y);if(id){const d=S.deco[id];editSel=id;epUI();drag={id,dx:x-d.x,dy:y-(SAND+2+d.y)};try{cv.setPointerCapture(e.pointerId)}catch(_){}}return}
  if(capsule&&Math.hypot(capsule.x-x,capsule.y-y)<9){const g=Math.max(20,total()*20);S.coin+=g;pops.push({x,y,txt:'해류 캡슐 +'+fmt(g),life:80});capsule=null;sfx('capsule');ui();return}
- const f=hit(x,y);if(f){hover=f;if(VIEW||pipWin){clearTimeout(hoverT);hoverT=setTimeout(()=>hover=null,3000);return}f.u?openUser(f.u):openSheet(f.n);return}
+ const f=hit(x,y);if(f){hover=f;clearTimeout(hoverT);hoverT=setTimeout(()=>{if(hover===f)hover=null},3000);
+  const t0=performance.now();lp={f,t0,done:false,timer:setTimeout(()=>{lp.done=true;pet(f)},480)};return}
+ const dh=hitDeco(x,y);if(dh==='radio'&&!VIEW){const d=S.deco.radio;talks.push({fixed:true,x:d.x,y:SAND+2+d.y-14,txt:SIGNALS[Math.floor(Math.random()*SIGNALS.length)],until:performance.now()+3600,kind:'sig'});sfx('tap');if(!S.sigSeen){S.sigSeen=1;logAdd('무전기에서 출처 불명 신호가 잡혔습니다.');save()}return}
  if(S.feed>0){S.feed--;feedT=FEEDCD;sfx('drop');for(let i=0;i<3;i++)pellets.push({x:x+rnd(-3,3),y:Math.max(4,y+rnd(-2,2))});ui()}else{sfx('err');toast('먹이를 다시 채우는 중입니다')}});
 function drawTag(){let f=editMode?null:hover;if(sel!=null)f=swim.find(s=>s.n===sel)||null;if(selU!=null)f=swim.find(s=>s.u===selU)||null;const el=TAG;if(!f){el.hidden=true;return}
  let txt,col;if(f.u){const u=userBy(f.u);if(!u){el.hidden=true;return}txt=esc(u.name)+'<small>내 물고기</small>';col='#FFD36E'}
  else{const d=ROSTER[f.n];txt=S.nick[f.n]?esc(S.nick[f.n])+'<small>'+d[1]+' · '+d[3]+'</small>':d[1]+'<small>'+d[3]+'</small>';col=d[5]||F[d[0]].col}
  el.hidden=false;el.style.left=(f.x/W*100)+'%';el.style.top=((f.y-f.h/2-3)/H*100)+'%';el.style.setProperty('--tc',col);if(el.dataset.v!==txt){el.dataset.v=txt;el.innerHTML=txt}}
 
+/* ---------- 생활: 대사·상호작용·밤낮·일지·이벤트 ---------- */
+const LINES=[
+ [["…밥은 먹었나.","함교로 돌아가야 하는데.","물이 잔잔하군."],["자네가 오면 수조가 조용해지는군.","오늘 보고는 짧게 해도 좋다.","세베린 얘기는 꺼내지 마."],["함장실 불은 늘 켜 둔다.","…이건 함장이 아니라 내 얘기다.","자네가 와서 다행이다."]],
+ [["점호 시간이다.","함장님 귀찮게 하지 마.","먹이는 정해진 양만."],["…요즘 함장님이 웃더군.","규정은 지키라고 있는 거다.","네 이름은 외워 뒀다."],["부장 자리는 생각보다 외롭다.","함장님을 지키는 게 내 일이다."]],
+ [["수평선 이상 없음!","나침반 못 봤어?","멀리 보면 다 보여."],["저기, 북쪽 해류가 이상해.","정찰은 혼자가 편해.","너도 같이 볼래?"],["가끔 아무 데도 안 가고 싶어.","너한테만 보여주는 항로야."]],
+ [["기관실 건드리지 마.","렌치 어디 뒀더라.","엔진 소리가 좋네."],["…붉은 깃발은 보기 싫어.","옛날 배 얘긴 하지 말자.","손에 기름때가 안 빠져."],["나도 한때는 다른 배에 있었어.","드리프트… 아니, 아무것도."]],
+ [["작전도 확인 중이야.","안경 어디 갔지.","계산상으론 괜찮아."],["변수는 늘 사람이야.","통신 감도 양호.","너도 작전에 넣어 둘까."],["계산이 틀리는 게 무서워.","가끔은 계산 없이 움직이고 싶어."]],
+ [["돌격 준비 끝!","단검은 늘 손에.","심심한데 싸움 없나?"],["선배들 몰래 간식 있어.","템페스트가 최고야.","너 의외로 용감하네."],["사실 무서울 때도 있어.","다음 출격엔 꼭 돌아올게."]],
+ [["탄도 계산 끝.","포성 들으면 마음이 편해.","조준선 정렬."],["산갈치는 길어서 불편해.","주드 좀 말려 줘.","네 위치는 기억해 둘게."],["포를 쏘면 아무 생각이 안 나.","…가끔은 그게 무서워."]],
+ [["항로는 내가 정해.","바람이 좋다!","별 보러 갈래?"],["돛새치가 제일 빨라.","별자리로 길을 찾지.","전대장님 눈치 보여."],["길 잃어도 너는 찾아 줄게.","별이 안 보이는 날이 제일 싫어."]],
+ [["흠.","느긋하게 가자고.","밥은 넉넉히."],["전대장님 화나면 내 뒤로.","젊은 애들은 성급해.","콧수염 어울리나?"],["다들 무사히 돌아오면 그걸로 됐어.","내가 버티는 동안은 괜찮아."]],
+ [["보고는 간결하게.","흰 제복에 얼룩 내지 마.","다음."],["카엘 보른? 그 이름은 듣고 싶지 않군.","부상은 혼자 처리한다.","자네는 쓸 만하군."],["계산이 틀린 건 단 한 번이었다.","…그 한 번을 아직 잊지 못했다."]],
+ [["어, 왔어?","선글라스 멋있지?","가시 조심~"],["칼름에서 제일 잘생긴 건 나.","윗분들 몰래 놀자.","금목걸이 탐나?"],["가볍게 보여도 다 보고 있어.","너 꽤 마음에 들어."]],
+ [["천천히 해도 돼.","밥은 잘 챙겨 먹고?","졸려…"],["동생이 하나 있어. 말 안 듣는.","피곤하면 여기서 쉬어.","리본 예쁘지?"],["그 애는 지금 어디 있을까.","…형 노릇을 제대로 못 했어."]],
+ [["……","물이 차가워.","보고 있었어."],["지네는 등에 하나 있어.","칼름은 바람이 없어서 좋아.","가까이 와도 돼."],["다들 날 무서워하더라.","너는 도망가지 않네."]],
+ [["서류는 오늘까지.","정숙.","안경 닦는 중이다."],["흉터는 묻지 않는 게 예의다.","평정표는 공정하다.","자네 보고서는 읽을 만하더군."],["불길 속에서도 서류는 챙겼지.","…자네 앞에선 말이 많아지는군."]],
+ [["용건만.","칼름의 규율은 바뀌지 않는다.","…"],["이 눈은 원래 금색이었다.","칼름은 군도연합 그 자체다.","물러서지 마라."],["명령보다 무거운 게 있다는 걸 안다.","자네에게만 하는 말이다."]],
+ [["쉿.","들은 거 없어.","정보는 공짜가 아니야."],["해군 출신 아닌 건 나뿐이야.","쪽지는 읽고 먹어.","너 비밀 하나쯤 있지?"],["다들 해군 냄새가 나.","그래도 여기가 내 배야."]],
+ [["펑!","불 붙일 거 없나?","엔진은 내 거야."],["기관실 하나 날려 본 적 있어.","로렐? 아, 그 이름.","고글 벗기지 마."],["부수는 게 고치는 것보다 쉬워.","근데 너는 안 부숴."]],
+ [["비켜.","곡도 날 세우는 중.","따라오지 마."],["해군학교? 오래전 얘기야.","칼름 놈들은 다 똑같아.","…형 같은 건 없어."],["에밀은 아직도 리본 매고 다니나.","…아무한테도 말하지 마."]],
+ [["길 잃었어? 이쪽이야~","불빛 예쁘지?","카드 한 장 뽑아 봐."],["조난 신호는 내 특기.","거짓말은 아니야. 아마도.","넌 속이기 아까워."],["이 불빛, 진짜 나는 아니야.","너한테만은 진짜를 말할게."]],
+ [["뭘 봐.","드리프트는 드리프트다.","금니? 전리품이야."],["해군 제복은 버렸다.","우리 배에 오를 거면 각오해.","넌 쓸 만해 보여."],["다 버리고 나왔지. 이름까지.","…돌아갈 곳은 없다."]]];
+const ULINES=["뻐끔.","보글보글…","밥 줘!","헤엄치는 중~","…?","반가워!"];
+const SLEEPL=["Zzz…","음냐…","…쿨"];
+const SIGNALS=["…치직… 07 해역… 붉은…","…신호 불명… 드…리…","…누군가 듣고 있다면… 응답하라…","…무풍대… 금고… 열쇠는…","…치지직… 아무것도 들리지 않는다.","…스콜… 함장실… 불이…","…좌표 수신 실패… 다시…"];
+const josa=(w,a,b)=>{const c=w.charCodeAt(w.length-1);return w+((c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28)?a:b)};
+const nameOf=n=>S.nick[n]||ROSTER[n][1];
+
+/* 일지 */
+function logAdd(txt){if(VIEW)return;S.log=S.log||[];S.log.unshift({t:Date.now(),txt});if(S.log.length>80)S.log.length=80;if(S.tab==='log')buildLog()}
+function buildLog(){const b=$('pLog');const L=S.log||[];const st=S.streak||0;
+ b.innerHTML=`<section class="px stat" style="gap:14px"><div class="coinrow"><div><div class="lbl">ATTENDANCE</div><div class="coin" style="font-size:24px">${st}<i>일 연속 관측</i></div></div><span class="pill">${7-((st-1)%7+1)===0?'오늘 7일 보상!':'7일 보상까지 '+(7-((st-1)%7+1))+'일'}</span></div><div class="track"><i style="width:${(((st-1)%7)+1)/7*100}%"></i></div><div class="bnote">매일 처음 들어오면 출석 은화와 오늘의 관측 일지가 도착합니다. 7일마다 특별 보상이 있습니다.</div></section>
+ <section class="sec"><h3><span><b style="color:var(--gold)">관측 일지</b>영입·성장·사건 기록</span><em>${L.length}</em></h3><div class="list" id="logList"></div></section>`;
+ const ll=$('logList');if(!L.length){ll.innerHTML='<div class="empty">아직 기록이 없습니다</div>';return}
+ let last='';L.forEach(e=>{const d=new Date(e.t),day=`${d.getMonth()+1}월 ${d.getDate()}일`;const r=document.createElement('div');r.className='logrow';
+  r.innerHTML=`<span class="lt">${day!==last?day:''}<small>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</small></span><span class="lx"></span>`;r.querySelector('.lx').textContent=e.txt;last=day;ll.appendChild(r)})}
+
+/* 말풍선 */
+let talks=[];
+function say(f,txt,ms=3200,kind=''){if(!f)return;talks=talks.filter(t=>t.f!==f);if(talks.length>=3)talks.shift();talks.push({f,txt,until:performance.now()+ms,kind})}
+function drawTalks(){const box=$('talks');const now=performance.now();talks=talks.filter(t=>t.until>now&&swim.includes(t.f)||t.fixed&&t.until>now);
+ while(box.children.length<talks.length){const d=document.createElement('div');d.className='talk';box.appendChild(d)}
+ [...box.children].forEach((el,i)=>{const t=talks[i];if(!t){el.hidden=true;return}el.hidden=false;const x=t.fixed?t.x:t.f.x,y=t.fixed?t.y:t.f.y-t.f.h/2;
+  el.style.left=Math.max(8,Math.min(92,x/W*100))+'%';el.style.top=(y/H*100)+'%';el.className='talk'+(t.kind?' '+t.kind:'');if(el.dataset.v!==t.txt){el.dataset.v=t.txt;el.textContent=t.txt}})}
+function talkTo(f){if(f.u){say(f,ULINES[Math.floor(Math.random()*ULINES.length)]);return}
+ const n=f.n;if(isSleeping(f)){say(f,SLEEPL[Math.floor(Math.random()*SLEEPL.length)],2200,'zz');return}
+ S.talk=S.talk||Array(N).fill(0);S.talk[n]=(S.talk[n]||0)+1;const c=S.talk[n],tier=c>=30?2:c>=10?1:0;
+ const pool=Math.random()<.45?LINES[n][tier]:LINES[n].slice(0,tier+1).flat();say(f,pool[Math.floor(Math.random()*pool.length)]);
+ if(c===10||c===30){setTimeout(()=>{toast(josa(nameOf(n),'과','와')+' 조금 더 가까워졌습니다');logAdd(josa(nameOf(n),'이','가')+' 새로운 이야기를 꺼내기 시작했습니다.');sfx('hire')},900)}
+ save()}
+
+/* 밤낮 */
+function nightLevel(){const m=S.tod||'auto';if(m==='day')return 0;if(m==='night')return 1;const d=new Date(),h=d.getHours()+d.getMinutes()/60;
+ if(h>=20||h<5)return 1;if(h>=18)return (h-18)/2;if(h<7)return 1-(h-5)/2;return 0}
+const isSleeping=f=>!f.u&&nightLevel()>.6&&((f.n*7)%3===0)&&!f.follow;
+function drawNight(t){const nl=nightLevel();if(nl<=0)return;cx.fillStyle=`rgba(6,10,40,${nl*.5})`;cx.fillRect(0,0,W,H);if(nl<1&&nl>0){cx.fillStyle=`rgba(255,140,80,${(1-Math.abs(nl-.5)*2)*.08})`;cx.fillRect(0,0,W,H)}
+ cx.globalAlpha=Math.min(1,nl*1.2);for(const id of decoOrder()){if(!['lantern','lighthouse','buoy','giantclam','calmgate','radio','cave','glow'].includes(id))continue;const d=S.deco[id],img=DIMG[id],yb=SAND+2+d.y;
+  if(id==='glow'){for(const[dx,h]of KELPS.glow){const x=d.x+dx*(d.f?-1:1);for(let i=5;i<h;i+=7)px(cx,x+(i%2?2:-2),yb-i-1,`rgba(184,255,248,${.5+Math.abs(Math.sin(t*.002+i))*.5})`)}continue}
+  const ox=Math.round(d.x-img.width/2),oy=yb-img.height;cx.save();if(d.f){cx.translate(ox*2+img.width,0);cx.scale(-1,1)}DFX[id](cx,ox,oy,t);cx.restore()}
+ for(const f of swim)if(f.base==='angler'){const k=f.g||1,ox=f.x-f.w/2,oy=f.y-f.h/2,lx=f.face>0?ox+f.w-2*k:ox+k;cx.fillStyle=`rgba(255,243,138,${.35+Math.abs(Math.sin(f.ph))*.4})`;cx.fillRect(lx-2*k,oy-2*k,5*k,5*k)}
+ cx.globalAlpha=1}
+function setTod(m){S.tod=m;document.querySelectorAll('#todChips button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===m));save()}
+
+/* 상호작용 */
+let socialT=0,lorelT=rnd(120,240),chatT=rnd(40,80),cur=null,curT=rnd(420,840),streaks=[];
+function social(dt,sec){if(VIEW&&!swim.length)return;const by={};swim.forEach(f=>{if(f.n>=0)by[f.n]=f});const now=performance.now();
+ const push=(a,b,str)=>{const dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;a.vx+=dx/d*str*dt;a.vy+=dy/d*str*.6*dt};
+ if(by[0]&&by[9]){const a=by[0],b=by[9],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<46){push(a,b,.012);push(b,a,.012);if(now-(socialT||0)>25000){socialT=now;say(a,Math.random()<.5?'…':'(시선을 피한다)',2200);setTimeout(()=>say(b,'칫.',2000),700)}}}
+ for(let n=NAVY;n<N;n++){const f=by[n];if(!f)continue;for(let m=0;m<NAVY;m++){const g=by[m];if(!g||m===3)continue;if(Math.hypot(f.x-g.x,f.y-g.y)<26)push(f,g,.008)}}
+ const follow=(f,tgt,off)=>{f.tx=tgt.x-tgt.face*off;f.ty=tgt.y+4;f.rest=0};
+ if(by[17]&&by[11]){const s=by[17],e=by[11];if(!s.follow&&Math.random()<sec/90){s.follow={t:e,until:now+18000};}}
+ if(by[3]&&navyDone()&&nightLevel()<.6){lorelT-=sec;if(lorelT<=0){lorelT=rnd(150,300);const ds=[15,16,17,18,19].map(n=>by[n]).filter(Boolean);if(ds.length){by[3].follow={t:ds[Math.floor(Math.random()*ds.length)],until:now+25000}}}}
+ for(const f of swim){if(f.follow){if(now>f.follow.until||!swim.includes(f.follow.t))f.follow=null;else follow(f,f.follow.t,f.follow.t.w*.7+6)}}
+ chatT-=sec;if(chatT<=0){chatT=rnd(45,95);const pool=swim.filter(f=>f.n>=0&&!talks.length);if(pool.length&&!editMode){const f=pool[Math.floor(Math.random()*pool.length)];if(isSleeping(f))say(f,'Zzz…',2400,'zz');else{const L=LINES[f.n][0];say(f,L[Math.floor(Math.random()*L.length)],2800)}}}}
+
+/* 해류 */
+function currentTick(dt,sec){if(VIEW)return;if(cur){if(performance.now()>cur.until){cur=null;toast('해류가 잦아들었습니다');return}for(const f of swim){if(!f.crawl)f.vx+=cur.dir*.012*dt}if(Math.random()<.5)streaks.push({x:cur.dir>0?-10:W+10,y:rnd(6,SAND-6),l:rnd(8,22),v:cur.dir*rnd(1.2,2.2)})}
+ else{curT-=sec;if(curT<=0&&!editMode){curT=rnd(480,960);cur={dir:Math.random()<.5?1:-1,until:performance.now()+30000};toast('해류가 흐릅니다! 30초 동안 은화 2배');sfx('capsule');logAdd('해류가 수조를 지나갔습니다.')}}
+ streaks=streaks.filter(s=>{s.x+=s.v*dt;return s.x>-30&&s.x<W+30})}
+function drawStreaks(){if(!streaks.length)return;for(const s of streaks){cx.fillStyle='rgba(220,245,255,.28)';cx.fillRect(Math.round(s.x),Math.round(s.y),Math.round(s.l),1)}}
+const curMul=()=>cur?2:1;
+
+/* 쓰다듬기 */
+let hearts=[];function pet(f){for(let i=0;i<5;i++)hearts.push({x:f.x+rnd(-6,6),y:f.y-f.h/2,vy:-rnd(.15,.35),life:rnd(50,80)});if(f.n>=0){S.talk=S.talk||Array(N).fill(0);S.talk[f.n]=(S.talk[f.n]||0)+2;save()}sfx('on');if(f.n>=0&&Math.random()<.5)say(f,f.n===9||f.n===14||f.n===19?'…흠.':['헤헤.','…간지러워.','좋아.'][Math.floor(Math.random()*3)],1800)}
+function drawHearts(dt){hearts=hearts.filter(h=>(h.life-=dt)>0);for(const h of hearts){h.y+=h.vy*dt;const x=Math.round(h.x),y=Math.round(h.y),c=`rgba(255,133,174,${Math.min(1,h.life/30)})`;px(cx,x-1,y,c,1,1);px(cx,x+1,y,c,1,1);px(cx,x-1,y+1,c,3,1);px(cx,x,y+2,c,1,1)}}
+let zz=[];function drawZ(dt){if(nightLevel()<=.6){zz.length=0;return}for(const f of swim)if(isSleeping(f)&&Math.random()<.008)zz.push({x:f.x+f.w*.3*f.face,y:f.y-f.h/2,life:90});zz=zz.filter(z=>(z.life-=dt)>0);cx.font='6px Silkscreen, monospace';cx.textAlign='center';for(const z of zz){cx.fillStyle=`rgba(230,238,255,${Math.min(.9,z.life/40)})`;cx.fillText('z',Math.round(z.x+Math.sin(z.life*.08)*2),Math.round(z.y-(90-z.life)*.18))}}
+
+/* 출석·오늘의 일지 */
+const dayKey=d=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+const DAILY=[n=>josa(nameOf(n),'이','가')+' 수조 구석에서 은화 주머니를 찾아냈습니다.',n=>josa(nameOf(n),'이','가')+' 순찰 중 반짝이는 은화를 물어 왔습니다.',n=>'새벽 해류를 타고 '+nameOf(n)+' 앞으로 보급품이 도착했습니다.',n=>josa(nameOf(n),'이','가')+' 낮잠을 자다 꿈에서 은화를 세었습니다. 진짜였습니다.'];
+const DSP={3:'로렐이 기관실에서 렌치를 떨어뜨렸는데, 그 밑에 은화가 있었습니다.',15:'유안이 정보를 팔아 은화를 벌어 왔습니다.',19:'카르네가 "전리품이다"라며 은화를 던져 주었습니다.',7:'리오가 지름길을 찾아 보급이 일찍 도착했습니다.',10:'덱스가 윗분들 몰래 은화 내기에서 이겼습니다.',4:'아마데오의 계산대로 보급 예산이 남았습니다.',8:'가레스가 넉넉히 챙겨 둔 보급품을 나눠 주었습니다.',18:'리스가 가짜 조난 신호로 은화를 낚아 왔습니다.'};
+function daily(){if(VIEW)return;const now=new Date(),k=dayKey(now);if(S.lastDay===k)return;const y=new Date(now);y.setDate(y.getDate()-1);
+ S.streak=S.lastDay===dayKey(y)?(S.streak||0)+1:1;S.lastDay=k;const st=S.streak;
+ const att=Math.max(300,Math.round(total()*120*Math.min(st,7)));let extra='';
+ if(st%7===0){if(!S.own.deco.includes('trophy')){S.own.deco.push('trophy');S.deco.trophy={x:118,y:4,on:true};extra='출석 7일 보상 · 「황금 조개 트로피」 장식을 받았습니다!'}else{extra='출석 7일 보상 · 은화 3배!'}}
+ const hired=S.lv.map((l,n)=>l?n:-1).filter(n=>n>=0&&(n<NAVY||navyDone()));const n=hired[Math.floor(Math.random()*hired.length)]||0;
+ const txt=(DSP[n]&&Math.random()<.6)?DSP[n]:DAILY[Math.floor(Math.random()*DAILY.length)](n);const ev=Math.max(200,Math.round(total()*rnd(60,240)));
+ const gain=att*(st%7===0&&extra.includes('3배')?3:1)+ev;S.coin+=gain;logAdd(`출석 ${st}일째 · 은화 ${fmt(att)}`);logAdd(txt+' (은화 +'+fmt(ev)+')');if(extra)logAdd(extra);save();
+ setTimeout(()=>{$('dyTitle').textContent=`${now.getMonth()+1}월 ${now.getDate()}일의 관측 일지`;$('dyBody').innerHTML='';
+  [[`출석 ${st}일째`,`은화 +${fmt(att*(extra.includes('3배')?3:1))}`],['오늘의 사건',txt+' · 은화 +'+fmt(ev)]].concat(extra?[['특별 보상',extra]]:[]).forEach(([a,b])=>{const d=document.createElement('div');d.className='dyrow';d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=a;d.querySelector('span').textContent=b;$('dyBody').appendChild(d)});
+  thumb($('dyPic'),kindOf(n));$('daily').classList.add('on');$('scrim').classList.add('on');sfx('hire')},700)}
+
+/* 비밀 */
+function checkSecret(){const a=S.deco.lockbox,b=S.deco.driftship;if(!a||!b||!a.on||!b.on||S.own.deco.includes('secretmap'))return;
+ const A=decoBox('lockbox'),B=decoBox('driftship'),cxA=(A.x0+A.x1)/2;if(cxA>B.x0+8&&cxA<B.x1-8&&A.y1<B.y0+30&&A.y1>B.y0){S.own.deco.push('secretmap');S.deco.secretmap={x:B.x0+12,y:8,on:true};save();sfx('grow');toast('금고가 열렸습니다… 안에서 낡은 지도가 나왔습니다');logAdd('드리프트 금고를 해적선에 올려놓자 숨겨진 지도가 나왔습니다.')}}
+
+/* 사진·자랑 카드 */
+function showImg(title,canvas,name){const url=canvas.toDataURL('image/png');$('shotT').textContent=title;$('shotImg').src=url;$('shotDl').onclick=()=>{try{const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();toast('저장을 시도했습니다. 안 되면 이미지를 길게 눌러 저장하세요')}catch(e){toast('이미지를 길게 눌러 저장하세요')}};
+ closeSheet();$('shot').classList.add('on');$('scrim').classList.add('on')}
+function snapTank(){const c=document.createElement('canvas');c.width=960;c.height=640;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.fillStyle='#0A0D1E';x.fillRect(0,0,960,640);x.drawImage(cv,0,0);
+ x.fillStyle='#141A38';x.fillRect(0,600,960,40);x.fillStyle='#EEF1FA';x.font='16px Silkscreen, monospace';x.textAlign='left';x.fillText('ARCHIPELAGO AQUA-NET',16,626);x.textAlign='right';x.fillStyle='#8F97BC';const d=new Date();x.fillText(`${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}  ${S.lv.filter(l=>l).length}/20`,944,626);
+ sfx('coin');showImg('수조 사진',c,'aquarium.png')}
+function profileCard(n){const d=ROSTER[n],col=d[5]||F[d[0]].col,c=document.createElement('canvas');c.width=720;c.height=400;const x=c.getContext('2d');x.imageSmoothingEnabled=false;
+ x.fillStyle='#0A0D1E';x.fillRect(0,0,720,400);x.fillStyle='#141A38';x.fillRect(16,16,688,368);x.fillStyle=col;x.fillRect(16,16,688,6);
+ const th=THEMES.find(t=>t.id===S.theme);th.bands.forEach((b,i)=>{x.fillStyle=b;x.fillRect(36,44+i*40,300,40)});x.fillStyle='#F3D7A4';x.fillRect(36,300,300,24);
+ const k=kindOf(n),sp=SP[k],img=IMG[k],sc=Math.max(2,Math.min(9,Math.floor(Math.min(280/sp.r[0].length,220/sp.r.length))));x.drawImage(img,186-sp.r[0].length*sc/2,(44+300)/2-sp.r.length*sc/2+10,sp.r[0].length*sc,sp.r.length*sc);
+ const st=stOf(S.ate[n],capOf(SP[d[4]].w));x.textAlign='left';x.fillStyle=col;x.font='18px "Pretendard", sans-serif';x.fillText(F[d[0]].full,364,70);
+ x.fillStyle='#EEF1FA';x.font='40px "Jua", "Pretendard", sans-serif';x.fillText(S.nick[n]||d[1],364,122);x.fillStyle='#8F97BC';x.font='18px "Pretendard", sans-serif';if(S.nick[n])x.fillText(d[1],364,152);
+ const rows=[['직책',d[2]],['관측종',d[3]],['사육',`Lv.${S.lv[n]} · +${fmt(rateOf(n))}/초`],['크기',`${SLAB[st]} ×${SCALE[st]} · 먹이 ${S.ate[n]}개`],['스킨',(S.wear[n]||[]).map(id=>SKIN.find(s=>s.id===id).name).join(', ')||'없음'],['친밀도',`대화 ${(S.talk&&S.talk[n])||0}회`]];
+ rows.forEach(([a,b],i)=>{x.fillStyle='#8F97BC';x.font='16px "Pretendard", sans-serif';x.fillText(a,364,188+i*28);x.fillStyle='#EEF1FA';x.fillText(b,444,188+i*28)});
+ x.fillStyle='#56608A';x.font='14px Silkscreen, monospace';x.fillText('ARCHIPELAGO AQUA-NET',364,370);sfx('coin');showImg('자랑 카드',c,'card.png')}
+
 /* ---------- 루프 ---------- */
 const FEEDCD=20;let feedT=FEEDCD,capT=rnd(150,240),lastT=performance.now(),acc=0;
 let lastTick=0;function loop(){const now=performance.now();lastTick=now;const ms=Math.max(0,Math.min(100,now-lastT));lastT=now;const dt=ms/16.67,sec=ms/1000;
- if(!VIEW)S.coin+=total()*sec;acc+=ms;
+ if(!VIEW)S.coin+=total()*sec*curMul();acc+=ms;if(!editMode)social(dt,sec);currentTick(dt,sec);
  if(S.feed<3){feedT-=sec;if(feedT<=0){S.feed++;feedT=FEEDCD}}
  capT-=sec;if(!VIEW&&capT<=0&&!capsule){const l=Math.random()<.5;capsule={x:l?-6:W+6,y:rnd(20,90),vx:(l?1:-1)*.18,ph:0};capT=rnd(150,240)}
- step(dt);render(now);drawTag();if(vpip)bigx.drawImage(cv,0,0);if(acc>250){acc=0;ui()}sched()}
+ step(dt);render(now);drawTag();drawTalks();if(vpip)bigx.drawImage(cv,0,0);if(acc>250){acc=0;ui()}sched()}
 
-paintIcons(document);load();sndUI();buildDeco();buildBg();spawn();buildCrew();setTab(S.tab||'crew');ui();
+paintIcons(document);load();sndUI();setTod(S.tod||'auto');buildDeco();buildBg();spawn();buildCrew();setTab(S.tab||'crew');ui();
 const away=Math.min(8*3600,Math.max(0,(Date.now()-S.last)/1000));
 if(away>60){const g=total()*away;S.coin+=g;const h=Math.floor(away/3600),m=Math.floor(away%3600/60);setTimeout(()=>toast(`자리를 비운 ${h?h+'시간 ':''}${m}분 동안 은화 ${fmt(g)} 적립`),500)}
-S.feed=Math.min(3,S.feed+Math.floor(away/FEEDCD));
+S.feed=Math.min(3,S.feed+Math.floor(away/FEEDCD));daily();setInterval(daily,60000);checkSecret();if(location.protocol==='file:')window.__dbg={swim:()=>swim};
 save();setInterval(save,5000);
 if(VIEW){let sig='';const pull=()=>{try{const r=localStorage.getItem(KEY);if(!r)return;const o=JSON.parse(r);const k=JSON.stringify([o.wear,o.lv,o.out,(o.user||[]).map(u=>[u.id,u.r,u.pal,u.acc,u.aura,u.mode,u.out]),o.theme,o.sub,o.deco,o.own]);if(Array.isArray(o.ate))S.ate=o.ate;(o.user||[]).forEach(v=>{const u=S.user.find(x=>x.id===v.id);if(u)u.ate=v.ate});if(k!==sig){const first=!sig;sig=k;Object.assign(S,o);defaults();S.user.forEach(regUser);buildBg();if(!first)spawn()}}catch(e){}};pull();setInterval(pull,3000);document.title='군도연합 수조'}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else lastT=performance.now()});
