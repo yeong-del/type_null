@@ -179,6 +179,11 @@ body{font-family:var(--f-body);font-size:14px;line-height:1.5;letter-spacing:-.0
 .growth{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
 .growth .gb{display:flex;gap:3px}.growth .gb i{width:14px;height:8px;background:#232A50}.growth .gb i.f{background:var(--ok);box-shadow:inset 0 -2px 0 #5EB58A}
 
+.admbox{display:flex;flex-direction:column;gap:12px;padding:14px;background:var(--panel);box-shadow:0 0 0 2px var(--edge);margin:2px}
+.admrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.admin-in{flex:1 1 180px;min-width:0;background:#0B0F24;border:0;border-radius:0;box-shadow:0 0 0 2px var(--edge2),inset 0 3px 0 rgba(0,0,0,.4);color:var(--fg);font:15px var(--f-body);padding:10px 13px;margin:2px}
+.admin-in:focus{outline:none;box-shadow:0 0 0 2px var(--gold),inset 0 3px 0 rgba(0,0,0,.4)}
+#admPanel[hidden]{display:none!important}
 /* 편집기 */
 #ed{padding-top:0}
 .edtop{position:sticky;top:0;z-index:3;background:var(--panel2);margin:0 calc(-1 * max(18px,env(safe-area-inset-left,0px)));padding:12px max(18px,env(safe-area-inset-left,0px)) 14px;box-shadow:0 2px 0 #1F2650,0 6px 12px rgba(4,6,15,.35)}
@@ -235,7 +240,7 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
 </style>
 
 <div class="app">
-  <div class="head"><h1><i class="ico" data-i="fish" data-s="3"></i><span><small>ARCHIPELAGO AQUA-NET</small>군도연합 사이버 아쿠아리움</span></h1><div class="hbtns"><button class="sbtn px" type="button" id="tSnd" aria-pressed="true" aria-expanded="false" aria-controls="sndPop" title="사운드 설정" aria-label="사운드 설정"><i class="ico" data-i="note" data-s="3"></i></button>
+  <div class="head"><h1><i class="ico" data-i="fish" data-s="3"></i><span><small id="hid">ARCHIPELAGO AQUA-NET</small>군도연합 사이버 아쿠아리움</span></h1><div class="hbtns"><button class="sbtn px" type="button" id="tSnd" aria-pressed="true" aria-expanded="false" aria-controls="sndPop" title="사운드 설정" aria-label="사운드 설정"><i class="ico" data-i="note" data-s="3"></i></button>
   <div class="sndpop" id="sndPop" hidden role="dialog" aria-label="사운드 설정">
    <div class="sph"><b>사운드</b><span>SOUND</span></div>
    <div class="srow"><button class="stog" type="button" id="tMus" aria-pressed="true" aria-label="배경음 켜기·끄기"><i class="ico" data-i="note" data-s="2"></i></button><label for="vMus">배경음</label><input type="range" id="vMus" min="0" max="100" step="5"><output id="vMusN">70</output></div>
@@ -311,6 +316,28 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
       <div class="lb">헤엄치는 높이</div><div class="chips" id="zones"></div></div></details>
     <label class="field">이름<input id="eName" maxlength="12" placeholder="물고기 이름 (최대 12자)" autocomplete="off"></label>
     <div class="acts"><button class="btn ghost" type="button" id="eCancel">취소</button><button class="btn go" type="button" id="eSave">수조에 넣기</button></div>
+  </div>
+</div>
+<div class="sheet" id="adm" role="dialog" aria-label="관리자">
+  <div class="grab"></div>
+  <div class="sin">
+    <div class="shead"><div><div class="sk" style="color:var(--gold)">ADMIN · 관리자</div><h2 id="admT">관리자 코드</h2></div></div>
+    <div id="admLock">
+      <label class="field">코드<input id="admCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="관리자 코드를 입력하세요"></label>
+      <div class="bnote" id="admMsg" style="margin-top:8px"></div>
+      <div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-adm-close>닫기</button><button class="btn go" type="button" id="admGo">확인</button></div>
+    </div>
+    <div id="admPanel" hidden style="display:flex;flex-direction:column;gap:20px">
+      <div class="admbox"><div class="lb" style="margin:0">은화 지정</div>
+        <div class="admrow"><input id="admCoin" class="admin-in" inputmode="text" autocomplete="off" placeholder="예: 5000000 · 3억 · 1조 5000억"><button class="btn go" type="button" id="admSet">이 값으로 지정</button></div>
+        <div class="bnote" id="admNow"></div>
+        <div class="chips"><button class="chip" type="button" data-add="1e4">+1만</button><button class="chip" type="button" data-add="1e6">+100만</button><button class="chip" type="button" data-add="1e8">+1억</button><button class="chip" type="button" data-add="1e10">+100억</button><button class="chip" type="button" data-add="1e12">+1조</button><button class="chip" type="button" data-add="0">0으로</button></div>
+      </div>
+      <div class="admbox"><div class="lb" style="margin:0">빠른 조작</div>
+        <div class="chips"><button class="chip" type="button" id="admAll">20명 전원 영입</button><button class="chip" type="button" id="admMax">전원 최대 강화</button><button class="chip" type="button" id="admShop">상점 전부 구매</button><button class="chip" type="button" id="admFeed">먹이 가득</button><button class="chip" type="button" id="admBig">전원 최대 크기</button><button class="chip" type="button" id="admSmall">크기 초기화</button><button class="chip" type="button" id="admCap">해류 캡슐 부르기</button></div>
+      </div>
+      <div class="acts"><button class="btn warn" type="button" id="admLockBtn">관리자 모드 잠그기</button><button class="btn ghost" type="button" data-adm-close>닫기</button></div>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -439,7 +466,8 @@ function defaults(){
  if(!S.deco||typeof S.deco!=='object')S.deco={};if(!S.snd||typeof S.snd!=='object')S.snd={music:true,sfx:true};if(typeof S.snd.mv!=='number')S.snd.mv=70;if(typeof S.snd.sv!=='number')S.snd.sv=80;
  for(const d of DECOS)if(S.own.deco.includes(d.id)&&!S.deco[d.id])S.deco[d.id]={x:d.x,y:d.y,on:true};
  if(!THEMES.find(t=>t.id===S.theme))S.theme='shallow';if(!SUBS.find(t=>t.id===S.sub))S.sub='sand';}
-function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.lv)&&o.lv.length===N)S=Object.assign(S,o)}}catch(e){}defaults();S.user.forEach(regUser)}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.lv)&&o.lv.length===N)S=Object.assign(S,o)}}catch(e){}
+ if(!(S.coin>=0)){S.coinFix=(S.coinFix||0)+1;S.coin=0}defaults();S.user.forEach(regUser)}
 function save(){if(VIEW)return;S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const rateOf=n=>baseRate(n)*S.lv[n];
 const total=()=>S.lv.reduce((a,l,n)=>a+baseRate(n)*l,0);
@@ -684,7 +712,7 @@ function fillSheet(){
  $('sEdit').hidden=true;$('sDel').hidden=true;$('sBuy').hidden=false;$('sOut').textContent=S.out[n]?'수조에 넣기':'꺼내기';
  const b=$('sBuy');b.textContent=st.label;b.disabled=!st.can||S.coin<st.cost;b.onclick=()=>act(n)}
 function closeSheet(){sel=null;selU=null;showSheet(false);$('sDel').textContent='삭제';delArm=0}
-$('sClose').onclick=closeSheet;$('scrim').onclick=()=>{closeSheet();closeEditor()};
+$('sClose').onclick=closeSheet;$('scrim').onclick=()=>{closeSheet();closeEditor();admClose()};
 $('sOut').onclick=()=>{if(selU!=null){const u=userBy(selU);u.out=!u.out;swim=swim.filter(f=>f.u!==u.id);if(!u.out)swim.push(makeUser(u));toast(u.out?u.name+' 보관함으로':u.name+' 수조로');buildUser()}
  else if(sel!=null){const n=sel;S.out[n]=!S.out[n];swim=swim.filter(f=>f.n!==n);if(!S.out[n])swim.push(makeFish(n));toast((S.nick[n]||ROSTER[n][1])+(S.out[n]?' 보관함으로':' 수조로'))}
  save();ui()};
@@ -733,7 +761,32 @@ $('vMus').addEventListener('input',e=>{S.snd.mv=+e.target.value;if(S.snd.mv>0&&!
 $('vSfx').addEventListener('input',e=>{S.snd.sv=+e.target.value;if(S.snd.sv>0&&!S.snd.sfx)S.snd.sfx=true;initAudio();if(A)A.fx.gain.setTargetAtTime(fxVol(),A.ctx.currentTime,.03);sndUI();sfx('eat')});
 ['vMus','vSfx'].forEach(id=>$(id).addEventListener('change',()=>save()));
 $('tSfx').onclick=()=>{S.snd.sfx=!S.snd.sfx;if(S.snd.sfx){initAudio();setTimeout(()=>sfx('on'),30)}sndUI();save()};
-$('editBtn').onclick=()=>setEdit(true);$('editDone').onclick=()=>{setEdit(false);toast('배치를 저장했습니다')};
+$('editBtn').onclick=()=>setEdit(true);
+/* ---------- 관리자 ---------- */
+const ADM='d4df83fc';
+function hs(v){let x=0x811c9dc5;for(const c of 'aqua~'+v.trim().toLowerCase()+'~net'){x^=c.codePointAt(0);x=Math.imul(x,0x01000193)>>>0}return x.toString(16)}
+function parseKor(t){t=String(t).replace(/[,\s원은화]/g,'');if(!t)return NaN;if(/^\d+(\.\d+)?(e\d+)?$/i.test(t))return Number(t);
+ let sum=0,rest=t;const U={'경':1e16,'조':1e12,'억':1e8,'만':1e4,'천':1e3};rest=rest.replace(/(\d+(?:\.\d+)?)(경|조|억|만|천)/g,(m,n,u)=>{sum+=Number(n)*U[u];return''});
+ if(rest&&!/^\d+$/.test(rest))return NaN;return sum+(rest?Number(rest):0)}
+function admOpen(){closeSheet();if(ED)closeEditor();setPop&&setPop(false);const on=!!S.admin;$('admLock').hidden=on;$('admPanel').hidden=!on;$('admT').textContent=on?'관리자 패널':'관리자 코드';$('admMsg').textContent='';$('admCode').value='';admRefresh();
+ $('adm').classList.add('on');$('scrim').classList.add('on');if(!on)setTimeout(()=>$('admCode').focus(),250)}
+function admClose(){$('adm').classList.remove('on');$('scrim').classList.toggle('on',$('sheet').classList.contains('on')||$('ed').classList.contains('on'))}
+function admRefresh(){$('admNow').textContent='지금 은화 · '+fmt(S.coin)+' ('+Math.floor(S.coin).toLocaleString('ko-KR')+')'}
+document.querySelectorAll('[data-adm-close]').forEach(b=>b.onclick=admClose);
+let hidN=0,hidT=0;$('hid').addEventListener('click',()=>{if(VIEW)return;const now=Date.now();hidN=now-hidT<700?hidN+1:1;hidT=now;if(hidN>=5){hidN=0;admOpen()}});
+const tryCode=()=>{if(hs($('admCode').value)===ADM){S.admin=true;save();sfx('hire');admOpen();toast('관리자 모드가 열렸습니다')}else{sfx('err');$('admMsg').textContent='코드가 맞지 않습니다';$('admCode').select()}};
+$('admGo').onclick=tryCode;$('admCode').addEventListener('keydown',e=>{if(e.key==='Enter')tryCode()});
+$('admSet').onclick=()=>{const v=parseKor($('admCoin').value);if(!isFinite(v)||v<0){sfx('err');toast('숫자로 입력해 주세요. 예: 3억, 1조 5000억');return}S.coin=Math.min(v,9e18);save();ui();admRefresh();sfx('coin');toast('은화를 '+fmt(S.coin)+'(으)로 지정했습니다')};
+$('admCoin').addEventListener('keydown',e=>{if(e.key==='Enter')$('admSet').click()});
+document.querySelectorAll('#adm [data-add]').forEach(b=>b.onclick=()=>{const a=+b.dataset.add;S.coin=a?S.coin+a:0;save();ui();admRefresh();sfx('coin')});
+$('admAll').onclick=()=>{S.lv.forEach((l,n)=>{if(!l){S.lv[n]=1}});spawn();save();ui();sfx('hire');toast('20명 전원 영입')};
+$('admMax').onclick=()=>{S.lv=S.lv.map(()=>LVMAX);spawn();save();ui();sfx('up');toast('전원 Lv.'+LVMAX)};
+$('admShop').onclick=()=>{THEMES.forEach(t=>{if(!S.own.theme.includes(t.id))S.own.theme.push(t.id)});SUBS.forEach(t=>{if(!S.own.sub.includes(t.id))S.own.sub.push(t.id)});DECOS.forEach(d=>{if(!S.own.deco.includes(d.id)){S.own.deco.push(d.id);S.deco[d.id]={x:d.x,y:d.y,on:false}}});save();if(S.tab==='shop')buildShop();sfx('coin');toast('상점 품목을 전부 갖고 있습니다. 상점에서 적용·배치하세요')};
+$('admFeed').onclick=()=>{S.feed=3;ui();sfx('drop')};
+$('admBig').onclick=()=>{S.ate=S.ate.map(()=>STAGE[1]);S.user.forEach(u=>u.ate=STAGE[1]);save();sfx('grow');toast('전원 최대 크기')};
+$('admSmall').onclick=()=>{S.ate=S.ate.map(()=>0);S.user.forEach(u=>u.ate=0);save();sfx('tap');toast('크기를 처음으로 되돌렸습니다')};
+$('admCap').onclick=()=>{capsule={x:-6,y:rnd(20,90),vx:.18,ph:0};admClose();toast('해류 캡슐이 들어옵니다')};
+$('admLockBtn').onclick=()=>{S.admin=false;save();admClose();toast('관리자 모드를 잠갔습니다')};$('editDone').onclick=()=>{setEdit(false);toast('배치를 저장했습니다')};
 
 /* ---------- 내 물고기 ---------- */
 const UMAX=6,GW=32,GH=16,FIX={w:'#F4F7FA',k:'#15151C'};
@@ -899,7 +952,7 @@ function drawTag(){let f=editMode?null:hover;if(sel!=null)f=swim.find(s=>s.n===s
 
 /* ---------- 루프 ---------- */
 const FEEDCD=20;let feedT=FEEDCD,capT=rnd(150,240),lastT=performance.now(),acc=0;
-let lastTick=0;function loop(now){lastTick=performance.now();const ms=Math.min(100,now-lastT);lastT=now;const dt=ms/16.67,sec=ms/1000;
+let lastTick=0;function loop(){const now=performance.now();lastTick=now;const ms=Math.max(0,Math.min(100,now-lastT));lastT=now;const dt=ms/16.67,sec=ms/1000;
  if(!VIEW)S.coin+=total()*sec;acc+=ms;
  if(S.feed<3){feedT-=sec;if(feedT<=0){S.feed++;feedT=FEEDCD}}
  capT-=sec;if(!VIEW&&capT<=0&&!capsule){const l=Math.random()<.5;capsule={x:l?-6:W+6,y:rnd(20,90),vx:(l?1:-1)*.18,ph:0};capT=rnd(150,240)}
