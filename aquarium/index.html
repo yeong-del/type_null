@@ -1001,8 +1001,8 @@ function shopState(){const s=S.stab;
  document.querySelectorAll('#shopGrid .item').forEach(el=>{const it=list.find(x=>x.id===el.dataset.id);if(!it)return;const own=S.own[s].includes(it.id),b=el.querySelector('button:not(.pos)');let cur=false;b.className='btn';b.disabled=false;
   if(!own){b.textContent=it.price?fmt(it.price)+' 은화':'무료';b.disabled=S.coin<it.price;if(!b.disabled)b.classList.add('go')}
   else if(s==='deco'){cur=S.deco[it.id]&&S.deco[it.id].on;b.textContent=cur?'빼기':'배치하기';b.classList.add(cur?'on':'ghost')}
-  const pb=el.querySelector('.pos');if(pb)pb.hidden=!(s==='deco'&&own&&S.deco[it.id]&&S.deco[it.id].on);
   else{cur=S[s]===it.id;b.textContent=cur?'사용 중':'적용하기';b.classList.add(cur?'on':'ghost');b.disabled=cur}
+  const pb=el.querySelector('.pos');if(pb)pb.hidden=!(s==='deco'&&own&&S.deco[it.id]&&S.deco[it.id].on);
   el.classList.toggle('cur',cur)})}
 function shopAct(s,it){const own=S.own[s].includes(it.id);
  if(!own){if(S.coin<it.price)return;S.coin-=it.price;S.own[s].push(it.id);sfx('coin');toast(it.name+' 구매 완료');
