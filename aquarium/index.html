@@ -30,7 +30,8 @@ body{font-family:var(--f-body);font-size:14px;line-height:1.5;letter-spacing:-.0
 .px{background:var(--panel);box-shadow:0 -2px 0 0 var(--edge),0 2px 0 0 var(--edge),-2px 0 0 0 var(--edge),2px 0 0 0 var(--edge),0 7px 0 -2px var(--hard),inset 0 2px 0 rgba(255,255,255,.04)}
 .ico{display:inline-block;vertical-align:middle;image-rendering:pixelated;image-rendering:crisp-edges;flex:none}
 
-.head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 4px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 4px;position:relative;z-index:12}
+.hbtns{position:relative}
 .head h1{margin:0;font:400 19px var(--f-disp);display:flex;align-items:center;gap:10px}
 .head h1 small{display:block;margin-bottom:3px;font:10px var(--f-pix);letter-spacing:.06em;color:var(--dim)}
 .hbtns{display:flex;align-items:center;gap:12px;flex:none}
@@ -38,6 +39,26 @@ body{font-family:var(--f-body);font-size:14px;line-height:1.5;letter-spacing:-.0
 .sbtn:active{transform:translateY(2px)}
 .sbtn[aria-pressed="false"] .ico{opacity:.35}
 .sbtn[aria-pressed="false"]::after{content:"";position:absolute;width:26px;height:4px;background:var(--red);transform:rotate(-45deg);box-shadow:1px 1px 0 var(--hard)}
+.sndpop{position:absolute;right:0;top:calc(100% + 14px);width:min(300px,calc(100vw - 32px));background:#0F1430;padding:14px 16px 12px;display:flex;flex-direction:column;gap:12px;z-index:15;
+ box-shadow:0 -2px 0 0 var(--edge2),0 2px 0 0 var(--edge2),-2px 0 0 0 var(--edge2),2px 0 0 0 var(--edge2),6px 8px 0 0 var(--hard)}
+.sndpop::before{content:"";position:absolute;right:13px;top:-10px;width:12px;height:8px;background:var(--edge2);clip-path:polygon(0 100%,25% 100%,25% 50%,50% 50%,50% 0,50% 0,75% 50%,75% 100%,100% 100%)}
+.sph{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:2px dashed #232A52}
+.sph b{font:400 16px var(--f-disp)}.sph span{font:10px var(--f-pix);color:var(--faint);letter-spacing:.08em}
+.srow{display:grid;grid-template-columns:auto auto 1fr 34px;align-items:center;gap:10px}
+.srow label{font-size:13px;color:var(--fg);white-space:nowrap}
+.srow output{font:11px var(--f-num);color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.stog{width:32px;height:32px;border:0;border-radius:0;background:var(--panel);display:grid;place-items:center;cursor:pointer;padding:0;position:relative;box-shadow:0 0 0 2px var(--edge),0 3px 0 0 var(--hard)}
+.stog[aria-pressed="false"] .ico{opacity:.35}
+.stog[aria-pressed="false"]::after{content:"";position:absolute;width:22px;height:3px;background:var(--red);transform:rotate(-45deg)}
+.stog:focus-visible{outline:2px dashed var(--gold);outline-offset:3px}
+.srow input[type=range]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;height:24px;background:transparent;cursor:pointer;margin:0;--p:70%}
+.srow input[type=range]::-webkit-slider-runnable-track{height:10px;background:linear-gradient(90deg,#6372C4 0 var(--p),#0B0F24 var(--p));box-shadow:0 0 0 2px var(--edge2)}
+.srow input[type=range]::-moz-range-track{height:10px;background:linear-gradient(90deg,#6372C4 0 var(--p),#0B0F24 var(--p));box-shadow:0 0 0 2px var(--edge2)}
+.srow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:22px;margin-top:-6px;background:#E9ECFA;border:0;border-radius:0;box-shadow:0 0 0 2px var(--hard),inset 0 -4px 0 #B9C0DE}
+.srow input[type=range]::-moz-range-thumb{width:14px;height:22px;background:#E9ECFA;border:0;border-radius:0;box-shadow:0 0 0 2px var(--hard),inset 0 -4px 0 #B9C0DE}
+.srow input[type=range]:focus-visible{outline:2px dashed var(--gold);outline-offset:3px}
+.srow.off label,.srow.off output{color:var(--faint)}.srow.off input{opacity:.45}
+.snote{font-size:11.5px;color:var(--faint)}
 .sbtn:focus-visible{outline:2px dashed var(--gold);outline-offset:4px}
 .count{white-space:nowrap;flex:none;font:12px var(--f-num);color:var(--fg);padding:8px 12px;display:flex;align-items:center;gap:7px}
 
@@ -214,7 +235,13 @@ footer button{background:none;border:0;color:var(--dim);font:inherit;text-decora
 </style>
 
 <div class="app">
-  <div class="head"><h1><i class="ico" data-i="fish" data-s="3"></i><span><small>ARCHIPELAGO AQUA-NET</small>군도연합 사이버 아쿠아리움</span></h1><div class="hbtns"><button class="sbtn px" type="button" id="tMus" aria-pressed="true" title="배경음 끄기·켜기" aria-label="배경음"><i class="ico" data-i="note" data-s="3"></i></button><button class="sbtn px" type="button" id="tSfx" aria-pressed="true" title="효과음 끄기·켜기" aria-label="효과음"><i class="ico" data-i="spk" data-s="3"></i></button><span class="count px"><i class="ico" data-i="star" data-s="2"></i><span id="count">0 / 20</span></span></div></div>
+  <div class="head"><h1><i class="ico" data-i="fish" data-s="3"></i><span><small>ARCHIPELAGO AQUA-NET</small>군도연합 사이버 아쿠아리움</span></h1><div class="hbtns"><button class="sbtn px" type="button" id="tSnd" aria-pressed="true" aria-expanded="false" aria-controls="sndPop" title="사운드 설정" aria-label="사운드 설정"><i class="ico" data-i="note" data-s="3"></i></button>
+  <div class="sndpop" id="sndPop" hidden role="dialog" aria-label="사운드 설정">
+   <div class="sph"><b>사운드</b><span>SOUND</span></div>
+   <div class="srow"><button class="stog" type="button" id="tMus" aria-pressed="true" aria-label="배경음 켜기·끄기"><i class="ico" data-i="note" data-s="2"></i></button><label for="vMus">배경음</label><input type="range" id="vMus" min="0" max="100" step="5"><output id="vMusN">70</output></div>
+   <div class="srow"><button class="stog" type="button" id="tSfx" aria-pressed="true" aria-label="효과음 켜기·끄기"><i class="ico" data-i="spk" data-s="2"></i></button><label for="vSfx">효과음</label><input type="range" id="vSfx" min="0" max="100" step="5"><output id="vSfxN">80</output></div>
+   <div class="snote">아이콘을 누르면 켜고 끕니다</div>
+  </div><span class="count px"><i class="ico" data-i="star" data-s="2"></i><span id="count">0 / 20</span></span></div></div>
 
   <div class="win" id="win">
     <div class="bar-min">ARCHIPELAGO AQUARIUM · 최소화됨</div>
@@ -409,7 +436,7 @@ function defaults(){
  if(!Array.isArray(S.ate)||S.ate.length!==N)S.ate=Array(N).fill(0);
  if(!Array.isArray(S.user))S.user=[];if(!S.uid)S.uid=1;
  if(!S.own||!S.own.theme)S.own={theme:['shallow'],sub:['sand'],deco:['kelp','coralp','moss']};
- if(!S.deco||typeof S.deco!=='object')S.deco={};if(!S.snd||typeof S.snd!=='object')S.snd={music:true,sfx:true};
+ if(!S.deco||typeof S.deco!=='object')S.deco={};if(!S.snd||typeof S.snd!=='object')S.snd={music:true,sfx:true};if(typeof S.snd.mv!=='number')S.snd.mv=70;if(typeof S.snd.sv!=='number')S.snd.sv=80;
  for(const d of DECOS)if(S.own.deco.includes(d.id)&&!S.deco[d.id])S.deco[d.id]={x:d.x,y:d.y,on:true};
  if(!THEMES.find(t=>t.id===S.theme))S.theme='shallow';if(!SUBS.find(t=>t.id===S.sub))S.sub='sand';}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.lv)&&o.lv.length===N)S=Object.assign(S,o)}}catch(e){}defaults();S.user.forEach(regUser)}
@@ -538,6 +565,7 @@ function render(t){cx.drawImage(bg,0,0);
  cx.font='8px Silkscreen, monospace';cx.textAlign='center';for(const p of pops){cx.fillStyle=`rgba(255,228,150,${Math.min(1,p.life/30)})`;cx.fillText(p.txt,Math.round(p.x),Math.round(p.y-(60-p.life)*.15))}}
 
 /* ---------- 소리 ---------- */
+const musVol=()=>Math.pow(S.snd.mv/100,1.6)*1.25,fxVol=()=>Math.pow(S.snd.sv/100,1.6)*1.05;
 let A=null;const mf=m=>440*Math.pow(2,(m-69)/12);
 function initAudio(){if(VIEW)return null;if(A){if(A.ctx.state==='suspended')A.ctx.resume().catch(()=>{});return A}
  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;let ctx;try{ctx=new AC()}catch(e){return null}
@@ -547,7 +575,7 @@ function initAudio(){if(VIEW)return null;if(A){if(A.ctx.state==='suspended')A.ct
  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}rev.buffer=buf;
  const revG=ctx.createGain();revG.gain.value=.32;rev.connect(revG);revG.connect(lp);
  const mus=ctx.createGain();mus.gain.value=0;mus.connect(master);const mSend=ctx.createGain();mSend.gain.value=.9;mus.connect(mSend);mSend.connect(rev);
- const fx=ctx.createGain();fx.gain.value=.75;fx.connect(master);const fSend=ctx.createGain();fSend.gain.value=.35;fx.connect(fSend);fSend.connect(rev);
+ const fx=ctx.createGain();fx.gain.value=fxVol();fx.connect(master);const fSend=ctx.createGain();fSend.gain.value=.35;fx.connect(fSend);fSend.connect(rev);
  A={ctx,mus,fx,timer:null,step:0,next:0,mel:3,bub:0};return A}
 function pluck(dest,m,t,dur=1.3,vol=.15){const c=A.ctx,g=c.createGain(),f=mf(m);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);g.connect(dest);
  [[1,1,'sine'],[2,.22,'sine'],[3.01,.07,'triangle']].forEach(([r,v,ty],i)=>{const o=c.createOscillator(),og=c.createGain();o.type=ty;o.frequency.value=f*r;og.gain.value=v;if(i){og.gain.setValueAtTime(v,t);og.gain.exponentialRampToValueAtTime(.0001,t+dur*(i===2?.25:.5))}o.connect(og);og.connect(g);o.start(t);o.stop(t+dur+.05)})}
@@ -564,7 +592,7 @@ function musicTick(){if(!A)return;const c=A.ctx;while(A.next<c.currentTime+.3){c
   if(Math.random()<dens){A.mel=Math.max(0,Math.min(ch.m.length-1,A.mel+Math.round((Math.random()-.5)*3.2)));const m=ch.m[A.mel];pluck(A.mus,m,t+(Math.random()*.012),1.6,.09);if(Math.random()<.18)pluck(A.mus,m-12,t+EI*.98,1.1,.04)}
   if(--A.bub<=0){A.bub=24+Math.floor(Math.random()*40);const b=t+Math.random()*EI;for(let i=0;i<2+Math.floor(Math.random()*3);i++)sweep(A.mus,260+Math.random()*120,900+Math.random()*500,b+i*.09,.06,.022)}
   A.next+=EI;A.step++}}
-function musicOn(){const a=initAudio();if(!a)return;a.ctx.resume().catch(()=>{});if(a.timer)return;a.next=a.ctx.currentTime+.15;a.step=0;a.mus.gain.cancelScheduledValues(a.ctx.currentTime);a.mus.gain.setValueAtTime(a.mus.gain.value,a.ctx.currentTime);a.mus.gain.linearRampToValueAtTime(.9,a.ctx.currentTime+2.5);a.timer=setInterval(musicTick,90);musicTick()}
+function musicOn(){const a=initAudio();if(!a)return;a.ctx.resume().catch(()=>{});if(a.timer)return;a.next=a.ctx.currentTime+.15;a.step=0;a.mus.gain.cancelScheduledValues(a.ctx.currentTime);a.mus.gain.setValueAtTime(a.mus.gain.value,a.ctx.currentTime);a.mus.gain.linearRampToValueAtTime(musVol(),a.ctx.currentTime+2.5);a.timer=setInterval(musicTick,90);musicTick()}
 function musicOff(){if(!A||!A.timer)return;const t=A.ctx.currentTime;A.mus.gain.cancelScheduledValues(t);A.mus.gain.setValueAtTime(A.mus.gain.value,t);A.mus.gain.linearRampToValueAtTime(0,t+.6);clearInterval(A.timer);A.timer=null}
 let lastSfx={};
 function sfx(n){if(VIEW||!S.snd.sfx||!A)return;const c=A.ctx;if(c.state!=='running')return;const now=c.currentTime;if(lastSfx[n]&&now-lastSfx[n]<.06)return;lastSfx[n]=now;const t=now+.01,F=A.fx;
@@ -580,9 +608,10 @@ function sfx(n){if(VIEW||!S.snd.sfx||!A)return;const c=A.ctx;if(c.state!=='runni
   case'capsule':[90,93,97,102].forEach((m,i)=>pluck(F,m,t+i*.05,.6,.07));break;
   case'err':pluck(F,57,t,.3,.08);pluck(F,55,t+.1,.4,.07);break;
   case'on':pluck(F,81,t,.5,.08);break}}
-function sndUI(){[['tMus','music'],['tSfx','sfx']].forEach(([id,k])=>{const b=$(id);if(b)b.setAttribute('aria-pressed',!!S.snd[k])})}
+function sndUI(){[['tMus','music','vMus','mv'],['tSfx','sfx','vSfx','sv']].forEach(([id,k,vid,vk])=>{const b=$(id);if(!b)return;b.setAttribute('aria-pressed',!!S.snd[k]);const r=$(vid);r.value=S.snd[vk];r.style.setProperty('--p',S.snd[vk]+'%');$(vid+'N').textContent=S.snd[vk];b.closest('.srow').classList.toggle('off',!S.snd[k])});
+ $('tSnd').setAttribute('aria-pressed',!!(S.snd.music||S.snd.sfx))}
 document.addEventListener('pointerdown',()=>{if(VIEW)return;if(S.snd.music||S.snd.sfx){initAudio();if(S.snd.music)musicOn()}},{capture:true});
-document.addEventListener('click',e=>{const b=e.target.closest('button,summary');if(b&&!b.disabled&&b.id!=='tMus'&&b.id!=='tSfx')sfx('tap')},{capture:true});
+document.addEventListener('click',e=>{const b=e.target.closest('button,summary');if(b&&!b.disabled&&!b.closest('#sndPop'))sfx('tap')},{capture:true});
 document.addEventListener('visibilitychange',()=>{if(!A)return;if(document.hidden&&!pipWin)A.ctx.suspend().catch(()=>{});else if(S.snd.music||S.snd.sfx)A.ctx.resume().catch(()=>{})});
 
 /* ---------- 공용 UI ---------- */
@@ -695,8 +724,15 @@ function shopAct(s,it){const own=S.own[s].includes(it.id);
 document.querySelectorAll('#stabs button').forEach(b=>b.onclick=()=>{S.stab=b.dataset.s;buildShop();save()});
 let editMode=false,drag=null;
 function setEdit(on){editMode=on;TANK.classList.toggle('edit',on);EBAR.hidden=!on;hover=null;if(on){closeSheet();$('win').classList.remove('min');$('win').scrollIntoView({behavior:'smooth',block:'start'})}else save()}
-$('tMus').onclick=()=>{S.snd.music=!S.snd.music;if(S.snd.music){musicOn();toast('배경음을 켰습니다')}else{musicOff();toast('배경음을 껐습니다')}sndUI();save()};
-$('tSfx').onclick=()=>{S.snd.sfx=!S.snd.sfx;if(S.snd.sfx){initAudio();sfx('on');toast('효과음을 켰습니다')}else toast('효과음을 껐습니다');sndUI();save()};
+$('tMus').onclick=()=>{S.snd.music=!S.snd.music;if(S.snd.music)musicOn();else musicOff();sndUI();save()};
+function setPop(on){$('sndPop').hidden=!on;$('tSnd').setAttribute('aria-expanded',on)}
+$('tSnd').onclick=()=>setPop($('sndPop').hidden);
+document.addEventListener('pointerdown',e=>{if(!$('sndPop').hidden&&!e.target.closest('#sndPop,#tSnd'))setPop(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sndPop').hidden){setPop(false);$('tSnd').focus()}});
+$('vMus').addEventListener('input',e=>{S.snd.mv=+e.target.value;if(S.snd.mv>0&&!S.snd.music){S.snd.music=true;musicOn()}if(A&&A.timer){const t=A.ctx.currentTime;A.mus.gain.cancelScheduledValues(t);A.mus.gain.setTargetAtTime(musVol(),t,.06)}sndUI()});
+$('vSfx').addEventListener('input',e=>{S.snd.sv=+e.target.value;if(S.snd.sv>0&&!S.snd.sfx)S.snd.sfx=true;initAudio();if(A)A.fx.gain.setTargetAtTime(fxVol(),A.ctx.currentTime,.03);sndUI();sfx('eat')});
+['vMus','vSfx'].forEach(id=>$(id).addEventListener('change',()=>save()));
+$('tSfx').onclick=()=>{S.snd.sfx=!S.snd.sfx;if(S.snd.sfx){initAudio();setTimeout(()=>sfx('on'),30)}sndUI();save()};
 $('editBtn').onclick=()=>setEdit(true);$('editDone').onclick=()=>{setEdit(false);toast('배치를 저장했습니다')};
 
 /* ---------- 내 물고기 ---------- */
