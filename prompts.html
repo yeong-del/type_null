@@ -191,7 +191,7 @@ footer b i{font-style:normal;color:var(--red)}
    프롬프트 채우는 곳
    - look: 외형 프롬프트 / note: 메모 (선택)
    - 비워 두면 페이지에 「준비 중」으로 표시됩니다
-   - 전신 이미지는 img/full/키.jpg 로 넣으면 자동으로 라인업에 섭니다 (예: img/full/sq1-01.jpg)
+   - 전신 이미지는 img/full/키.png 로 넣으면 자동으로 라인업에 섭니다 (예: img/full/sq1-01.png)
    ─────────────────────────────────────────────── */
 const PROMPTS={
   "sq1-01":{look:"1boy, mature male, tall, broad shoulders, muscular, black hair, short hair, 1.2::undercut::, side shaved, asymmetrical hair, hair slicked to one side, 1.3::red eyes::, 1.3::scar across eye::, one eye closed, scarred eyelid, scar on mouth, scar on lip, sharp eyes, 1.2::black military uniform::, silver embroidery, epaulettes, buttoned collar, black gloves",note:""},
@@ -249,7 +249,7 @@ SQ.forEach(sq=>{
   b.addEventListener('click',()=>showSq(sq.id,true));$('tabs').append(b);
 });
 
-function imgFull(k){return 'img/full/'+k+'.jpg'}
+function imgFull(k){return 'img/full/'+k+'.png'}
 function imgFace(k){return 'img/'+k+'.jpg'}
 
 function showSq(id,pickFirst){
